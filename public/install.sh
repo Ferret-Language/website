@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-REPO="${FERRET_REPO:-itsfuad/Ferret}"
+REPO="${FERRET_REPO:-Ferret-Language/Ferret}"
 BASE_URL="${FERRET_RELEASE_BASE:-https://github.com/${REPO}/releases/latest/download}"
 TERMUX_PREFIX="${PREFIX:-}"
 IS_TERMUX=0

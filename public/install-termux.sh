@@ -6,7 +6,7 @@ if [ -z "${TERMUX_VERSION-}" ] && [ "${PREFIX:-}" != "/data/data/com.termux/file
   exit 1
 fi
 
-REPO="${FERRET_REPO:-https://github.com/itsfuad/Ferret.git}"
+REPO="${FERRET_REPO:-https://github.com/Ferret-Language/Ferret.git}"
 REF="${FERRET_REF:-stable}"
 SRC_DIR="${FERRET_SRC_DIR:-${HOME}/Ferret}"
 DEST_DIR="${FERRET_INSTALL_DIR:-${PREFIX:-/data/data/com.termux/files/usr}}"

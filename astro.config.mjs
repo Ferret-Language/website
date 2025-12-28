@@ -18,10 +18,10 @@ export default defineConfig({
         disable404Route: true, // Use custom 404 page instead of Starlight's
         lastUpdated: true,
         editLink: {
-            baseUrl: 'https://github.com/itsfuad/Ferret/edit/main/website/',
+            baseUrl: 'https://github.com/Ferret-Language/website/edit/main/',
         },
         social: [
-            { icon: 'github', label: 'GitHub', href: 'https://github.com/itsfuad/Ferret' }
+            { icon: 'github', label: 'GitHub', href: 'https://github.com/Ferret-Language/Ferret' }
         ],
         customCss: [
             './src/styles/custom.css',

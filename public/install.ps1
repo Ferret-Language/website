@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$repo = if ($env:FERRET_REPO) { $env:FERRET_REPO } else { "itsfuad/Ferret" }
+$repo = if ($env:FERRET_REPO) { $env:FERRET_REPO } else { "Ferret-Language/Ferret" }
 $baseUrl = if ($env:FERRET_RELEASE_BASE) { $env:FERRET_RELEASE_BASE } else { "https://github.com/$repo/releases/latest/download" }
 $installDir = if ($env:FERRET_INSTALL_DIR) { $env:FERRET_INSTALL_DIR } else { Join-Path $env:USERPROFILE ".ferret" }
 
