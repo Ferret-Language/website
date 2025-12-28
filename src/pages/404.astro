@@ -19,6 +19,8 @@ import '../styles/custom.css';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="preload" href="/fonts/The Laker.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/ShareTech.woff2" as="font" type="font/woff2" crossorigin>
     <title>404 - Page Not Found | Ferret</title>
     <style>
         * {
@@ -37,6 +39,11 @@ import '../styles/custom.css';
             align-items: center;
             justify-content: center;
             padding: 2rem;
+            font-family: var(--font-body);
+        }
+
+        h1, p {
+            font-family: var(--font-header);
         }
 
         .error-container {
