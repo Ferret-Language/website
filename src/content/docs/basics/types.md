@@ -94,20 +94,6 @@ let last: byte = s[-1]; // last byte
 let n: i32 = len(s);
 ```
 
-### Boolean Type
-
-Booleans represent yes/no, on/off, or true/false values. There are only two possible values: `true` and `false`.
-
-The type name is `bool`, and booleans are essential for making decisions in your code.
-
-```ferret
-let is_active: bool = true;
-let is_complete: bool = false;
-let has_permission := true;  // Inferred as bool
-```
-
-You'll use booleans constantly when writing conditions, like "if the user is logged in" or "while the game is running."
-
 ### Character Type
 
 A character represents a single letter, symbol, or emoji. Unlike strings that can hold multiple characters, the `byte` type holds exactly one character. It is called byte because it typically uses one byte (8 bits) of memory to store the value. Internally `byte` and `u8` are the same.
@@ -123,6 +109,20 @@ Think of a `byte` as a single building block, while a `str` (string) is like a s
 
 When printing, `byte` displays as a character while `u8` prints as a number.
 
+### Boolean Type
+
+Booleans represent yes/no, on/off, or true/false values. There are only two possible values: `true` and `false`.
+
+The type name is `bool`, and booleans are essential for making decisions in your code.
+
+```ferret
+let is_active: bool = true;
+let is_complete: bool = false;
+let has_permission := true;  // Inferred as bool
+```
+
+You'll use booleans constantly when writing conditions, like "if the user is logged in" or "while the game is running."
+
 ## Compound Types
 
 Compound types are built by combining other types together. They let you group related data.
@@ -133,16 +133,16 @@ Arrays are collections that store multiple values of the same type in a specific
 
 There are two kinds of arrays in Ferret:
 
-**Dynamic arrays** automatically grow when you access or assign beyond their current size:
+**Dynamic arrays** automatically grow when you add more elements. Use the `append()` builtin function to append an item to the end of an array.
 
 ```ferret
 let numbers: []i32 = [1, 2, 3, 4, 5];
 let names: []str = ["Alice", "Bob", "Charlie"];
 let scores := [95, 87, 92];  // Inferred as []i32
 
-// Dynamic arrays grow automatically
+// Dynamic arrays
 let arr := [1, 2, 4];  // size 3
-arr[5] = 43;           // grows to [1, 2, 4, 0, 0, 43]
+arr[5] = 43;
 ```
 
 Notice the `[]` before the type - this means "an array of" that type. Dynamic arrays have **no bounds checking** - they grow to accommodate any index you use.

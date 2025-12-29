@@ -100,4 +100,15 @@ EOF
 chmod 755 "${wrapper}"
 
 echo "Installed to ${DEST_DIR}"
-echo "If needed, ensure ${DEST_DIR}/bin is on your PATH."
+echo ""
+# Check if installed to default Termux location (which is in PATH by default)
+default_prefix="/data/data/com.termux/files/usr"
+if [ "${DEST_DIR}" = "${PREFIX:-${default_prefix}}" ] || [ "${DEST_DIR}" = "${default_prefix}" ]; then
+  echo "✓ The 'ferret' command should be available now (${DEST_DIR}/bin is in PATH by default in Termux)"
+  echo "  If 'ferret' doesn't work, try: exec \$SHELL"
+else
+  echo "To use the 'ferret' command, add to your PATH:"
+  echo "  export PATH=\"${DEST_DIR}/bin:\$PATH\""
+  echo "Or add to ~/.bashrc:"
+  echo "  echo 'export PATH=\"${DEST_DIR}/bin:\$PATH\"' >> ~/.bashrc"
+fi
