@@ -28,19 +28,42 @@ fn process_ref(data: &LargeData) {
 
 ## Reference Type Syntax
 
-Use `&` before a type to declare a reference type. The `&` is only used in type position:
+Ferret has two kinds of references:
+
+- **Immutable references** (`&T`): Read-only access to a value
+- **Mutable references** (`&'T`): Read-write access to a value
+
+Use `&` before a type to declare an immutable reference, and `&'` for a mutable reference:
 
 ```ferret
-// Function parameter with reference type
+// Function parameter with immutable reference
 fn process(data: &LargeData) {
-    // data is automatically a reference
+    // Can read from data, but cannot modify
+}
+
+// Function parameter with mutable reference
+fn modify(data: &'LargeData) {
+    // Can both read and modify data
 }
 
 // Variable with reference type
 let config_ref: &Config = get_config();
+let mut_config: &'Config = get_mutable_config();
 ```
 
-When you call a function with a reference parameter, Ferret automatically passes the argument by reference - no special syntax needed!
+When you call a function with a reference parameter, Ferret automatically passes the argument by reference - no special syntax needed! However, for mutable references, you must use `&'` when taking the reference:
+
+```ferret
+let arr: []i32 = [10, 20, 30];
+
+// Immutable reference
+let immut_ref := &arr;
+process(immut_ref);
+
+// Mutable reference
+let mut_ref := &'arr;
+modify(mut_ref);
+```
 
 ## When to Use References
 
@@ -95,13 +118,14 @@ setup_cache(config);
 
 Understanding when to use each:
 
-| Aspect | Value (`T`) | Reference (`&T`) |
-|--------|-------------|------------------|
-| **Copying** | Creates a copy | Passes a pointer |
-| **Size overhead** | Full size of T | Always 8 bytes (pointer) |
-| **Mutation** | Can't affect original | Can affect original |
-| **Safety** | Always safe | Must ensure validity |
-| **Default** | ✅ Ferret default | Opt-in with `&` |
+| Aspect | Value (`T`) | Immutable Ref (`&T`) | Mutable Ref (`&'T`) |
+|--------|-------------|---------------------|---------------------|
+| **Copying** | Creates a copy | Passes a pointer | Passes a pointer |
+| **Size overhead** | Full size of T | Always 8 bytes | Always 8 bytes |
+| **Mutation** | Can't affect original | Can't modify | Can modify |
+| **Safety** | Always safe | Always safe | Must ensure validity |
+| **Borrowing** | N/A | Multiple allowed | Exclusive (no other borrows) |
+| **Default** | ✅ Ferret default | Opt-in with `&` | Opt-in with `&'` |
 
 ## Automatic Dereferencing
 
@@ -158,7 +182,7 @@ type User struct {
 fn find_user(id: i32) -> &User? {
     // Returns optional reference to User
     if user_exists(id) {
-        return some_ref_to_user();  // Returns &User wrapped in optional
+        return ref_to_user();  // Returns &User (automatically wrapped in optional)
     }
     return none;
 }
@@ -257,6 +281,49 @@ fn add(a: i32, b: i32) -> i32 {
 }
 ```
 
+## Borrow Semantics
+
+Ferret enforces strict borrowing rules to ensure memory safety:
+
+### Rules
+
+1. **Multiple immutable references are allowed:**
+   ```ferret
+   let arr: []i32 = [10, 20, 30];
+   let ref1 := &arr;
+   let ref2 := &arr;  // ✅ OK - multiple immutable refs allowed
+   ```
+
+2. **Only one mutable reference at a time:**
+   ```ferret
+   let arr: []i32 = [10, 20, 30];
+   let mut_ref1 := &'arr;
+   let mut_ref2 := &'arr;  // ❌ Error - can't have multiple mutable refs
+   ```
+
+3. **Cannot have mutable and immutable references simultaneously:**
+   ```ferret
+   let arr: []i32 = [10, 20, 30];
+   let immut_ref := &arr;
+   let mut_ref := &'arr;  // ❌ Error - conflicts with immutable ref
+   ```
+
+4. **Cannot use value while mutably borrowed:**
+   ```ferret
+   let arr: []i32 = [10, 20, 30];
+   let mut_ref := &'arr;
+   io::Println(arr[0]);  // ❌ Error - can't use arr while mutably borrowed
+   ```
+
+5. **Borrows are released after function calls:**
+   ```ferret
+   let arr: []i32 = [10, 20, 30];
+   set(&'arr, 0, 100);  // Borrow released after call
+   set(&'arr, 1, 200);  // ✅ OK - can borrow again
+   ```
+
+These rules prevent data races and ensure memory safety at compile time!
+
 ## Comparison with Other Languages
 
 Ferret's reference types are similar to:
@@ -271,10 +338,42 @@ Unlike pointers in C/C++:
 - ✅ No dangling references (checked at compile time)
 - ✅ No pointer arithmetic
 - ✅ Automatic lifetime checking
+- ✅ Borrow checker prevents data races
+
+## Borrow Semantics with Built-in Functions
+
+Ferret's built-in functions for containers respect borrow semantics:
+
+- **Read operations** use immutable references (`&T`): `get()`, `get_or()`, `has()`
+- **Write operations** require mutable references (`&'T`): `set()`, `remove()`, `append()`, `insert()`
+
+```ferret
+let arr: []i32 = [10, 20, 30];
+let scores := {"alice" => 95} as map[str]i32;
+
+// ✅ OK - read operations with immutable reference
+let val := get(&arr, 0);
+let exists := has(&scores, "alice");
+
+// ✅ OK - write operations with mutable reference
+set(&'arr, 0, 100);
+set(&'scores, "bob", 87);
+
+// ❌ Error - can't use immutable reference for mutation
+set(&arr, 0, 100);  // Compile error: requires mutable reference
+```
+
+The compiler enforces these rules:
+- You cannot have multiple mutable references to the same value
+- You cannot have mutable and immutable references simultaneously
+- You cannot use a value while it's mutably borrowed
+
+**Learn more:** See the [Built-in Functions](/basics/builtins) documentation for complete details.
 
 ## Next Steps
 
 - [Learn about Methods](/type-system/methods) - Methods can use reference receivers
 - [Explore Structs](/type-system/structs) - Common place to use references
 - [Understand Optional Types](/type-system/optionals) - Combine with references for `&T?`
+- [Built-in Functions](/basics/builtins) - Container operations with borrow semantics
 - [Master Ownership](TODO) - Deep dive into Ferret's ownership model

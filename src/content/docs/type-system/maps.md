@@ -68,35 +68,57 @@ let user_data := {} as map[i32]str;
 
 ## Accessing Values
 
-Here's the most important thing about maps in Ferret: **accessing a value always returns an optional type**!
+Ferret provides two ways to access map values, each with different safety guarantees:
 
-### Why Optional Returns?
+### Direct Indexing (Returns `T`, Panics if Missing)
 
-When you access a map with a key, that key might not exist. Instead of crashing your program, Ferret returns an optional type (`T?`) to force you to handle the missing case:
+Direct map indexing `map[key]` returns the value type `T` directly. **If the key doesn't exist, the program will panic:**
 
 ```ferret
-let ages := {"alice" => 25, "bob" => 30};
+let scores := {"alice" => 95, "bob" => 87} as map[str]i32;
+
+// Returns i32 directly (not i32?)
+let alice_score: i32 = scores["alice"];  // ✅ 95
+let bob_score: i32 = scores["bob"];      // ✅ 87
+let charlie_score: i32 = scores["charlie"]; // ❌ Panic: key not found!
+```
+
+**Use direct indexing only when you're certain the key exists.**
+
+### Safe Access with `get()` (Returns `T?`)
+
+The `get()` builtin function safely retrieves a value, returning an optional type (`T?`) if the key doesn't exist:
+
+```ferret
+let ages := {"alice" => 25, "bob" => 30} as map[str]i32;
 
 // Returns i32? (optional), not i32!
-let alice_age: i32? = ages["alice"];    // Some(25)
-let unknown_age: i32? = ages["nobody"]; // none
+let alice_age: i32? = get(&ages, "alice");    // Returns i32? with value 25
+let unknown_age: i32? = get(&ages, "nobody"); // Returns i32? with value none
 ```
 
 This design prevents common bugs! You can't forget to check if a key exists because the type system reminds you.
 
 ### The Coalescing Operator Pattern
 
-The most common way to work with map values is using the coalescing operator `??` to provide a default:
+The most common way to work with map values is using the coalescing operator `??` with `get()` to provide a default:
 
 ```ferret
 let scores := {
     "alice" => 95,
     "bob" => 87
-};
+} as map[str]i32;
 
 // Get value or use default
-let alice_score := scores["alice"] ?? 0;   // 95
-let carol_score := scores["carol"] ?? 0;   // 0 (key doesn't exist)
+let alice_score := get(&scores, "alice") ?? 0;   // 95
+let carol_score := get(&scores, "carol") ?? 0;   // 0 (key doesn't exist)
+```
+
+Alternatively, use the `get_or()` builtin function for a more concise syntax:
+
+```ferret
+let alice_score := get_or(&scores, "alice", 0);  // 95
+let carol_score := get_or(&scores, "carol", 0);  // 0 (fallback)
 ```
 
 This pattern is so useful because:
@@ -106,15 +128,28 @@ This pattern is so useful because:
 
 ### Checking Before Using
 
-You can also check if a value exists before using it:
+You can use the `has()` builtin to check if a key exists before accessing it:
 
 ```ferret
 let user_emails := {
     "alice" => "alice@example.com",
     "bob" => "bob@example.com"
-};
+} as map[str]str;
 
-let email: str? = user_emails["alice"];
+// Check if key exists
+if has(&user_emails, "alice") {
+    // Safe to use direct indexing
+    let email: str = user_emails["alice"];
+    send_email(email);
+} else {
+    print("No email found");
+}
+```
+
+Or use `get()` and check the optional:
+
+```ferret
+let email: str? = get(&user_emails, "alice");
 
 if email != none {
     // Inside this block, email is str (not str?)
@@ -362,20 +397,55 @@ if maybe_id != none {
 }
 ```
 
+## Modifying Maps
+
+### Setting Values
+
+Use the `set()` builtin function to add or update map entries. It requires a mutable reference (`&'T`):
+
+```ferret
+let scores := {"alice" => 95} as map[str]i32;
+
+// Add new key (requires mutable reference)
+set(&'scores, "bob", 87);
+
+// Update existing key
+set(&'scores, "alice", 96);
+```
+
+### Removing Keys
+
+Use the `remove()` builtin function to remove a key from a map:
+
+```ferret
+let scores := {"alice" => 95, "bob" => 87} as map[str]i32;
+
+// Remove a key (requires mutable reference)
+let removed := remove(&'scores, "bob");  // true if found
+
+// Check if key still exists
+let has_bob := has(&scores, "bob");  // false
+```
+
+**Learn more:** See the [Built-in Functions](/basics/builtins) documentation for complete details on all container operations.
+
 ## Summary
 
 Maps in Ferret are:
-- **Safe**: Optional returns prevent crashes
+- **Safe**: Builtin functions prevent crashes
 - **Explicit**: You must handle missing keys
 - **Type-safe**: Keys and values have specific types
-- **Ergonomic**: Coalescing operator makes defaults easy
+- **Ergonomic**: Builtin functions make operations easy
 
 Key takeaways:
 - Map syntax: `map[KeyType]ValueType`
 - Map literals: `{ key => value } as map[K]V`
-- Accessing values returns optionals: `map[key]` → `V?`
-- Use coalescing for defaults: `map[key] ?? default`
-- No crashes - missing keys return `none`
+- Direct indexing: `map[key]` → `V` (panics if key missing)
+- Safe access: `get(&map, key)` → `V?` (returns `none` if missing)
+- Use `get_or()` for defaults: `get_or(&map, key, default)` → `V`
+- Use `has()` to check existence: `has(&map, key)` → `bool`
+- Use `set()` to modify: `set(&'map, key, value)` → `bool`
+- Use `remove()` to delete: `remove(&'map, key)` → `bool`
 
 ## What's Next?
 

@@ -9,12 +9,14 @@ Optional types are one of Ferret's key safety features, helping you avoid null p
 
 ## What are Optional Types?
 
-An optional type `T?` can hold either a value of type `T` or `none`. This makes the possibility of missing values explicit in your type system.
+An optional type `T?` can hold either a value of type `T` or `none`. The `none` keyword is a constant (like `true` and `false`) that represents the absence of a value. This makes the possibility of missing values explicit in your type system.
 
 ```ferret
-let someNumber: i32? = 42;      // Has a value
-let noNumber: i32? = none;      // No value
+let someNumber: i32? = 42;      // Has a value (42)
+let noNumber: i32? = none;      // No value (none is a constant like true/false)
 ```
+
+**Important:** Ferret doesn't use wrapper types like `Some()` or `None()`. An optional `T?` is simply either a value of type `T` or the constant `none`.
 
 ## Type Narrowing
 
@@ -166,8 +168,8 @@ let scores := {
 } as map[str]i32;
 
 // Map access returns i32?
-let alice_score: i32? = scores["alice"];  // Some(95)
-let carol_score: i32? = scores["carol"];  // none
+let alice_score: i32? = scores["alice"];  // Returns i32? with value 95
+let carol_score: i32? = scores["carol"];  // Returns i32? with value none
 
 // Use coalescing for defaults
 let score1 := scores["alice"] ?? 0;  // 95

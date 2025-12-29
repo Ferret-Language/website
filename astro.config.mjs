@@ -101,6 +101,7 @@ export default defineConfig({
             {
                 label: 'Advanced',
                 items: [
+                    { label: 'Built-in Functions', slug: 'advanced/builtins'},
                     { label: 'Error Handling', slug: 'advanced/errors' },
                     { label: 'Generics', slug: 'advanced/generics' },
                     { label: 'Modules', slug: 'advanced/modules' },

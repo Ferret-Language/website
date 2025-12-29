@@ -142,10 +142,12 @@ let scores := [95, 87, 92];  // Inferred as []i32
 
 // Dynamic arrays
 let arr := [1, 2, 4];  // size 3
-arr[5] = 43;
+append(&'arr, 43);  // Append using mutable reference
 ```
 
 Notice the `[]` before the type - this means "an array of" that type. Dynamic arrays have **no bounds checking** - they grow to accommodate any index you use.
+
+**Learn more:** See the [Built-in Functions](/advanced/builtins) documentation for complete details on array operations like `get()`, `set()`, `insert()`, and more.
 
 **Fixed-size arrays** have a set number of elements that cannot change:
 
@@ -161,9 +163,9 @@ let arr: [5]i32 = [1, 2, 3, 4, 5];
 let x := arr[2];   // OK - index 2 is valid
 let y := arr[10];  // Compile error: constant index 10 is out of bounds!
 
-// Runtime indices are safe - return last item if out of bounds
+// Runtime indices panic if out of bounds
 let i := 10;
-let z := arr[i];   // No error - returns arr[4] (last item)
+let z := arr[i];   // Runtime panic: index out of bounds!
 ```
 
 #### Negative Indexing
@@ -183,29 +185,34 @@ let arr: [5]i32 = [1, 2, 3, 4, 5];
 let valid := arr[-5];   // OK - first element
 let invalid := arr[-6]; // Compile error: constant index -6 is out of bounds!
 
-// Runtime negative indices safely clamp to bounds
+// Runtime negative indices panic if out of bounds
 let i := -10;
-let safe := arr[i];     // No error - returns arr[0] (first item)
+let unsafe := arr[i];   // Runtime panic: index out of bounds!
 ```
+
+**Important:** For safe array access without panics, use the built-in functions:
+- `get(&arr, index)` - Returns `T?` (optional), `none` if out of bounds
+- `get_or(&arr, index, fallback)` - Returns `T` with fallback if out of bounds
+- `has(&arr, index)` - Returns `bool` to check if index is valid
 
 #### Array Safety Summary
 
 | Array Type | Constant Indices | Runtime Indices | Negative Indexing |
 |------------|------------------|-----------------|-------------------|
-| Fixed-size `[N]T` | ✅ Compile error if out of bounds | Returns last/first item (safe clamp) | ✅ Same behavior |
-| Dynamic `[]T` | No checking (auto-grows) | Auto-grows to fit | ✅ No checking |
+| Fixed-size `[N]T` | ✅ Compile error if out of bounds | ❌ Runtime panic if out of bounds | ✅ Same behavior |
+| Dynamic `[]T` | ❌ Runtime panic if out of bounds | ❌ Runtime panic if out of bounds | ✅ Same behavior |
 
-This approach gives you both safety and flexibility: fixed-size arrays catch constant index errors at compile-time and safely clamp runtime indices, while dynamic arrays automatically grow to accommodate any index.
+**Both fixed-size and dynamic arrays panic on out-of-bounds access at runtime.** Use the built-in functions (`get()`, `get_or()`, `has()`) for safe access without panics.
 
 ## Optional Types
 
 Sometimes you need to represent "I might have a value, or I might not." That's what optional types do.
 
-You make any type optional by adding a question mark `?` after it. An optional type can hold either a real value or `none` (which means "no value").
+You make any type optional by adding a question mark `?` after it. An optional type `T?` can hold either a value of type `T` or `none`. The `none` keyword is a constant (like `true` and `false`) that represents the absence of a value.
 
 ```ferret
-let maybe_number: i32? = 42;      // Has a value
-let no_value: str? = none;         // No value
+let maybe_number: i32? = 42;      // Has a value (42)
+let no_value: str? = none;        // No value (none is a constant like true/false)
 let age: i32? = none;              // Starts with no value
 ```
 
@@ -247,32 +254,53 @@ The syntax `map[KeyType]ValueType` tells Ferret what types the keys and values s
 
 #### Accessing Map Values
 
-Here's something really important: when you access a map value, you get an **optional type** back. Why? Because the key might not exist in the map!
+Ferret provides two ways to access map values:
+
+**Direct indexing** `map[key]` returns the value type `T` directly, but **panics if the key doesn't exist:**
+
+```ferret
+let ages := {"alice" => 25, "bob" => 30} as map[str]i32;
+
+// Returns i32 directly (not i32?)
+let alice_age: i32 = ages["alice"];  // ✅ 25
+let missing: i32 = ages["unknown"];  // ❌ Panic: key not found!
+```
+
+**Safe access** with the `get()` builtin returns an optional type:
 
 ```ferret
 let ages := {"alice" => 25, "bob" => 30} as map[str]i32;
 
 // Returns i32? (optional i32) - key might not exist!
-let alice_age: i32? = ages["alice"];  // Some(25)
-let missing: i32? = ages["unknown"];  // none
+let alice_age: i32? = get(&ages, "alice");  // Returns i32? with value 25
+let missing: i32? = get(&ages, "unknown");   // Returns i32? with value none
 ```
+<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
+read_file
 
 This is a safety feature! It forces you to think about what happens when a key doesn't exist, preventing crashes.
 
 #### The Coalescing Operator with Maps
 
-The coalescing operator `??` is perfect for providing default values:
+The coalescing operator `??` is perfect for providing default values with `get()`:
 
 ```ferret
 let scores := {"alice" => 95} as map[str]i32;
 
-let alice_score := scores["alice"] ?? 0;    // 95
-let bob_score := scores["bob"] ?? 0;        // 0 (key doesn't exist)
+let alice_score := get(&scores, "alice") ?? 0;    // 95
+let bob_score := get(&scores, "bob") ?? 0;        // 0 (key doesn't exist)
+```
+
+Or use the `get_or()` builtin for a more concise syntax:
+
+```ferret
+let alice_score := get_or(&scores, "alice", 0);  // 95
+let bob_score := get_or(&scores, "bob", 0);      // 0 (fallback)
 ```
 
 This pattern is so common you'll use it all the time when working with maps!
 
-**Learn more:** Maps are covered in detail in the [Type System section](/type-system/maps).
+**Learn more:** Maps are covered in detail in the [Type System section](/type-system/maps), and see [Built-in Functions](/basics/builtins) for all container operations.
 
 ## Reference Types
 
