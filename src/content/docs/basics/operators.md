@@ -76,7 +76,7 @@ Logical operators combine or modify boolean values (`true` and `false`). They're
 | Operator | Name        | Example                | Result  | What it does                          |
 |----------|-------------|------------------------|---------|---------------------------------------|
 | `&&`    | Logical AND | `true and false`       | `false` | Both must be true                     |
-| `||`     | Logical OR  | `true or false`        | `true`  | At least one must be true             |
+| `\|\|`     | Logical OR  | `true or false`        | `true`  | At least one must be true             |
 | `!`    | Logical NOT | `not true`             | `false` | Flips true to false and vice versa    |
 
 ### Understanding `&&`
