@@ -96,6 +96,7 @@ export default defineConfig({
                     { label: 'Maps', slug: 'type-system/maps' },
                     { label: 'Methods', slug: 'type-system/methods' },
                     { label: 'References', slug: 'type-system/references' },
+                    { label: 'Type Compatibility & Casting', slug: 'type-system/compatibility' },
                 ],
             },
             {

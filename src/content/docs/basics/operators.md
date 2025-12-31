@@ -75,13 +75,13 @@ Logical operators combine or modify boolean values (`true` and `false`). They're
 
 | Operator | Name        | Example                | Result  | What it does                          |
 |----------|-------------|------------------------|---------|---------------------------------------|
-| `and`    | Logical AND | `true and false`       | `false` | Both must be true                     |
-| `or`     | Logical OR  | `true or false`        | `true`  | At least one must be true             |
-| `not`    | Logical NOT | `not true`             | `false` | Flips true to false and vice versa    |
+| `&&`    | Logical AND | `true and false`       | `false` | Both must be true                     |
+| `||`     | Logical OR  | `true or false`        | `true`  | At least one must be true             |
+| `!`    | Logical NOT | `not true`             | `false` | Flips true to false and vice versa    |
 
-### Understanding `and`
+### Understanding `&&`
 
-The `and` operator returns `true` only when **both** sides are true:
+The `&&` operator returns `true` only when **both** sides are true:
 
 ```ferret
 let has_ticket := true;
@@ -95,9 +95,9 @@ let has_time := true;
 let can_go_shopping := has_money and has_time;  // false (one is false)
 ```
 
-### Understanding `or`
+### Understanding `||`
 
-The `or` operator returns `true` when **at least one** side is true:
+The `||` operator returns `true` when **at least one** side is true:
 
 ```ferret
 let is_weekend := true;
@@ -111,9 +111,9 @@ let is_snowing := false;
 let need_umbrella := is_raining or is_snowing;  // false (both are false)
 ```
 
-### Understanding `not`
+### Understanding `!`
 
-The `not` operator flips the boolean value:
+The `!` operator flips the boolean value:
 
 ```ferret
 let is_logged_in := true;
@@ -154,7 +154,7 @@ let safe := x != 0 and 10 / x > 1;
 // let unsafe := 10 / x > 1 and x != 0;
 ```
 
-This is called "short-circuit evaluation" - if the first part of `and` is false, Ferret doesn't bother checking the second part because the result will be false anyway.
+This is called "short-circuit evaluation" - if the first part of `&&` is false, Ferret doesn't bother checking the second part because the result will be false anyway.
 
 ## Assignment Operators
 
@@ -342,7 +342,7 @@ When you have multiple operators in one expression, Ferret follows specific rule
 Here's the order from highest priority (done first) to lowest (done last):
 
 1. **Member access** - `.`, `?.`
-2. **Unary operators** - `not`, `-`, `+`
+2. **Unary operators** - `!`, `-`, `+`
 3. **Exponentiation** - `**`
 4. **Multiplication, Division, Modulo** - `*`, `/`, `%`
 5. **Addition, Subtraction** - `+`, `-`
@@ -352,8 +352,8 @@ Here's the order from highest priority (done first) to lowest (done last):
 9. **Bitwise AND** - `&`
 10. **Bitwise XOR** - `^`
 11. **Bitwise OR** - `|`
-12. **Logical AND** - `and`
-13. **Logical OR** - `or`
+12. **Logical AND** - `&&`
+13. **Logical OR** - `||`
 14. **Coalescing operator** - `??`
 15. **Assignment** - `=`, `+=`, `-=`, etc.
 
@@ -387,7 +387,7 @@ You've learned about all the operators in Ferret! Here's what we covered:
 
 * **Arithmetic operators** for math: `+`, `-`, `*`, `/`, `%`, `**`
 * **Comparison operators** for checking relationships: `==`, `!=`, `<`, `>`, `<=`, `>=`
-* **Logical operators** for combining conditions: `and`, `or`, `not`
+* **Logical operators** for combining conditions: `&&`, `||`, `!`
 * **Assignment operators** for modifying variables: `=`, `+=`, `-=`, etc.
 * **Special operators** like `:=` for type inference and `??` for defaults
 * **Bitwise operators** for low-level bit manipulation
