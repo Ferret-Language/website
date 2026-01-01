@@ -1,0 +1,808 @@
+---
+title: "Inside Ferret: Compiler Architecture and Design"
+description: "A deep dive into Ferret's multi-phase compiler architecture, from source code to native binary."
+pubDate: 2026-01-01
+tags: [architecture, compiler, technical]
+---
+
+Ferret's compiler is built from the ground up with a focus on correctness, performance, and maintainability. This post explores the architecture that powers Ferret's compilation from `.fer` source files to native executables.
+
+## Design Principles
+
+The Ferret compiler follows several key principles:
+
+1. **Per-Module Phase Tracking**: Each source file progresses through compilation phases independently
+2. **Parallel Processing**: Modules are parsed in parallel with unbounded goroutines
+3. **Thread-Safe Diagnostics**: Error collection is thread-safe with proper mutex synchronization
+4. **Topological Ordering**: Phases respect module dependencies for correct compilation
+5. **Multi-IR Architecture**: Three intermediate representations (AST → HIR → MIR) for progressive lowering
+
+## Architecture Overview
+
+Here's the complete architecture diagram showing all compilation phases and data flow:
+
+```d2
+direction: down
+
+title: "Ferret Compiler Architecture" {
+  near: top-center
+  style: {
+    font-size: 24
+    bold: true
+  }
+}
+
+# Entry Point
+source_file: ".fer Source Files" {
+  shape: document
+  style.fill: "#e3f2fd"
+}
+
+# =======================
+# PHASE 1: LEX + PARSE (Parallel)
+# =======================
+phase1: "Phase 1: Lex + Parse\n(Parallel per Module)" {
+  style.fill: "#fff3e0"
+  style.stroke: "#ff9800"
+  style.stroke-width: 3
+  
+  lexer: "Lexer\n(tokenizer.go)\nRegex-based, continues on errors" {
+    shape: rectangle
+    style.fill: "#ffecb3"
+  }
+  
+  parser: "Parser\n(Recursive Descent)\nError recovery, minimal panic" {
+    shape: rectangle
+    style.fill: "#ffecb3"
+  }
+  
+  ast: "AST\n(Abstract Syntax Tree)\nNode, Expr, Stmt, Decl, TypeNode" {
+    shape: cylinder
+    style.fill: "#ffe0b2"
+  }
+  
+  import_extractor: "Import Extractor\n(Recursive Discovery)" {
+    shape: rectangle
+    style.fill: "#ffecb3"
+  }
+  
+  lexer -> parser: Token Stream
+  parser -> ast: Build Tree
+  ast -> import_extractor: Extract Imports
+}
+
+# Module System & Context
+context: "Compiler Context\n(context_v2.CompilerContext)" {
+  style.fill: "#f3e5f5"
+  style.stroke: "#9c27b0"
+  style.stroke-width: 3
+  
+  module_registry: "Module Registry\n(map[ImportPath]*Module)" {
+    shape: cylinder
+    style.fill: "#e1bee7"
+  }
+  
+  phase_tracker: "Phase Tracker\n(Per-Module Phase State)\nNotStarted→Lexed→Parsed→\nCollected→Resolved→TypeChecked→\nHIRGenerated→CFGAnalyzed→\nHIRLowered→MIRGenerated→CodeGen" {
+    shape: rectangle
+    style.fill: "#e1bee7"
+  }
+  
+  dep_graph: "Dependency Graph\n(Import Path Resolution)" {
+    shape: rectangle
+    style.fill: "#e1bee7"
+  }
+  
+  source_cache: "Source Cache\n(RWMutex, for diagnostics)" {
+    shape: cylinder
+    style.fill: "#e1bee7"
+  }
+  
+  universe: "Universe Scope\n(Built-in Types & Symbols)" {
+    shape: rectangle
+    style.fill: "#e1bee7"
+  }
+  
+  config: "Compiler Config\n(Backend, PointerSize, Paths)" {
+    shape: rectangle
+    style.fill: "#e1bee7"
+  }
+}
+
+# Diagnostic System
+diagnostics: "Diagnostic System\n(diagnostics/)" {
+  style.fill: "#ffebee"
+  style.stroke: "#f44336"
+  style.stroke-width: 3
+  
+  bag: "DiagnosticBag\n(Thread-Safe, sync.Mutex)" {
+    shape: rectangle
+    style.fill: "#ffcdd2"
+  }
+  
+  emitter: "Error Emitter\n(Rust-style formatting)" {
+    shape: rectangle
+    style.fill: "#ffcdd2"
+  }
+  
+  codes: "Error Codes\n(T-prefix, W-prefix)" {
+    shape: rectangle
+    style.fill: "#ffcdd2"
+  }
+  
+  bag -> emitter: Format
+  codes -> emitter: Code Lookup
+}
+
+# =======================
+# PHASE 2: SYMBOL COLLECTION
+# =======================
+phase2: "Phase 2: Symbol Collection\n(Topological Order)" {
+  style.fill: "#e8f5e9"
+  style.stroke: "#4caf50"
+  style.stroke-width: 3
+  
+  collector: "Collector\n(collector/)\nDeclare names, build scopes" {
+    shape: rectangle
+    style.fill: "#c8e6c9"
+  }
+  
+  symbol_table: "Symbol Tables\n(Lexical Scopes)\nModule→Function→Block" {
+    shape: cylinder
+    style.fill: "#a5d6a7"
+  }
+  
+  import_validation: "Import Alias\nValidation\nPrevent redeclaration" {
+    shape: rectangle
+    style.fill: "#c8e6c9"
+  }
+  
+  method_validation: "Method Validation\n(Same-module restriction)" {
+    shape: rectangle
+    style.fill: "#c8e6c9"
+  }
+  
+  collector -> symbol_table: Declare Names
+  collector -> import_validation: Check Conflicts
+  collector -> method_validation: Validate Methods
+}
+
+# =======================
+# PHASE 3: RESOLUTION
+# =======================
+phase3: "Phase 3: Resolution\n(Topological Order)" {
+  style.fill: "#e1f5fe"
+  style.stroke: "#03a9f4"
+  style.stroke-width: 3
+  
+  resolver: "Resolver\n(resolver/)\nScope walking, cross-module" {
+    shape: rectangle
+    style.fill: "#b3e5fc"
+  }
+  
+  name_binding: "Name Binding\n(Qualified Access)\nmodule::symbol resolution" {
+    shape: rectangle
+    style.fill: "#b3e5fc"
+  }
+  
+  scope_lookup: "Scope Lookup\n(Parent chain traversal)" {
+    shape: rectangle
+    style.fill: "#b3e5fc"
+  }
+  
+  resolver -> name_binding: Bind Identifiers to Declarations
+  resolver -> scope_lookup: Walk Scopes
+}
+
+# =======================
+# PHASE 4: TYPE CHECKING
+# =======================
+phase4: "Phase 4: Type Checking\n(Topological Order)" {
+  style.fill: "#fce4ec"
+  style.stroke: "#e91e63"
+  style.stroke-width: 3
+  
+  typechecker: "Type Checker\n(typechecker/)\nValidate types, track assignments" {
+    shape: rectangle
+    style.fill: "#f8bbd0"
+  }
+  
+  inference: "Type Inference\n(inference.go)\nContext-based, array adoption" {
+    shape: rectangle
+    style.fill: "#f8bbd0"
+  }
+  
+  compatibility: "Type Compatibility\n(compatibility.go)\nAssignability, conversions" {
+    shape: rectangle
+    style.fill: "#f8bbd0"
+  }
+  
+  consteval: "Constant Evaluator\n(consteval/)\nbig.Int/big.Float precision" {
+    shape: rectangle
+    style.fill: "#f8bbd0"
+  }
+  
+  bounds_check: "Array Bounds\nChecking\nCompile-time validation" {
+    shape: rectangle
+    style.fill: "#f8bbd0"
+  }
+  
+  dead_code: "Dead Code\nDetection\nConstant condition analysis" {
+    shape: rectangle
+    style.fill: "#f8bbd0"
+  }
+  
+  optional_checking: "Optional/Result\nType Checking\nT?, Error!Result" {
+    shape: rectangle
+    style.fill: "#f8bbd0"
+  }
+  
+  typechecker -> inference: Infer Types
+  typechecker -> compatibility: Check Assignability
+  typechecker -> consteval: Evaluate Constants
+  typechecker -> optional_checking: Validate Optional
+  consteval -> bounds_check: Validate Indices
+  consteval -> dead_code: Detect Unreachable
+}
+
+# =======================
+# PHASE 5: HIR GENERATION
+# =======================
+phase5: "Phase 5: HIR Generation\n(High-level IR)" {
+  style.fill: "#fff9c4"
+  style.stroke: "#fbc02d"
+  style.stroke-width: 3
+  
+  hir_gen: "HIR Generator\n(hir/gen/)\nSource-shaped IR with types" {
+    shape: rectangle
+    style.fill: "#fff59d"
+  }
+  
+  hir_module: "HIR Module\n(Typed AST Lowering)\nFuncDecl, MethodDecl, Stmts" {
+    shape: cylinder
+    style.fill: "#fff176"
+  }
+  
+  expr_lowering: "Expression Lowering\n(Preserve structure)" {
+    shape: rectangle
+    style.fill: "#fff59d"
+  }
+  
+  hir_gen -> hir_module: Lower AST to HIR
+  hir_gen -> expr_lowering: Transform Exprs
+}
+
+# =======================
+# PHASE 6: CFG ANALYSIS
+# =======================
+phase6: "Phase 6: Control Flow Analysis\n(HIR-level)" {
+  style.fill: "#e0f7fa"
+  style.stroke: "#00bcd4"
+  style.stroke-width: 3
+  
+  cfg_builder: "CFG Builder\n(hir/analysis/)\nBasicBlock construction" {
+    shape: rectangle
+    style.fill: "#b2ebf2"
+  }
+  
+  cfg: "Control Flow Graph\n(Basic Blocks)\nSuccessors, Predecessors, Terminators" {
+    shape: cylinder
+    style.fill: "#80deea"
+  }
+  
+  return_path: "Return Path\nValidation\nEnsure all paths return" {
+    shape: rectangle
+    style.fill: "#b2ebf2"
+  }
+  
+  unreachable: "Unreachable Code\nDetection\nObvious infinite loops" {
+    shape: rectangle
+    style.fill: "#b2ebf2"
+  }
+  
+  loop_analysis: "Loop Analysis\n(Break/Continue tracking)" {
+    shape: rectangle
+    style.fill: "#b2ebf2"
+  }
+  
+  cfg_builder -> cfg: Build CFG
+  cfg -> return_path: Analyze Paths
+  cfg -> unreachable: Find Dead Blocks
+  cfg -> loop_analysis: Track Loops
+}
+
+# =======================
+# PHASE 7: HIR LOWERING
+# =======================
+phase7: "Phase 7: HIR Lowering\n(Canonical Form)" {
+  style.fill: "#f3e5f5"
+  style.stroke: "#9c27b0"
+  style.stroke-width: 3
+  
+  lowerer: "HIR Lowerer\n(hir/lower/)\nCanonical transformations" {
+    shape: rectangle
+    style.fill: "#e1bee7"
+  }
+  
+  optional_explicit: "Make Optional/Result\nOperations Explicit\nUnwrap, coalesce, catch" {
+    shape: rectangle
+    style.fill: "#e1bee7"
+  }
+  
+  temp_generation: "Temp Variable\nGeneration\nComplex expression splitting" {
+    shape: rectangle
+    style.fill: "#e1bee7"
+  }
+  
+  lowered_hir: "Lowered HIR\n(Canonical)\nReady for MIR" {
+    shape: cylinder
+    style.fill: "#ce93d8"
+  }
+  
+  lowerer -> optional_explicit: Canonicalize
+  lowerer -> temp_generation: Generate Temps
+  optional_explicit -> lowered_hir: Output
+  temp_generation -> lowered_hir: Output
+}
+
+# =======================
+# PHASE 8: MIR GENERATION
+# =======================
+phase8: "Phase 8: MIR Generation\n(Mid-level IR)" {
+  style.fill: "#ffe0b2"
+  style.stroke: "#ff9800"
+  style.stroke-width: 3
+  
+  mir_gen: "MIR Generator\n(mir/gen/)\nSSA-like with basic blocks" {
+    shape: rectangle
+    style.fill: "#ffcc80"
+  }
+  
+  mir_module: "MIR Module\n(SSA-like)\nFunctions, Instructions, Blocks" {
+    shape: cylinder
+    style.fill: "#ffb74d"
+  }
+  
+  vtables: "VTables\n(Interface Dispatch)\nMethod resolution tables" {
+    shape: cylinder
+    style.fill: "#ffcc80"
+  }
+  
+  type_ids: "Type IDs\n(Runtime Type Info)\nGlobal type identifiers" {
+    shape: cylinder
+    style.fill: "#ffcc80"
+  }
+  
+  closure_lowering: "Closure Lowering\n(Environment Capture)\nCapture structs, upvalues" {
+    shape: rectangle
+    style.fill: "#ffcc80"
+  }
+  
+  ssa_builder: "SSA Builder\n(Value/Block IDs)" {
+    shape: rectangle
+    style.fill: "#ffcc80"
+  }
+  
+  mir_gen -> mir_module: Lower to MIR
+  mir_gen -> vtables: Generate
+  mir_gen -> type_ids: Generate
+  mir_gen -> closure_lowering: Transform
+  mir_gen -> ssa_builder: Build SSA
+}
+
+# MIR Transformations
+mir_transforms: "MIR Transformations" {
+  style.fill: "#fff3e0"
+  style.stroke: "#ff6f00"
+  style.stroke-width: 2
+  
+  switch_lowering: "Switch Lowering\n(Decision Trees)\nMatch to if-else chains" {
+    shape: rectangle
+    style.fill: "#ffe0b2"
+  }
+  
+  layout: "Data Layout\n(Pointer Size, Alignment)\nStruct/union layout calculation" {
+    shape: rectangle
+    style.fill: "#ffe0b2"
+  }
+  
+  large_type_handling: "Large Type Handling\n(i128, i256, u256)" {
+    shape: rectangle
+    style.fill: "#ffe0b2"
+  }
+}
+
+# =======================
+# PHASE 9: QBE CODEGEN
+# =======================
+phase9: "Phase 9: QBE Code Generation" {
+  style.fill: "#c5e1a5"
+  style.stroke: "#689f38"
+  style.stroke-width: 3
+  
+  qbe_gen: "QBE Generator\n(codegen/qbe_embeddings/)\nMIR to QBE IR translation" {
+    shape: rectangle
+    style.fill: "#aed581"
+  }
+  
+  qbe_ir: "QBE IR\n(.ssa files)\nSSA form, type annotations" {
+    shape: document
+    style.fill: "#9ccc65"
+  }
+  
+  qbe_compiler: "QBE Compiler\n(External Tool)\nRegister allocation, optimization" {
+    shape: rectangle
+    style.fill: "#aed581"
+  }
+  
+  assembly: "Assembly\n(.s files)\nx86_64, aarch64, riscv64" {
+    shape: document
+    style.fill: "#8bc34a"
+  }
+  
+  qbe_gen -> qbe_ir: Emit SSA
+  qbe_ir -> qbe_compiler: Compile
+  qbe_compiler -> assembly: Generate
+}
+
+# =======================
+# ASSEMBLY & LINKING
+# =======================
+build: "Build & Link" {
+  style.fill: "#b2dfdb"
+  style.stroke: "#009688"
+  style.stroke-width: 3
+  
+  assembler: "Assembler\n(as / \$AS / \$FERRET_AS)\nPlatform-specific assembler" {
+    shape: rectangle
+    style.fill: "#80cbc4"
+  }
+  
+  object_files: "Object Files\n(.o)\nELF/Mach-O/COFF format" {
+    shape: document
+    style.fill: "#4db6ac"
+  }
+  
+  linker: "Linker\n(ld / \$LD / \$FERRET_LD)\nStatic linking" {
+    shape: rectangle
+    style.fill: "#80cbc4"
+  }
+  
+  runtime_lib: "Runtime Library\n(libferret_runtime.a)\nMemory, I/O, panic, GC hooks" {
+    shape: cylinder
+    style.fill: "#80cbc4"
+  }
+  
+  crt_objects: "CRT Objects\n(crt1.o, crti.o, crtn.o)\nC runtime initialization" {
+    shape: cylinder
+    style.fill: "#80cbc4"
+  }
+  
+  executable: "Executable\n(Native Binary)\nPlatform-specific binary" {
+    shape: document
+    style.fill: "#26a69a"
+  }
+  
+  toolchain: "Toolchain Resolution\n(Path detection)" {
+    shape: rectangle
+    style.fill: "#80cbc4"
+  }
+  
+  assembler -> object_files: Assemble
+  object_files -> linker: Link
+  runtime_lib -> linker
+  crt_objects -> linker
+  toolchain -> assembler: Locate
+  toolchain -> linker: Locate
+  linker -> executable: Output
+}
+
+# =======================
+# DATA FLOW CONNECTIONS
+# =======================
+
+source_file -> phase1.lexer: Read
+phase1.ast -> context.module_registry: Store Module
+phase1.import_extractor -> context.dep_graph: Extract Imports
+context.dep_graph -> phase1: Recursive Parse
+context.config -> phase1: Module Paths
+
+context.module_registry -> phase2.collector: Topological Order
+context.phase_tracker -> phase2: Phase Prerequisites
+phase2.symbol_table -> context.module_registry: Update Module
+phase2 -> diagnostics.bag: Errors
+
+context.module_registry -> phase3.resolver: Topological Order
+context.phase_tracker -> phase3: Phase Prerequisites
+phase3 -> context.universe: Lookup Built-ins
+phase3.name_binding -> context.module_registry: Update Symbols
+phase3.scope_lookup -> phase2.symbol_table: Read Scopes
+phase3 -> diagnostics.bag: Errors
+
+context.module_registry -> phase4.typechecker: Topological Order
+context.phase_tracker -> phase4: Phase Prerequisites
+phase4 -> context.module_registry: Update Types
+phase4 -> diagnostics.bag: Errors and Warnings
+
+phase4 -> phase5.hir_gen: Typed AST
+phase5.hir_module -> context.module_registry: Store HIR
+context.phase_tracker -> phase5: Phase Prerequisites
+
+phase5.hir_module -> phase6.cfg_builder: Analyze
+phase6 -> diagnostics.bag: Warnings
+phase6.cfg -> context.module_registry: Store CFG
+context.phase_tracker -> phase6: Phase Prerequisites
+
+phase5.hir_module -> phase7.lowerer: Transform
+phase7.lowered_hir -> context.module_registry: Store Lowered
+context.phase_tracker -> phase7: Phase Prerequisites
+
+phase7.lowered_hir -> phase8.mir_gen: Lower
+phase8.mir_module -> context.module_registry: Store MIR
+context.phase_tracker -> phase8: Phase Prerequisites
+context.config -> phase8: Pointer Size
+
+phase8.mir_module -> mir_transforms.switch_lowering: Transform
+mir_transforms.layout -> phase8.mir_gen: Size and Align Info
+mir_transforms.large_type_handling -> phase8.mir_gen: Handle Large Types
+mir_transforms -> phase9.qbe_gen: Transformed MIR
+
+phase8.mir_module -> phase9.qbe_gen: Translate
+context.config -> phase9: Backend Config
+phase9.assembly -> build.assembler: Assemble
+context.config -> build.toolchain: Runtime Path
+
+# Error reporting
+diagnostics.emitter -> context.source_cache: Read Source for Context
+diagnostics.codes -> diagnostics.bag: Error Code Lookup
+
+# Pipeline orchestration
+pipeline: "Pipeline Orchestrator\n(pipeline/)" {
+  shape: rectangle
+  style.fill: "#d1c4e9"
+  style.stroke: "#673ab7"
+  style.stroke-width: 3
+  style.border-radius: 8
+  
+  parallel_parse: "Parallel Parse\n(Unbounded Goroutines)" {
+    shape: rectangle
+    style.fill: "#b39ddb"
+  }
+  
+  waitgroup: "sync.WaitGroup\n(Module Dedup)" {
+    shape: rectangle
+    style.fill: "#b39ddb"
+  }
+  
+  cycle_detect: "Import Cycle\nDetection" {
+    shape: rectangle
+    style.fill: "#b39ddb"
+  }
+  
+  error_check: "Error Check\n(After Each Phase)" {
+    shape: rectangle
+    style.fill: "#b39ddb"
+  }
+  
+  parallel_parse -> waitgroup: Track
+  waitgroup -> cycle_detect: After Parse
+  cycle_detect -> error_check: Validate
+}
+
+pipeline -> phase1: Start
+pipeline -> context: Manage State
+pipeline.parallel_parse -> phase1: Spawn Goroutines
+pipeline.waitgroup -> context.module_registry: Module Dedup
+pipeline.cycle_detect -> context.dep_graph: Check Cycles
+pipeline.error_check -> diagnostics.bag: Check Errors
+pipeline.error_check -> phase9: Abort if Errors
+
+# Concurrency Annotations
+context.module_registry -> context: Protected by CompilerContext.mu (RWMutex)
+diagnostics.bag -> diagnostics: Protected by DiagnosticBag.mu (Mutex)
+context.source_cache -> context: Protected by SourceCache.mu (RWMutex)
+context.module_registry -> context.module_registry: Each Module has Module.Mu (Mutex)
+```
+
+## Phase-by-Phase Breakdown
+
+### Phase 1: Lexing & Parsing (Parallel)
+
+The compilation journey begins with parallel parsing:
+
+- **Regex-based Lexer**: Tokenizes source with error continuation (doesn't panic on bad input)
+- **Recursive Descent Parser**: Builds AST with minimal error recovery
+- **Import Extraction**: Discovers dependencies recursively
+- **Parallel Execution**: Each module spawns its own goroutine
+- **Deduplication**: Modules are parsed once per import path using `sync.Map`
+
+**Key Innovation**: Unbounded goroutines work well for typical project sizes (< 100s of modules) and avoid the complexity of worker pools.
+
+### Phase 2: Symbol Collection
+
+Building the symbol table hierarchy:
+
+- **Lexical Scoping**: Module → Function → Block scope chain
+- **Name Declaration**: Records all symbols (variables, functions, types)
+- **Import Validation**: Prevents redeclaration conflicts with import aliases
+- **Method Validation**: Ensures methods are defined in the same module as their types
+
+### Phase 3: Resolution
+
+Binding names to their declarations:
+
+- **Scope Walking**: Parent chain traversal for symbol lookup
+- **Qualified Access**: Resolves `module::symbol` syntax
+- **Cross-Module**: Links symbols across file boundaries
+- **Built-in Lookup**: Resolves references to universe scope (built-in types)
+
+### Phase 4: Type Checking
+
+The most complex phase with multiple subsystems:
+
+#### Type Inference
+- Context-based inference from expressions
+- Array type adoption from surrounding context
+- Untyped literal resolution
+
+#### Constant Evaluation
+- **Arbitrary Precision**: Uses `big.Int` and `big.Float`
+- **Assignment Tracking**: Follows constant values through local variables
+- **Conservative**: Only tracks primitives, not struct fields or complex expressions
+- **Sound**: Never gives wrong results, may miss some optimizations
+
+#### Array Bounds Checking
+- Compile-time validation for fixed-size arrays with constant indices
+- Supports negative indexing (`-1` to `-N`)
+- Dynamic arrays (`[]T`) auto-grow without bounds checking
+
+#### Dead Code Detection
+- Detects unreachable code from constant conditions
+- Warns about obvious infinite loops (no break/return)
+- Works with constant expressions
+
+### Phase 5: HIR Generation
+
+Lowering typed AST to High-Level IR:
+
+- **Source-Shaped**: Preserves original structure for error reporting
+- **Type Annotations**: All expressions have resolved types
+- **Expression Lowering**: Simplifies complex expressions
+- **Function/Method Preservation**: Maintains declaration structure
+
+### Phase 6: Control Flow Analysis
+
+Building and analyzing control flow graphs:
+
+- **BasicBlock Construction**: Breaks functions into basic blocks
+- **Successors/Predecessors**: Tracks control flow edges
+- **Return Path Validation**: Ensures all paths return a value
+- **Unreachable Detection**: Finds dead code blocks
+- **Loop Analysis**: Tracks break/continue for loop contexts
+
+### Phase 7: HIR Lowering
+
+Canonical transformation to prepare for MIR:
+
+- **Optional/Result Explicit**: Makes implicit operations explicit
+- **Temp Variables**: Splits complex expressions
+- **Desugaring**: Simplifies language constructs
+- **Ready for MIR**: Canonical form suitable for SSA
+
+### Phase 8: MIR Generation
+
+Lowering to Mid-Level IR (SSA-like):
+
+- **SSA Form**: Single Static Assignment with value/block IDs
+- **Basic Blocks**: Structured control flow
+- **VTables**: Interface dispatch tables
+- **Type IDs**: Runtime type information
+- **Closure Lowering**: Environment capture with upvalues
+
+### Phase 9: QBE Code Generation
+
+Native code generation via QBE:
+
+- **QBE IR**: SSA form with type annotations
+- **Register Allocation**: Handled by QBE
+- **Optimization**: QBE performs backend optimizations
+- **Multi-Architecture**: x86_64, aarch64, riscv64 support
+- **Assembly Output**: Platform-specific `.s` files
+
+### Assembly & Linking
+
+Final binary generation:
+
+- **Platform Assembler**: Uses system `as` or `$AS` / `$FERRET_AS`
+- **Object Files**: ELF/Mach-O/COFF format
+- **Runtime Library**: `libferret_runtime.a` with memory management, I/O, panic handlers
+- **CRT Objects**: C runtime initialization
+- **Static Linking**: Single native binary output
+
+## Concurrency Model
+
+Thread-safe compilation with proper lock hierarchy:
+
+1. **CompilerContext.mu** (RWMutex): Protects module registry and dependency graph
+2. **Module.Mu** (Mutex): Protects individual module field updates
+3. **DiagnosticBag.mu** (Mutex): Thread-safe error collection
+4. **SourceCache.mu** (RWMutex): Cached source for diagnostics
+
+**Lock Ordering**: Always acquire locks in this order to prevent deadlocks.
+
+## Error Diagnostics
+
+Rust-style error output with:
+
+- **Primary/Secondary Labels**: Multi-location error context
+- **Color-Coded Severity**: Error, Warning, Info, Hint
+- **Source Context**: Shows relevant source lines
+- **Error Codes**: T-prefix for type errors, W-prefix for warnings
+- **Help Messages**: Actionable suggestions for fixes
+
+Example:
+
+```
+error[T0009]: array index out of bounds
+  --> test.fer:5:9
+   |
+ 5 |     arr[15]
+   |         ^^ index 15 out of bounds for array of size 10
+   |
+   = note: array was defined with size 10
+   = help: valid indices are 0 to 9, or -1 to -10 for reverse indexing
+```
+
+## Design Decisions
+
+### Why Three IRs?
+
+- **AST**: Preserves source structure for error reporting
+- **HIR**: High-level IR maintains readability for optimization passes
+- **MIR**: Low-level SSA suitable for code generation
+
+### Why QBE?
+
+- **Mature Backend**: Production-ready register allocation and optimization
+- **Multi-Architecture**: Single IR for x86_64, aarch64, riscv64
+- **Simple Integration**: Clean C API and straightforward IR format
+- **Fast Compilation**: No LLVM overhead
+
+### Why Go for the Compiler?
+
+- **Concurrency**: Built-in goroutines and channels for parallel compilation
+- **Memory Safety**: GC eliminates memory bugs in compiler code
+- **Fast Compilation**: Go compiles quickly, keeping development iteration fast
+- **Standard Library**: Excellent regex, parsing, and file I/O support
+
+### Why Per-Module Phases?
+
+- **Incremental Compilation**: Only recompile changed modules (future)
+- **Parallel Processing**: Modules can progress independently
+- **Correct Dependencies**: Topological ordering ensures correctness
+- **Cache Friendly**: Each module's artifacts can be cached
+
+## Performance Characteristics
+
+- **Parallel Parsing**: Scales with available CPU cores
+- **Lock-Free Reads**: RWMutex allows concurrent phase queries
+- **Minimal Allocations**: Reuses symbol tables and scopes where possible
+- **Fast Type Checking**: Constant evaluation uses big integers but is still fast
+- **Zero-Copy**: Import paths used as map keys without string copying
+
+## Future Enhancements
+
+- **Incremental Compilation**: Cache module artifacts between builds
+- **Language Server**: IDE support with incremental reparsing
+- **Better Optimizations**: More sophisticated MIR transformations
+- **LLVM Backend**: Alternative to QBE for maximum optimization
+- **Build System Integration**: First-class build tool support
+
+## Conclusion
+
+Ferret's architecture balances simplicity with sophistication. The multi-phase pipeline with proper concurrency control enables fast, correct compilation while maintaining clear separation of concerns. The three-IR design allows progressive lowering from high-level semantics to low-level machine code while preserving enough information for high-quality error messages.
+
+The result is a compiler that's fast, correct, and maintainable - just like the language it compiles.
+
+---
+
+*Want to contribute to the compiler? Check out the [GitHub repository](https://github.com/Ferret-Language/Ferret) and read the [CONTRIBUTING.md](https://github.com/Ferret-Language/Ferret/blob/main/CONTRIBUTING.md) guide.*

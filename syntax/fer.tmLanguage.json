@@ -529,9 +529,14 @@
                     "match": "(\\^|\\||\\|\\||&&|<<|>>|!)(?!=)"
                 },
                 {
-                    "comment": "logical AND, borrow references",
+                    "comment": "mutable reference operator &'",
+                    "name": "keyword.operator.borrow.mutable.fer",
+                    "match": "&'"
+                },
+                {
+                    "comment": "immutable reference operator, logical AND, borrow references",
                     "name": "keyword.operator.borrow.and.fer",
-                    "match": "&(?![&=])"
+                    "match": "&(?![&='])"
                 },
                 {
                     "comment": "assignment operators",
@@ -916,7 +921,7 @@
                 {
                     "comment": "characters and bytes",
                     "name": "string.quoted.single.char.fer",
-                    "begin": "(b)?(')",
+                    "begin": "(?<!&)(b)?(')",
                     "beginCaptures": {
                         "1": {
                             "name": "string.quoted.byte.raw.fer"

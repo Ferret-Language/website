@@ -1,0 +1,160 @@
+---
+title: "Ferret v0.0.1: A New Systems Programming Language"
+description: "Introducing Ferret - a modern systems language with Rust-inspired safety, Go-like simplicity, and native performance."
+pubDate: 2026-01-02
+tags: [release, introduction]
+---
+
+We're excited to announce **Ferret v0.1**, a new systems programming language designed to bring modern language features to low-level programming without sacrificing performance or control.
+
+## Why Ferret?
+
+Systems programming has traditionally meant choosing between safety and performance, between high-level abstractions and low-level control. Ferret aims to bridge this gap by combining the best ideas from modern language design:
+
+- **Memory Safety Without GC**: Explicit ownership with reference semantics (`&T` for read-only, `&'T` for mutable) inspired by Rust, but simpler
+- **Zero-Cost Abstractions**: Compile-time type checking, constant evaluation, and dead code elimination
+- **Native Performance**: Compiles directly to native machine code via QBE backend
+- **Simple Syntax**: Clean, readable syntax inspired by Go and Rust
+- **Modern Type System**: Optional types (`T?`), result types (`Error!Result`), and powerful type inference
+
+## Key Features
+
+### 1. Safe Memory Management
+
+Ferret uses explicit reference semantics to prevent memory safety issues at compile time:
+
+- `&T` for immutable references (read-only access)
+- `&'T` for mutable references (can modify the original)
+
+```ferret
+fn (p: &'Point) scale(factor: f64) {
+    p.x = p.x * factor  // Modifies original
+    p.y = p.y * factor
+}
+
+let point := Point{.x: 3.0, .y: 4.0}
+point.scale(2.0)  // point is now {6.0, 8.0}
+```
+
+### 2. Optional and Result Types
+
+Handle nullable values and errors explicitly:
+
+```ferret
+fn divide(a: i32, b: i32) -> DivideError!i32 {
+    if b == 0 {
+        return DivideError.DivisionByZero
+    }
+    return a / b
+}
+
+let result := divide(10, 2) catch err {
+    println("Error: Division by zero")
+    return
+}
+println("Result: {}", result)
+```
+
+### 3. Powerful Type Inference
+
+Let the compiler figure out types for you:
+
+```ferret
+let numbers := [1, 2, 3, 4, 5]  // Inferred as [5]i32
+let doubled := numbers.map(fn(x) => x * 2)
+```
+
+### 4. Compile-Time Constant Evaluation
+
+Catch errors at compile time with big integer precision:
+
+```ferret
+let arr: [10]i32 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+let i := 5
+let j := i + 10  // j = 15
+arr[j]  // Compile error: index 15 out of bounds for array of size 10
+```
+
+### 5. Advanced Control Flow Analysis
+
+The compiler detects unreachable code and validates return paths:
+
+```ferret
+if true {
+    return 42
+} else {
+    return 0  // Warning: unreachable code
+}
+```
+
+## Native Performance
+
+Ferret compiles directly to native machine code with no runtime overhead:
+
+- **QBE Backend**: Generates optimized assembly for x86_64, aarch64, and riscv64
+- **Zero Runtime Cost**: No garbage collector, no virtual machine
+- **Static Linking**: Single native binary with minimal dependencies
+- **C Interop**: Easy integration with existing C libraries
+
+## Try It Today
+
+Get started with Ferret in minutes:
+
+```bash
+# Linux/macOS
+curl -fsSL https://ferret-lang.org/install.sh | sh
+
+# Windows
+powershell -c "irm https://ferret-lang.org/install.ps1 | iex"
+```
+
+Create your first program:
+
+```ferret
+// hello.fer
+fn main() {
+    println("Hello, Ferret!")
+}
+```
+
+Compile and run:
+
+```bash
+ferret hello.fer
+./hello
+```
+
+## What's Next?
+
+Ferret v0.1 is just the beginning. We're working on:
+
+- **Generics**: Type-safe generic programming
+- **Advanced Trait System**: Interfaces with default implementations
+- **Package Manager**: Built-in dependency management
+- **IDE Support**: Language server protocol for VS Code, Vim, and more
+- **Better Error Messages**: Even more helpful diagnostics
+
+## Learn More
+
+- [Language Documentation](https://ferret-lang.org/docs/)
+- [Examples](https://github.com/Ferret-Language/Ferret/tree/main/examples)
+- [GitHub Repository](https://github.com/Ferret-Language/Ferret)
+- [Architecture Deep Dive](https://ferret-lang.org/blog/ferret-architecture)
+
+## Community
+
+Join the Ferret community:
+
+- **GitHub Discussions**: Share ideas and ask questions
+- **Issue Tracker**: Report bugs and request features
+- **Contributing**: We welcome contributions of all kinds
+
+## Why "Ferret"?
+
+Ferrets are quick, agile, and resourceful - just like this language aims to be. They're also known for finding their way into tight spaces and solving problems creatively, which mirrors our philosophy of making systems programming accessible without compromising on power or performance.
+
+---
+
+We can't wait to see what you build with Ferret. Happy coding!
+
+*The Ferret Team*

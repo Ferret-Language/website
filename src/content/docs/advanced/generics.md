@@ -2,12 +2,10 @@
 title: Generics
 description: Generic types and functions in Ferret
 sidebar:
-  order: 5
-sidebar:
   badge:
     text: Upcomming
     variant: tip
-
+  order: 5
 banner:
   content: |
     This feature is coming soon! Stay tuned for updates.
