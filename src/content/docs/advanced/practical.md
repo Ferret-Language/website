@@ -1,6 +1,8 @@
 ---
 title: Practical Examples
 description: Common algorithms written in Ferret
+sidebar:
+  order: 6
 ---
 
 Below are small, practical snippets you can copy into a file and run.

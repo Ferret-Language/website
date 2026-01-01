@@ -1,6 +1,8 @@
 ---
 title: Operators
 description: Learn about operators in Ferret
+sidebar:
+  order: 3
 ---
 
 Operators are special symbols that tell Ferret to perform specific operations on values. Think of them as the verbs of programming - they let you add, compare, combine, and transform data.
@@ -37,6 +39,61 @@ The modulo operator `%` is particularly useful when you need to know if a number
 let is_even := 10 % 2 == 0;  // true
 let is_odd := 11 % 2 == 1;   // true
 ```
+
+### Strict Type Matching
+
+**Important:** Ferret requires all operands in arithmetic operations to have **the same type**. You cannot mix different numeric types without explicit casting.
+
+```ferret
+let a: i32 = 100;
+let b: i64 = 200;
+
+// ❌ ERROR: Cannot mix i32 and i64
+// let result := a + b;
+
+// ✅ CORRECT: Cast to matching type
+let result := (a as i64) + b;  // Both are now i64
+```
+
+This applies to **all** arithmetic operators: `+`, `-`, `*`, `/`, `%`, and `**`.
+
+#### Why Strict Typing?
+
+Ferret's strict type checking prevents bugs and surprises:
+- **No hidden conversions** that might lose precision or cause overflow
+- **Performance** - the compiler knows exact types at compile time
+- **Explicit intent** - casts show what you meant to do
+
+#### Common Type Mixing Scenarios
+
+**Integers of different sizes:**
+```ferret
+let small: i32 = 10;
+let large: i64 = 1000000000;
+
+// Cast the smaller type to the larger
+let sum := (small as i64) + large;  // i64
+```
+
+**Integers and floats:**
+```ferret
+let integer: i32 = 42;
+let floating: f64 = 3.14;
+
+// Cast integer to float
+let result := (integer as f64) + floating;  // f64
+```
+
+**Different float sizes:**
+```ferret
+let f32val: f32 = 3.14;
+let f64val: f64 = 2.718;
+
+// Cast to matching precision
+let result := (f32val as f64) + f64val;  // f64
+```
+
+**Learn more:** See the [Data Types](/docs/basics/types#strict-type-checking) section for complete details on Ferret's type system.
 
 ## Comparison Operators
 

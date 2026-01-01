@@ -1,6 +1,8 @@
 ﻿---
 title: Loops
 description: Iteration with for and while loops in Ferret
+sidebar:
+  order: 2
 ---
 
 Ferret provides several loop constructs for iteration.

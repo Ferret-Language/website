@@ -1,6 +1,8 @@
 ---
 title: Parameters
 description: Function parameters in Ferret
+sidebar:
+  order: 2
 ---
 
 You can use multiple types of parameters in Ferret functions.

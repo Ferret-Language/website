@@ -1,6 +1,8 @@
 ---
 title: If Statements
 description: Learn about conditional logic in Ferret
+sidebar:
+  order: 1
 ---
 
 Programs often need to make decisions: "If the user is logged in, show their profile. Otherwise, show the login page." That's where **if statements** come in.

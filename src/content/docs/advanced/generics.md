@@ -1,7 +1,8 @@
 ---
 title: Generics
 description: Generic types and functions in Ferret
-
+sidebar:
+  order: 5
 sidebar:
   badge:
     text: Upcomming

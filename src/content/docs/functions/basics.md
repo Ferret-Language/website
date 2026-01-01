@@ -1,6 +1,8 @@
 ---
 title: Functions
 description: Defining and calling functions in Ferret
+sidebar:
+  order: 1
 ---
 
 Functions are reusable blocks of code that perform specific tasks.

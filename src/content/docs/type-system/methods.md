@@ -1,6 +1,8 @@
 ---
 title: Methods
 description: Define behavior for your types with methods in Ferret
+sidebar:
+  order: 5
 ---
 
 Methods allow you to define behavior for any named type in Ferret. Unlike some languages where methods are tied only to classes or structs, Ferret lets you attach methods to any type you define—structs, enums, or even type aliases.

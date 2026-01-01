@@ -1,6 +1,8 @@
 ---
 title: Match Expressions
 description: Pattern matching in Ferret
+sidebar:
+  order: 3
 ---
 
 Match expressions provide powerful pattern matching capabilities.

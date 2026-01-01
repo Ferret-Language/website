@@ -1,6 +1,8 @@
 ---
 title: Structs
 description: Defining and using structs in Ferret
+sidebar:
+  order: 4
 ---
 
 Structs are custom data types that group related data together.

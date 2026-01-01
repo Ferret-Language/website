@@ -1,6 +1,8 @@
 ---
 title: Built-in Functions
 description: Learn about Ferret's built-in functions for working with containers and common operations
+sidebar:
+  order: 1
 ---
 
 # Built-in Functions

@@ -1,6 +1,8 @@
 ---
 title: Optional Types
 description: Working with optional types and handling none values
+sidebar:
+  order: 2
 ---
 
 # Optional Types

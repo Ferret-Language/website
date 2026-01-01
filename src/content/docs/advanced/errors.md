@@ -1,6 +1,8 @@
 ---
 title: Error Handling
 description: Working with errors and result types in Ferret
+sidebar:
+  order: 2
 ---
 
 Ferret uses explicit error handling with Error Types to manage failures safely.

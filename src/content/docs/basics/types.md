@@ -1,7 +1,8 @@
 ---
-
 title: "Data Types"
 description: "Learn about Ferret's built-in data types"
+sidebar:
+  order: 2
 ---
 
 Now that you know how to create variables and constants, it's time to learn what kinds of values they can store. These are called **data types**.
@@ -357,9 +358,101 @@ let color: Color = Color::Red;
 
 These custom types make your code more organized and type-safe. We'll dive deeper into structs, enums, and interfaces in the Type System section.
 
+## Strict Type Checking
+
+Ferret enforces **strict type matching** for all numeric operations, similar to Rust. This means you cannot mix different numeric types in arithmetic operations without explicit casting.
+
+### Why Strict Typing?
+
+1. **No Surprises**: You always know exactly what type you're working with
+2. **Performance**: No hidden runtime conversions or checks
+3. **Safety**: Prevents accidental truncation or precision loss
+4. **Predictability**: The type system is simple and deterministic
+5. **Explicit Intent**: Casts document your intentions in code
+
+### All Operands Must Match
+
+When performing arithmetic operations, **both operands must be the same type**, and the result will be that same type:
+
+```ferret
+let a: i32 = 100;
+let b: i256 = 340282366920938463463374607431768211456;
+
+// ❌ ERROR: mismatched types in arithmetic: i32 and i256
+// let result := a + b;
+
+// ✅ CORRECT: Explicit cast required
+let result := (a as i256) + b;  // result is i256
+```
+
+This applies to **all arithmetic operators**: `+`, `-`, `*`, `/`, `%`, and `**`.
+
+### Mixing Integer and Float Types
+
+You cannot mix integers and floats without explicit casting:
+
+```ferret
+let integer: i32 = 42;
+let floating: f64 = 3.14159;
+
+// ❌ ERROR: mismatched types
+// let sum := integer + floating;
+
+// ✅ CORRECT: Cast integer to float
+let sum := (integer as f64) + floating;  // result is f64
+```
+
+### Different Sized Integers
+
+Even integers of different sizes require explicit casting:
+
+```ferret
+let small: i32 = 100;
+let large: i64 = 9223372036854775807;
+
+// ❌ ERROR: mismatched types
+// let result := small + large;
+
+// ✅ CORRECT: Cast to matching type
+let result := (small as i64) + large;  // result is i64
+
+// Or cast down (with potential overflow):
+let result2 := small + (large as i32);  // result is i32
+```
+
+### Different Sized Floats
+
+The same rule applies to floating-point types:
+
+```ferret
+let f32val: f32 = 3.14;
+let f64val: f64 = 2.718281828;
+
+// ❌ ERROR: mismatched types
+// let result := f32val + f64val;
+
+// ✅ CORRECT: Cast to matching type
+let result := (f32val as f64) + f64val;  // result is f64
+```
+
+### Power Operator
+
+The power operator (`**`) follows the same strict typing rules:
+
+```ferret
+let base: i256 = 2;
+let exp: i32 = 10;
+
+// ❌ ERROR: mismatched types
+// let result := base ** exp;
+
+// ✅ CORRECT: Cast to matching type
+let result := base ** (exp as i256);  // result is i256
+```
+
 ## Type Conversion
 
-Sometimes you need to convert a value from one type to another. Ferret requires you to do this explicitly - it won't do it automatically behind your back.
+Ferret requires explicit type conversions for all numeric operations. Use the `as` keyword to cast between types.
 
 ### Casting Between Number Types
 
@@ -376,8 +469,30 @@ let pi: f64 = 3.14159;
 let rounded: i32 = pi as i32;     // Becomes 3 (decimal part removed)
 ```
 
+### Common Casting Patterns
+
+**Widening (Safe - No Data Loss):**
+```ferret
+let small: i32 = 100;
+let large := small as i64;      // i32 → i64 (safe)
+let huge := small as i256;      // i32 → i256 (safe)
+
+let f32val: f32 = 3.14;
+let f64val := f32val as f64;    // f32 → f64 (safe)
+```
+
+**Narrowing (Unsafe - Potential Data Loss):**
+```ferret
+let large: i64 = 9223372036854775807;
+let small := large as i32;      // i64 → i32 (truncates!)
+
+let precise: f64 = 3.14159265358979;
+let lessPrec := precise as f32; // f64 → f32 (loses precision)
+```
+
 :::caution
-Converting from floating-point to integer drops the decimal part - it doesn't round!
+- Converting from floating-point to integer drops the decimal part - it doesn't round!
+- Narrowing conversions (large → small) can cause overflow or precision loss
 :::
 
 ### Converting To and From Strings

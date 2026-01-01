@@ -1,6 +1,8 @@
 ---
 title: Reference Types
 description: Working with reference types in Ferret
+sidebar:
+  order: 3
 ---
 
 Reference types in Ferret provide a way to pass data by reference rather than by value. When you use a reference type `&T`, you're working with a reference to a value of type `T` rather than a copy of the value.

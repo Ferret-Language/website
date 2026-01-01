@@ -1,6 +1,8 @@
 ---
 title: Comments
 description: Learn how to write comments in Ferret
+sidebar:
+  order: 4
 ---
 
 Comments are notes you write in your code for yourself and other programmers. They explain **why** you wrote the code a certain way, not just **what** the code does.

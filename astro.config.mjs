@@ -56,58 +56,27 @@ export default defineConfig({
         sidebar: [
             {
                 label: 'Getting Started',
-                items: [
-                    { label: 'Introduction', slug: 'getting-started/introduction' },
-                    { label: 'Installation', slug: 'getting-started/installation' },
-                    { label: 'Hello World', slug: 'getting-started/hello-world' },
-                ],
+                autogenerate: { directory: 'getting-started' },
             },
             {
                 label: 'Basics',
-                items: [
-                    { label: 'Variables & Constants', slug: 'basics/variables' },
-                    { label: 'Data Types', slug: 'basics/types' },
-                    { label: 'Operators', slug: 'basics/operators' },
-                    { label: 'Comments', slug: 'basics/comments' },
-                ],
+                autogenerate: { directory: 'basics' },
             },
             {
                 label: 'Control Flow',
-                items: [
-                    { label: 'If Statements', slug: 'control-flow/if-statements' },
-                    { label: 'Loops', slug: 'control-flow/loops' },
-                    { label: 'Match Expressions', slug: 'control-flow/match' },
-                ],
+                autogenerate: { directory: 'control-flow' },
             },
             {
                 label: 'Functions',
-                items: [
-                    { label: 'Function Basics', slug: 'functions/basics' },
-                    { label: 'Parameters & Returns', slug: 'functions/parameters' },
-                ],
+                autogenerate: { directory: 'functions' },
             },
             {
                 label: 'Type System',
-                items: [
-                    { label: 'Structs', slug: 'type-system/structs' },
-                    { label: 'Enums', slug: 'type-system/enums' },
-                    { label: 'Interfaces', slug: 'type-system/interfaces' },
-                    { label: 'Optional Types', slug: 'type-system/optionals' },
-                    { label: 'Maps', slug: 'type-system/maps' },
-                    { label: 'Methods', slug: 'type-system/methods' },
-                    { label: 'References', slug: 'type-system/references' },
-                    { label: 'Type Compatibility & Casting', slug: 'type-system/compatibility' },
-                ],
+                autogenerate: { directory: 'type-system' },
             },
             {
                 label: 'Advanced',
-                items: [
-                    { label: 'Built-in Functions', slug: 'advanced/builtins'},
-                    { label: 'Error Handling', slug: 'advanced/errors' },
-                    { label: 'Generics', slug: 'advanced/generics' },
-                    { label: 'Modules', slug: 'advanced/modules' },
-                    { label: 'Practical Examples', slug: 'advanced/practical'}
-                ],
+                autogenerate: { directory: 'advanced' },
             },
         ],
     }), d2({

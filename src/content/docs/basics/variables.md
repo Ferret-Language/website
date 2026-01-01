@@ -1,7 +1,8 @@
 ---
-
 title: "Variables & Constants"
 description: "Learn about variables and constants in Ferret"
+sidebar:
+  order: 1
 ---
 
 Variables and constants let you store information in your program. If you're just getting started, you can think of them as labeled containers:

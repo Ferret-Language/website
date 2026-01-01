@@ -1,6 +1,8 @@
 ---
 title: Hello World
 description: Your first Ferret program
+sidebar:
+  order: 3
 ---
 
 Let's write your first Ferret program!

@@ -1,6 +1,8 @@
 ---
 title: Interfaces
 description: Define behavior contracts with interfaces in Ferret
+sidebar:
+  order: 7
 ---
 
 Interfaces are one of the most powerful features in Ferret. They let you define **what** a type can do without specifying **how** it does it. Think of an interface as a contract: "If you want to be this type, you must be able to do these things."

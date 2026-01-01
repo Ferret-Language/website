@@ -1,6 +1,8 @@
 ---
 title: Type Compatibility and Casting
 description: Understanding when types can be assigned and when casting is required in Ferret
+sidebar:
+  order: 1
 ---
 
 Ferret has a strict type system that ensures type safety while allowing convenient implicit conversions where safe. This page explains the rules for type compatibility and when explicit casting is required.

@@ -1,6 +1,8 @@
 ---
 title: Enums
 description: Enumeration types in Ferret
+sidebar:
+  order: 8
 ---
 
 Enums (enumerations) define a type with a fixed set of possible values.

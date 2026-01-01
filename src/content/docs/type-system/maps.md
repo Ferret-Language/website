@@ -1,6 +1,8 @@
 ---
 title: Maps
 description: Working with key-value collections in Ferret
+sidebar:
+  order: 6
 ---
 
 # Maps
