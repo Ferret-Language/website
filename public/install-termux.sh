@@ -55,17 +55,19 @@ find "${FERRET_LIBS_DIR}" -type f -name '*.fer' | while IFS= read -r file; do
 done
 
 OBJ_DIR="$(mktemp -d)"
+trap "rm -rf ${OBJ_DIR}" EXIT
+
 found_c=0
-for src in "${RUNTIME_DIR}"/*.c; do
+for src in "${RUNTIME_DIR}"/core/*.c "${RUNTIME_DIR}"/libs/*.c; do
   if [ -f "${src}" ]; then
     found_c=1
     base="$(basename "${src}" .c)"
     obj="${OBJ_DIR}/${base}.o"
-    clang -std=c99 -O2 -w -fPIC -I "${RUNTIME_DIR}" -c "${src}" -o "${obj}"
+    clang -std=c99 -O2 -w -fPIC -I "${RUNTIME_DIR}/core" -I "${RUNTIME_DIR}/libs" -c "${src}" -o "${obj}"
   fi
 done
 if [ "${found_c}" -ne 1 ]; then
-  echo "No runtime C files found in ${RUNTIME_DIR}" >&2
+  echo "No runtime C files found in ${RUNTIME_DIR}/core or ${RUNTIME_DIR}/libs" >&2
   exit 1
 fi
 
@@ -73,8 +75,11 @@ ar rcs "${LIBS_DIR}/libferret_runtime.a" "${OBJ_DIR}"/*.o
 if command -v ranlib >/dev/null 2>&1; then
   ranlib "${LIBS_DIR}/libferret_runtime.a"
 fi
-rm -rf "${OBJ_DIR}"
 
+rm -rf "${OBJ_DIR}"
+trap - EXIT
+
+echo "Building Ferret compiler..."
 go build -o bin/ferret
 
 mkdir -p "${DEST_DIR}/bin" "${DEST_DIR}/libs"
@@ -83,8 +88,8 @@ rm -rf "${DEST_DIR}/libs"
 cp -R libs "${DEST_DIR}/"
 
 wrapper="${DEST_DIR}/bin/ferret"
-cat > "${wrapper}" <<'EOF'
-#!/data/data/com.termux/files/usr/bin/sh
+cat > "${wrapper}" <<EOF
+#!/${PREFIX#/}/bin/sh
 set -e
 
 if ! command -v clang >/dev/null 2>&1; then
@@ -93,9 +98,7 @@ if ! command -v clang >/dev/null 2>&1; then
 fi
 
 export FERRET_LD=clang
-EOF
-cat >> "${wrapper}" <<'EOF'
-exec "$PREFIX/bin/ferret-bin" "$@"
+exec "${DEST_DIR}/bin/ferret-bin" "\$@"
 EOF
 chmod 755 "${wrapper}"
 

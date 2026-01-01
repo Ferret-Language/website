@@ -45,6 +45,9 @@ function Add-ToPath {
 
 Add-ToPath $binDir
 
+# Cleanup temp directory
+Remove-Item -Recurse -Force $tempDir -ErrorAction SilentlyContinue
+
 Write-Host "Installed to $installDir"
 Write-Host "Added to PATH: $binDir"
 Write-Host "Restart your terminal to use 'ferret'."

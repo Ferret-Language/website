@@ -83,17 +83,17 @@ OBJ_DIR="$(mktemp -d)"
 trap "rm -rf ${OBJ_DIR}" EXIT
 
 found_c=0
-for src in "${RUNTIME_DIR}"/*.c; do
+for src in "${RUNTIME_DIR}"/core/*.c "${RUNTIME_DIR}"/libs/*.c; do
   if [ -f "${src}" ]; then
     found_c=1
     base="$(basename "${src}" .c)"
     obj="${OBJ_DIR}/${base}.o"
-    clang -std=c99 -O2 -w -fno-pie -I "${RUNTIME_DIR}" -c "${src}" -o "${obj}"
+    clang -std=c99 -O2 -w -fno-pie -I "${RUNTIME_DIR}/core" -I "${RUNTIME_DIR}/libs" -c "${src}" -o "${obj}"
   fi
 done
 
 if [ "${found_c}" -ne 1 ]; then
-  echo "No runtime C files found in ${RUNTIME_DIR}" >&2
+  echo "No runtime C files found in ${RUNTIME_DIR}/core or ${RUNTIME_DIR}/libs" >&2
   exit 1
 fi
 
@@ -106,12 +106,33 @@ fi
 rm -rf "${OBJ_DIR}"
 trap - EXIT
 
-# Run bootstrap to set up toolchain
-if [ -f "${SRC_DIR}/tools/main.go" ]; then
-  echo "Running bootstrap..."
-  go run "${SRC_DIR}/tools/main.go" || {
-    echo "Warning: Bootstrap failed. Continuing anyway..." >&2
-  }
+# Bundle toolchain (as, ld) if enabled
+if [ "${FERRET_BUNDLE_TOOLCHAIN}" = "1" ]; then
+  echo "Bundling toolchain..."
+  TOOLCHAIN_DIR="${LIBS_DIR}/toolchain"
+  mkdir -p "${TOOLCHAIN_DIR}/lib"
+  
+  # Find and copy as/ld
+  AS_PATH="$(command -v as 2>/dev/null || true)"
+  LD_PATH="$(command -v ld 2>/dev/null || true)"
+  
+  if [ -n "${AS_PATH}" ] && [ -f "${AS_PATH}" ]; then
+    cp -f "${AS_PATH}" "${TOOLCHAIN_DIR}/as"
+    chmod 755 "${TOOLCHAIN_DIR}/as"
+  fi
+  
+  if [ -n "${LD_PATH}" ] && [ -f "${LD_PATH}" ]; then
+    cp -f "${LD_PATH}" "${TOOLCHAIN_DIR}/ld"
+    chmod 755 "${TOOLCHAIN_DIR}/ld"
+  fi
+  
+  # Copy essential runtime files
+  for crtfile in crt1.o crti.o crtn.o; do
+    crtpath="$(clang -print-file-name="${crtfile}" 2>/dev/null || true)"
+    if [ -n "${crtpath}" ] && [ -f "${crtpath}" ]; then
+      cp -f "${crtpath}" "${TOOLCHAIN_DIR}/lib/"
+    fi
+  done
 fi
 
 # Build the compiler

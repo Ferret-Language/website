@@ -40,6 +40,15 @@ case "$arch" in
   *) echo "Unsupported arch: $arch" >&2; exit 1 ;;
 esac
 
+# macOS requires Xcode Command Line Tools for assembler/linker
+if [ "$os" = "darwin" ]; then
+  if ! xcode-select -p >/dev/null 2>&1; then
+    echo "Xcode Command Line Tools required. Install with:" >&2
+    echo "  xcode-select --install" >&2
+    exit 1
+  fi
+fi
+
 archive="ferret-${os}-${arch}.tar.gz"
 url="${BASE_URL}/${archive}"
 
