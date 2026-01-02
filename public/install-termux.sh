@@ -16,9 +16,8 @@ pkg upgrade -y
 pkg install -y git golang clang binutils libxml2
 
 if [ -d "${SRC_DIR}/.git" ]; then
-  git -C "${SRC_DIR}" fetch --tags origin
-  git -C "${SRC_DIR}" checkout "${REF}"
-  git -C "${SRC_DIR}" pull --ff-only
+  git -C "${SRC_DIR}" fetch --depth 1 --tags origin "${REF}"
+  git -C "${SRC_DIR}" reset --hard "origin/${REF}"
 else
   git clone --depth 1 --branch "${REF}" "${REPO}" "${SRC_DIR}"
 fi
