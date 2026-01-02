@@ -35,7 +35,7 @@ fi
 
 # Clone or update repository
 if [ -d "${SRC_DIR}/.git" ]; then
-  git -C "${SRC_DIR}" fetch --depth 1 --tags origin "${REF}"
+  git -C "${SRC_DIR}" fetch --depth 1 --tags origin "${REF}" || true
   git -C "${SRC_DIR}" reset --hard "origin/${REF}"
 else
   mkdir -p "$(dirname "${SRC_DIR}")"
