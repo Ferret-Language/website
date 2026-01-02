@@ -24,84 +24,12 @@ fi
 
 cd "${SRC_DIR}"
 
+# Set environment for bootstrap
+export FERRET_INSTALL_DIR="${DEST_DIR}"
 export CC=clang
-export FERRET_CC=clang
-export CGO_ENABLED=1
-export FERRET_BUNDLE_TOOLCHAIN=0
 
-LIBS_DIR="${SRC_DIR}/libs"
-RUNTIME_DIR="${SRC_DIR}/runtime"
-FERRET_LIBS_DIR="${SRC_DIR}/ferret_libs"
-
-rm -rf "${LIBS_DIR}"
-mkdir -p "${LIBS_DIR}"
-
-if [ ! -d "${FERRET_LIBS_DIR}" ]; then
-  echo "Missing ferret_libs directory in ${SRC_DIR}" >&2
-  exit 1
-fi
-
-if [ ! -d "${RUNTIME_DIR}" ]; then
-  echo "Missing runtime directory in ${SRC_DIR}" >&2
-  exit 1
-fi
-
-find "${FERRET_LIBS_DIR}" -type f -name '*.fer' | while IFS= read -r file; do
-  rel="${file#${FERRET_LIBS_DIR}/}"
-  dest="${LIBS_DIR}/${rel}"
-  mkdir -p "$(dirname "${dest}")"
-  cp -f "${file}" "${dest}"
-done
-
-OBJ_DIR="$(mktemp -d)"
-trap "rm -rf ${OBJ_DIR}" EXIT
-
-found_c=0
-for src in "${RUNTIME_DIR}"/core/*.c "${RUNTIME_DIR}"/libs/*.c; do
-  if [ -f "${src}" ]; then
-    found_c=1
-    base="$(basename "${src}" .c)"
-    obj="${OBJ_DIR}/${base}.o"
-    clang -std=c99 -O2 -w -fPIC -I "${RUNTIME_DIR}/core" -I "${RUNTIME_DIR}/libs" -c "${src}" -o "${obj}"
-  fi
-done
-if [ "${found_c}" -ne 1 ]; then
-  echo "No runtime C files found in ${RUNTIME_DIR}/core or ${RUNTIME_DIR}/libs" >&2
-  exit 1
-fi
-
-ar rcs "${LIBS_DIR}/libferret_runtime.a" "${OBJ_DIR}"/*.o
-if command -v ranlib >/dev/null 2>&1; then
-  ranlib "${LIBS_DIR}/libferret_runtime.a"
-fi
-
-rm -rf "${OBJ_DIR}"
-trap - EXIT
-
-echo "Building Ferret compiler..."
-go build -o bin/ferret
-
-mkdir -p "${DEST_DIR}/bin" "${DEST_DIR}/libs"
-cp -f bin/ferret "${DEST_DIR}/bin/ferret-bin"
-rm -rf "${DEST_DIR}/libs"
-cp -R libs "${DEST_DIR}/"
-
-wrapper="${DEST_DIR}/bin/ferret"
-cat > "${wrapper}" <<EOF
-#!/${PREFIX#/}/bin/sh
-set -e
-
-if ! command -v clang >/dev/null 2>&1; then
-  echo "Ferret: clang is required on Termux." >&2
-  exit 1
-fi
-
-export FERRET_LD=clang
-exec "${DEST_DIR}/bin/ferret-bin" "\$@"
-EOF
-chmod 755 "${wrapper}"
-
-echo "Installed to ${DEST_DIR}"
+echo "Building Ferret..."
+go run tools/bootstrap.go
 echo ""
 # Check if installed to default Termux location (which is in PATH by default)
 default_prefix="/data/data/com.termux/files/usr"
