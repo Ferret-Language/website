@@ -100,19 +100,19 @@ let info := fs::Stat("myfile.txt") catch err {
     return;
 };
 
-io::Println("Path: ", info.path);
-io::Println("Size: ", info.size, " bytes");
-io::Println("Is directory: ", info.isDir);
-io::Println("Is file: ", info.isFile);
-io::Println("Exists: ", info.exists);
+io::Println("Path: ", info.Path);
+io::Println("Size: ", info.Size, " bytes");
+io::Println("Is directory: ", info.IsDir);
+io::Println("Is file: ", info.IsFile);
+io::Println("Exists: ", info.Exists);
 ```
 
 **Returns:** Result type containing a `FileInfo` struct with:
-- `.path: str` - Full path to the file
-- `.size: i64` - Size in bytes
-- `.isDir: bool` - True if it's a directory
-- `.isFile: bool` - True if it's a regular file
-- `.exists: bool` - True if the file exists
+- `.Path: str` - Full path to the file
+- `.Size: i64` - Size in bytes
+- `.IsDir: bool` - True if it's a directory
+- `.IsFile: bool` - True if it's a regular file
+- `.Exists: bool` - True if the file exists
 
 ```ferret
 fs::Size(path: str) -> str ! i64;
@@ -154,9 +154,9 @@ fs::Close(file);
 **Returns:** Result type containing a `File` handle or an error message.
 
 The `File` struct contains:
-- `.handle: i64` - Internal file handle
-- `.path: str` - Path that was opened
-- `.mode: str` - Mode: "r", "w", or "a"
+- `.Handle: i64` - Internal file handle
+- `.Path: str` - Path that was opened
+- `.Mode: str` - Mode: "r", "w", or "a"
 
 ```ferret
 fs::Create(path: str) -> str ! File;
