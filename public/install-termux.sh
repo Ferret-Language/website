@@ -24,12 +24,16 @@ fi
 
 cd "${SRC_DIR}"
 
+# Clean previous builds for fresh install
+echo "Cleaning previous builds..."
+rm -rf bin/ libs/ gen/ gen_debug/ gen_keep/
+
 # Set environment for bootstrap
 export FERRET_INSTALL_DIR="${DEST_DIR}"
 export CC=clang
 
 echo "Building Ferret..."
-go run tools/bootstrap.go
+go run tools/main.go
 echo ""
 # Check if installed to default Termux location (which is in PATH by default)
 default_prefix="/data/data/com.termux/files/usr"
