@@ -122,6 +122,7 @@
 
     import * as monaco from "monaco-editor";
     import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
+    import { createFerretRuntime } from "../lib/ferret-runtime";
 
     // Setup Monaco environment
     self.MonacoEnvironment = {
@@ -135,7 +136,12 @@
             ferretCompile?: (
                 code: string,
                 debug: boolean,
-            ) => { success: boolean; output?: string; error?: string };
+            ) => {
+                success: boolean;
+                output?: string;
+                error?: string;
+                wasm?: string;
+            };
             ferretWasmVersion?: string;
             ferretEditor?: monaco.editor.IStandaloneCodeEditor;
             MonacoEnvironment?: {
@@ -167,7 +173,7 @@
             }
 
             console.log("📥 Fetching ferret.wasm...");
-            const wasmVersion = "10.0.0"; // Clean architecture with internal/compiler package
+            const wasmVersion = "wasm-backend-0.1"; // Browser WASM backend
             const response = await fetch("/ferret2.wasm?v=" + wasmVersion, {
                 cache: "no-store", // Force no cache
             });
@@ -564,6 +570,15 @@
 
     // No theme switching: always use 'ferret-one-dark-pro' for consistency with code snippets
 
+    function decodeBase64(base64: string): Uint8Array {
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+    }
+
     // Button handlers
     (document.getElementById("run-btn") as HTMLButtonElement).addEventListener(
         "click",
@@ -617,11 +632,52 @@
                 //console.log('📊 Compilation result:', result);
 
                 if (result.success) {
-                    //console.log('Compilation successful');
-                    status.setAttribute("data-status", "success");
-                    statusText.textContent = "Success";
-                    // Output is already HTML-formatted from the compiler
-                    output.innerHTML = `<pre>${result.output || '<p style="color: #10b981;">✓ Program compiled successfully</p>'}</pre>`;
+                    try {
+                        const wasmBase64 = result.wasm || "";
+                        if (!wasmBase64) {
+                            throw new Error("Compiler did not return a wasm module");
+                        }
+
+                        let programOutput = "";
+                        const runtime = createFerretRuntime({
+                            onPrint: (text) => {
+                                programOutput += text;
+                            },
+                        });
+
+                        const programBytes = decodeBase64(wasmBase64);
+                        const program = await WebAssembly.instantiate(
+                            programBytes,
+                            runtime.imports,
+                        );
+                        runtime.bind(program.instance);
+                        const main = (program.instance.exports as any).main;
+                        if (typeof main === "function") {
+                            main();
+                        }
+
+                        status.setAttribute("data-status", "success");
+                        statusText.textContent = "Success";
+
+                        const compilerLog = (result.output || "").trim();
+                        const runText =
+                            programOutput.trim().length > 0
+                                ? programOutput
+                                : "✓ Program ran with no output";
+                        if (compilerLog) {
+                            output.innerHTML = `<div class="compiler-log">${compilerLog}</div><pre>${escapeHtml(runText)}</pre>`;
+                        } else {
+                            output.innerHTML = `<pre>${escapeHtml(runText)}</pre>`;
+                        }
+                    } catch (runError) {
+                        status.setAttribute("data-status", "error");
+                        statusText.textContent = "Error";
+                        const runMessage =
+                            runError instanceof Error
+                                ? runError.message
+                                : String(runError);
+                        output.innerHTML = `<p style="color: #ef4444;">Runtime error: ${escapeHtml(runMessage)}</p>`;
+                    }
                 } else {
                     //console.error('Compilation failed');
                     status.setAttribute("data-status", "error");
@@ -667,9 +723,52 @@
                                 false,
                             );
                             if (retryResult.success) {
-                                status.setAttribute("data-status", "success");
-                                statusText.textContent = "Success";
-                                output.innerHTML = `<pre>${retryResult.output || '<p style="color: #10b981;">✓ Program compiled successfully</p>'}</pre>`;
+                                try {
+                                    const wasmBase64 = retryResult.wasm || "";
+                                    if (!wasmBase64) {
+                                        throw new Error("Compiler did not return a wasm module");
+                                    }
+
+                                    let programOutput = "";
+                                    const runtime = createFerretRuntime({
+                                        onPrint: (text) => {
+                                            programOutput += text;
+                                        },
+                                    });
+
+                                    const programBytes = decodeBase64(wasmBase64);
+                                    const program = await WebAssembly.instantiate(
+                                        programBytes,
+                                        runtime.imports,
+                                    );
+                                    runtime.bind(program.instance);
+                                    const main = (program.instance.exports as any).main;
+                                    if (typeof main === "function") {
+                                        main();
+                                    }
+
+                                    status.setAttribute("data-status", "success");
+                                    statusText.textContent = "Success";
+
+                                    const compilerLog = (retryResult.output || "").trim();
+                                    const runText =
+                                        programOutput.trim().length > 0
+                                            ? programOutput
+                                            : "✓ Program ran with no output";
+                                    if (compilerLog) {
+                                        output.innerHTML = `<div class="compiler-log">${compilerLog}</div><pre>${escapeHtml(runText)}</pre>`;
+                                    } else {
+                                        output.innerHTML = `<pre>${escapeHtml(runText)}</pre>`;
+                                    }
+                                } catch (runError) {
+                                    status.setAttribute("data-status", "error");
+                                    statusText.textContent = "Error";
+                                    const runMessage =
+                                        runError instanceof Error
+                                            ? runError.message
+                                            : String(runError);
+                                    output.innerHTML = `<p style="color: #ef4444;">Runtime error: ${escapeHtml(runMessage)}</p>`;
+                                }
                             } else {
                                 status.setAttribute("data-status", "error");
                                 statusText.textContent = "Error";

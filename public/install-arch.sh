@@ -8,9 +8,6 @@ if [ ! -f /etc/arch-release ]; then
   exit 1
 fi
 
-REPO="${FERRET_REPO:-https://github.com/Ferret-Language/Ferret.git}"
-REF="${FERRET_REF:-stable}"
-SRC_DIR="${FERRET_SRC_DIR:-${HOME}/.local/src/Ferret}"
 DEST_DIR="${FERRET_INSTALL_DIR:-${HOME}/.local}"
 
 # Check if user wants system-wide install
@@ -20,40 +17,78 @@ fi
 
 echo "Installing Ferret to ${DEST_DIR}"
 
-# Install dependencies via pacman (requires sudo if not root)
-if [ "$(id -u)" -eq 0 ]; then
-  pacman -S --needed --noconfirm base-devel git go clang binutils
-else
-  echo "Note: This script may need sudo privileges to install packages."
-  echo "Installing dependencies..."
-  if ! sudo pacman -S --needed --noconfirm base-devel git go clang binutils 2>/dev/null; then
-    echo "Warning: Could not install packages. Please install manually:" >&2
-    echo "  sudo pacman -S base-devel git go clang binutils" >&2
-    echo "Continuing anyway..." >&2
-  fi
+# Detect architecture
+ARCH=$(uname -m)
+case "${ARCH}" in
+  x86_64)
+    FERRET_ARCH="linux-amd64"
+    ;;
+  aarch64|arm64)
+    FERRET_ARCH="linux-arm64"
+    ;;
+  *)
+    echo "Unsupported architecture: ${ARCH}" >&2
+    exit 1
+    ;;
+esac
+
+# Get latest release URL
+RELEASE_URL="https://api.github.com/repos/Ferret-Language/Ferret/releases/latest"
+echo "Fetching latest release..."
+
+# Download release info and extract download URL for our architecture
+DOWNLOAD_URL=$(curl -sL "${RELEASE_URL}" | grep "browser_download_url.*${FERRET_ARCH}.tar.gz" | cut -d '"' -f 4)
+
+if [ -z "${DOWNLOAD_URL}" ]; then
+  echo "Error: Could not find ${FERRET_ARCH} release" >&2
+  echo "Available releases: https://github.com/Ferret-Language/Ferret/releases/latest" >&2
+  exit 1
 fi
 
-# Clone or update repository
-if [ -d "${SRC_DIR}/.git" ]; then
-  git -C "${SRC_DIR}" fetch --depth 1 --tags origin "${REF}" || true
-  git -C "${SRC_DIR}" reset --hard "origin/${REF}"
+echo "Downloading ${DOWNLOAD_URL}..."
+
+# Create temp directory
+TEMP_DIR=$(mktemp -d)
+trap "rm -rf ${TEMP_DIR}" EXIT
+
+# Download and extract
+cd "${TEMP_DIR}"
+curl -L -o ferret.tar.gz "${DOWNLOAD_URL}"
+tar -xzf ferret.tar.gz
+
+# Install to destination
+mkdir -p "${DEST_DIR}/bin"
+mkdir -p "${DEST_DIR}/lib/ferret"
+
+# Copy binary
+if [ -f "bin/ferret" ]; then
+  cp -f bin/ferret "${DEST_DIR}/bin/"
+elif [ -f "ferret" ]; then
+  cp -f ferret "${DEST_DIR}/bin/"
 else
-  mkdir -p "$(dirname "${SRC_DIR}")"
-  git clone --depth 1 --branch "${REF}" "${REPO}" "${SRC_DIR}"
+  echo "Error: ferret binary not found in extracted archive" >&2
+  exit 1
 fi
 
-cd "${SRC_DIR}"
+chmod +x "${DEST_DIR}/bin/ferret"
 
-# Clean previous builds for fresh install
-echo "Cleaning previous builds..."
-rm -rf bin/ libs/ gen/ gen_debug/ gen_keep/
-
-# Set environment for bootstrap
-export FERRET_INSTALL_DIR="${DEST_DIR}"
-export CC=clang
-
-echo "Building Ferret..."
-go run tools/main.go
+# Copy runtime libraries
+if [ -d "libs" ]; then
+  cp -r libs/* "${DEST_DIR}/lib/ferret/"
+fi
 
 echo ""
-echo "✓ Installation complete!"
+echo "✓ Ferret installed successfully to ${DEST_DIR}"
+echo ""
+
+# Check if in PATH
+if echo "${PATH}" | grep -q "${DEST_DIR}/bin"; then
+  echo "✓ ${DEST_DIR}/bin is already in your PATH"
+  echo "  Run: ferret --version"
+else
+  echo "Add to your PATH:"
+  echo "  export PATH=\"${DEST_DIR}/bin:\$PATH\""
+  echo ""
+  echo "Or add to ~/.bashrc:"
+  echo "  echo 'export PATH=\"${DEST_DIR}/bin:\$PATH\"' >> ~/.bashrc"
+fi
