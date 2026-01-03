@@ -1409,6 +1409,10 @@
         font-weight: 500;
     }
 
+    #output {
+        padding: 0.5rem;
+    }
+
     /* Output panel - 40% width by default */
     .output-panel {
         flex: 0 0 calc(40% - 4px);
@@ -1515,11 +1519,9 @@
 
     .output-log {
         flex: 1;
-        padding: 1rem 1rem 0.75rem;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
-        gap: 0.35rem;
     }
 
     :global([data-theme="dark"]) .output-content {
@@ -1568,9 +1570,6 @@
     :global(.terminal-output) {
         margin: 0;
         white-space: pre;
-        overflow-x: auto;
-        padding: 0 !important;
-        margin: 0 !important;
     }
 
     :global(.terminal-line) {
@@ -1578,6 +1577,7 @@
         align-items: flex-start;
         gap: 0.5rem;
         white-space: pre-wrap;
+        font-style: italic;
     }
 
     :global(.terminal-text) {

@@ -904,6 +904,7 @@ img {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    -webkit-user-drag: none;
 }
 
 /* Allow text selection in blog/article content */
@@ -933,17 +934,12 @@ img {
     user-select: text;
 }
 
-* {
-    user-select: none;
-    -webkit-user-drag: none;
-}
-
 /* Allow selection in code blocks and inputs */
 code,
 pre,
 input,
 textarea,
-select {
+select, #output-log, #output-log * {
     -webkit-user-select: text !important;
     -moz-user-select: text !important;
     -ms-user-select: text !important;
