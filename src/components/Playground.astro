@@ -721,6 +721,11 @@
                 });
             }
 
+            terminalEvents.push({
+                type: "system",
+                html: `<p style="color: #10b981;">Program executed successfully with exit status 0.</p>`,
+            });
+
             setStatus("success", "Success");
             runState = "idle";
             renderTerminal();
@@ -742,6 +747,10 @@
                 {
                     type: "system",
                     html: `<p style="color: #ef4444;">Runtime error: ${escapeHtml(runMessage)}</p>`,
+                },
+                {
+                    type: "system",
+                    html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>`,
                 },
             ];
             runState = "idle";
@@ -799,12 +808,6 @@
             inputField.value = "";
         }
 
-    renderTerminal();
-
-    renderTerminal();
-
-    renderTerminal();
-
         setStatus("running", "Running...");
         terminalEvents = [
             {
@@ -837,6 +840,10 @@
                         type: "system",
                         html: `<pre>${result.output || '<p style="color: #ef4444;">Compilation failed</p>'}</pre>`,
                     },
+                                {
+                                    type: "system",
+                                    html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>`,
+                                },
                 ];
                 runState = "idle";
                 renderTerminal();
@@ -898,6 +905,10 @@
                                     type: "system",
                                     html: `<pre>${retryResult.output || '<p style="color: #ef4444;">Compilation failed</p>'}</pre>`,
                                 },
+                                {
+                                    type: "system",
+                                    html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>`,
+                                },
                             ];
                             runState = "idle";
                             renderTerminal();
@@ -914,6 +925,10 @@
                                 type: "system",
                                 html: `<p style="color: #ef4444;">Compiler crashed and restart failed. Please refresh the page.</p><p style="color: #6b7280; font-size: 0.75rem; margin-top: 0.5rem;">Error: ${escapeHtml((retryError as Error).message || String(retryError))}</p>`,
                             },
+                            {
+                                type: "system",
+                                html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>`,
+                            },
                         ];
                         runState = "idle";
                         renderTerminal();
@@ -925,6 +940,10 @@
                         {
                             type: "system",
                             html: `<p style="color: #ef4444;">Compiler crashed and could not be restarted. Please refresh the page.</p><p style="color: #6b7280; font-size: 0.75rem; margin-top: 0.5rem;">Original error: ${escapeHtml((error as Error).message || String(error))}</p>`,
+                        },
+                        {
+                            type: "system",
+                            html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>`,
                         },
                     ];
                     runState = "idle";
@@ -938,6 +957,10 @@
                     {
                         type: "system",
                         html: `<p style="color: #ef4444;">Compiler crashed and restart failed. Please refresh the page.</p><p style="color: #6b7280; font-size: 0.75rem; margin-top: 0.5rem;">Restart error: ${escapeHtml((restartError as Error).message || String(restartError))}</p>`,
+                    },
+                    {
+                        type: "system",
+                        html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>`,
                     },
                 ];
                 runState = "idle";
