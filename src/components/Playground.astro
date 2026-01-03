@@ -1409,11 +1409,14 @@
         font-weight: 500;
     }
 
+    #output {
+        padding: 0.5rem;
+    }
+
     /* Output panel - 40% width by default */
     .output-panel {
         flex: 0 0 calc(40% - 4px);
         min-height: 0;
-        min-width: 350px;
         display: flex;
         flex-direction: column;
         background: #fafafa;
@@ -1515,11 +1518,9 @@
 
     .output-log {
         flex: 1;
-        padding: 1rem 1rem 0.75rem;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
-        gap: 0.35rem;
     }
 
     :global([data-theme="dark"]) .output-content {
@@ -1571,7 +1572,6 @@
         padding: 0 !important;
         margin: 0 !important;
         overflow: visible;
-        line-height: 1;
     }
 
     :global(.terminal-line) {
@@ -1579,6 +1579,7 @@
         align-items: flex-start;
         gap: 0.5rem;
         white-space: pre-wrap;
+        font-style: italic;
     }
 
     :global(.terminal-text) {
@@ -1647,16 +1648,12 @@
     }
 
     .terminal-input-field:focus {
-        box-shadow: inset 0 -2px 0 rgba(59, 130, 246, 0.4);
+        box-shadow: inset 0 -2px var(--neutral);
     }
 
     .terminal-input-field.input-locked {
         opacity: 0.65;
         cursor: not-allowed;
-    }
-
-    :global([data-theme="dark"]) .terminal-input-field:focus {
-        box-shadow: inset 0 -2px 0 rgba(56, 189, 248, 0.4);
     }
 
     /* Custom scrollbar */
