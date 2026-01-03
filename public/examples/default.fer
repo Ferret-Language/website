@@ -8,4 +8,8 @@ fn main() {
         io::Println(v);
     }
     io::Println("hello", 123, true, math::PI);
+    
+    io::Println("Who are you?");
+    let name := io::ReadUnsafe();
+    io::Println("Hello", name);
 }
