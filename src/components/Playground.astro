@@ -103,11 +103,25 @@
                     <span class="status-text">Loading...</span>
                 </span>
             </div>
-            <div id="output" class="output-content">
-                <p class="output-placeholder">
-                    ✓ Ready to run your code...<br /><span class="keyboard-tip"
-                        >💡 Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to run</span>
-                </p>
+            <div id="output" class="output-content terminal">
+                <div id="output-log" class="output-log">
+                    <p class="output-placeholder">
+                        ✓ Ready to run your code...<br />
+                        <span class="keyboard-tip">💡 Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to run</span>
+                    </p>
+                </div>
+                <div class="terminal-input terminal-input-hidden">
+                    <span class="terminal-prompt"></span>
+                    <textarea
+                        id="program-input"
+                        class="terminal-input-field"
+                        rows="1"
+                        placeholder="stdin... (one line per read)"
+                        autocomplete="off"
+                        autocapitalize="off"
+                        spellcheck="false"
+                    ></textarea>
+                </div>
             </div>
         </div>
     </div>
@@ -237,7 +251,7 @@
             const statusText = status.querySelector(
                 ".status-text",
             ) as HTMLElement;
-            const output = document.getElementById("output") as HTMLElement;
+            const output = document.getElementById("output-log") as HTMLElement;
 
             status.setAttribute("data-status", "error");
             statusText.textContent = "Error";
@@ -580,236 +594,384 @@
     }
 
     // Button handlers
-    (document.getElementById("run-btn") as HTMLButtonElement).addEventListener(
-        "click",
-        async function () {
-            const code = editor.getValue();
-            const output = document.getElementById("output") as HTMLElement;
-            const status = document.getElementById(
-                "output-status",
-            ) as HTMLElement;
-            const statusText = status.querySelector(
-                ".status-text",
-            ) as HTMLElement;
-            const runBtn = this;
+    type TerminalEvent = {
+        type: "output" | "input" | "system";
+        text?: string;
+        html?: string;
+    };
 
-            console.log("WASM Ready:", wasmReady);
+    const outputLog = document.getElementById("output-log") as HTMLElement;
+    const terminalInput = document.querySelector(
+        ".terminal-input",
+    ) as HTMLElement;
+    const inputField = document.getElementById(
+        "program-input",
+    ) as HTMLTextAreaElement;
+    const runBtn = document.getElementById("run-btn") as HTMLButtonElement;
+    const status = document.getElementById("output-status") as HTMLElement;
+    const statusText = status.querySelector(".status-text") as HTMLElement;
+    const terminalPlaceholder = outputLog ? outputLog.innerHTML : "";
 
-            // Check if WASM is ready
-            if (!wasmReady) {
-                console.warn("⚠️ WASM not ready yet");
-                status.setAttribute("data-status", "error");
-                statusText.textContent = "Loading...";
-                output.innerHTML =
-                    '<p style="color: #f59e0b;">⏳ Loading compiler... Please wait a few seconds and try again.</p>';
+    let terminalEvents: TerminalEvent[] = [];
+    let inputLines: string[] = [];
+    let runState: "idle" | "running" | "waiting" = "idle";
+    let cachedRun: {
+        code: string;
+        wasm: string;
+        compilerLog: string;
+    } | null = null;
+
+    function setStatus(state: string, text: string) {
+        status.setAttribute("data-status", state);
+        statusText.textContent = text;
+    }
+
+    function renderTerminalEvent(event: TerminalEvent): string {
+        if (event.html) {
+            return event.html;
+        }
+        if (event.type === "input") {
+            return `<div class="terminal-line terminal-input-line"><span class="terminal-prompt">></span><span class="terminal-text">${escapeHtml(event.text || "")}</span></div>`;
+        }
+        if (event.type === "system") {
+            return `<div class="terminal-line terminal-system">${escapeHtml(event.text || "")}</div>`;
+        }
+        return `<pre class="terminal-output">${escapeHtml(event.text || "")}</pre>`;
+    }
+
+    function renderTerminal() {
+        if (!outputLog) {
+            return;
+        }
+        if (terminalEvents.length === 0 && runState === "idle") {
+            outputLog.innerHTML = terminalPlaceholder;
+        } else {
+            outputLog.innerHTML = terminalEvents.map(renderTerminalEvent).join("");
+        }
+
+        if (terminalInput && inputField) {
+            if (runState === "waiting") {
+                terminalInput.classList.remove("terminal-input-hidden");
+                outputLog.appendChild(terminalInput);
+                inputField.readOnly = false;
+                inputField.classList.remove("input-locked");
+                inputField.focus();
+            } else {
+                terminalInput.classList.add("terminal-input-hidden");
+                inputField.readOnly = true;
+                inputField.classList.add("input-locked");
+            }
+        }
+
+        outputLog.scrollTop = outputLog.scrollHeight;
+    }
+
+    function isInputNeeded(error: unknown): boolean {
+        return (
+            error instanceof Error &&
+            (error as any).code === "FERRET_INPUT"
+        );
+    }
+
+    function buildCompilerEvents(compilerLog: string): TerminalEvent[] {
+        if (!compilerLog) {
+            return [];
+        }
+        return [
+            {
+                type: "system",
+                html: `<div class="compiler-log">${compilerLog}</div>`,
+            },
+        ];
+    }
+
+    async function runWithInputs() {
+        if (!cachedRun) {
+            return;
+        }
+
+        const baseEvents = buildCompilerEvents(cachedRun.compilerLog);
+        const events: TerminalEvent[] = [];
+        const runtime = createFerretRuntime({
+            onPrint: () => {},
+            onEvent: (event) => {
+                events.push(event);
+            },
+            input: inputLines.join("\n"),
+            throwOnInputNeeded: true,
+        });
+
+        try {
+            const programBytes = decodeBase64(cachedRun.wasm);
+            const program = await WebAssembly.instantiate(
+                programBytes,
+                runtime.imports,
+            );
+            runtime.bind(program.instance);
+            const main = (program.instance.exports as any).main;
+            if (typeof main === "function") {
+                main();
+            }
+
+            terminalEvents = baseEvents.concat(events);
+            if (!terminalEvents.some((event) => event.type === "output")) {
+                terminalEvents.push({
+                    type: "system",
+                    text: "✓ Program ran with no output",
+                });
+            }
+
+            setStatus("success", "Success");
+            runState = "idle";
+            renderTerminal();
+        } catch (runError) {
+            if (isInputNeeded(runError)) {
+                terminalEvents = baseEvents.concat(events);
+                setStatus("input", "Input");
+                runState = "waiting";
+                renderTerminal();
                 return;
             }
 
-            // Check if ferretCompile function is available
-            if (typeof window.ferretCompile !== "function") {
-                console.error("ferretCompile function not available");
-                console.log("window.ferretCompile:", window.ferretCompile);
-                status.setAttribute("data-status", "error");
-                statusText.textContent = "Error";
-                output.innerHTML =
-                    '<p style="color: #ef4444;">Compiler function not available. Please check console and refresh the page.</p>';
-                return;
-            }
-
-            // Disable button and show running state
-            runBtn.disabled = true;
-            status.setAttribute("data-status", "running");
-            statusText.textContent = "Running...";
-            output.innerHTML =
-                '<p class="output-info">⏳ Compiling and running your code...</p>';
-
-            try {
-                //console.log('📝 Calling ferretCompile with code:', code.substring(0, 100) + '...');
-
-                // Call the WASM compiler
-                const result = window.ferretCompile(code, false);
-
-                //console.log('📊 Compilation result:', result);
-
-                if (result.success) {
-                    try {
-                        const wasmBase64 = result.wasm || "";
-                        if (!wasmBase64) {
-                            throw new Error("Compiler did not return a wasm module");
-                        }
-
-                        let programOutput = "";
-                        const runtime = createFerretRuntime({
-                            onPrint: (text) => {
-                                programOutput += text;
-                            },
-                        });
-
-                        const programBytes = decodeBase64(wasmBase64);
-                        const program = await WebAssembly.instantiate(
-                            programBytes,
-                            runtime.imports,
-                        );
-                        runtime.bind(program.instance);
-                        const main = (program.instance.exports as any).main;
-                        if (typeof main === "function") {
-                            main();
-                        }
-
-                        status.setAttribute("data-status", "success");
-                        statusText.textContent = "Success";
-
-                        const compilerLog = (result.output || "").trim();
-                        const runText =
-                            programOutput.trim().length > 0
-                                ? programOutput
-                                : "✓ Program ran with no output";
-                        if (compilerLog) {
-                            output.innerHTML = `<div class="compiler-log">${compilerLog}</div><pre>${escapeHtml(runText)}</pre>`;
-                        } else {
-                            output.innerHTML = `<pre>${escapeHtml(runText)}</pre>`;
-                        }
-                    } catch (runError) {
-                        status.setAttribute("data-status", "error");
-                        statusText.textContent = "Error";
-                        const runMessage =
-                            runError instanceof Error
-                                ? runError.message
-                                : String(runError);
-                        output.innerHTML = `<p style="color: #ef4444;">Runtime error: ${escapeHtml(runMessage)}</p>`;
-                    }
-                } else {
-                    //console.error('Compilation failed');
-                    status.setAttribute("data-status", "error");
-                    statusText.textContent = "Error";
-                    // Output is already HTML-formatted from the compiler
-                    output.innerHTML = `<pre>${result.output || '<p style="color: #ef4444;">Compilation failed</p>'}</pre>`;
-                }
-            } catch (error) {
-                console.error("💥 Exception during compilation:", error);
-                console.error("Error stack:", (error as Error).stack);
-
-                // Mark WASM as not ready (it may have crashed)
-                wasmReady = false;
-
-                // Attempt to restart WASM
-                console.log("🔄 Attempting to restart WASM compiler...");
-                try {
-                    // Reset status to loading
-                    status.setAttribute("data-status", "loading");
-                    statusText.textContent = "Restarting...";
-                    output.innerHTML =
-                        '<p class="output-info">🔄 Restarting compiler...</p>';
-
-                    // Reinitialize WASM
-                    await initWasm();
-
-                    // If restart successful, try compilation again
-                    if (
-                        wasmReady &&
-                        typeof window.ferretCompile === "function"
-                    ) {
-                        console.log(
-                            "WASM restarted successfully, retrying compilation...",
-                        );
-                        status.setAttribute("data-status", "running");
-                        statusText.textContent = "Running...";
-                        output.innerHTML =
-                            '<p class="output-info">⏳ Retrying compilation...</p>';
-
-                        try {
-                            const retryResult = window.ferretCompile(
-                                code,
-                                false,
-                            );
-                            if (retryResult.success) {
-                                try {
-                                    const wasmBase64 = retryResult.wasm || "";
-                                    if (!wasmBase64) {
-                                        throw new Error("Compiler did not return a wasm module");
-                                    }
-
-                                    let programOutput = "";
-                                    const runtime = createFerretRuntime({
-                                        onPrint: (text) => {
-                                            programOutput += text;
-                                        },
-                                    });
-
-                                    const programBytes = decodeBase64(wasmBase64);
-                                    const program = await WebAssembly.instantiate(
-                                        programBytes,
-                                        runtime.imports,
-                                    );
-                                    runtime.bind(program.instance);
-                                    const main = (program.instance.exports as any).main;
-                                    if (typeof main === "function") {
-                                        main();
-                                    }
-
-                                    status.setAttribute("data-status", "success");
-                                    statusText.textContent = "Success";
-
-                                    const compilerLog = (retryResult.output || "").trim();
-                                    const runText =
-                                        programOutput.trim().length > 0
-                                            ? programOutput
-                                            : "✓ Program ran with no output";
-                                    if (compilerLog) {
-                                        output.innerHTML = `<div class="compiler-log">${compilerLog}</div><pre>${escapeHtml(runText)}</pre>`;
-                                    } else {
-                                        output.innerHTML = `<pre>${escapeHtml(runText)}</pre>`;
-                                    }
-                                } catch (runError) {
-                                    status.setAttribute("data-status", "error");
-                                    statusText.textContent = "Error";
-                                    const runMessage =
-                                        runError instanceof Error
-                                            ? runError.message
-                                            : String(runError);
-                                    output.innerHTML = `<p style="color: #ef4444;">Runtime error: ${escapeHtml(runMessage)}</p>`;
-                                }
-                            } else {
-                                status.setAttribute("data-status", "error");
-                                statusText.textContent = "Error";
-                                output.innerHTML = `<pre>${retryResult.output || '<p style="color: #ef4444;">Compilation failed</p>'}</pre>`;
-                            }
-                        } catch (retryError) {
-                            console.error(
-                                "Retry compilation also failed:",
-                                retryError,
-                            );
-                            status.setAttribute("data-status", "error");
-                            statusText.textContent = "Error";
-                            output.innerHTML = `<p style="color: #ef4444;">Compiler crashed and restart failed. Please refresh the page.</p><p style="color: #6b7280; font-size: 0.75rem; margin-top: 0.5rem;">Error: ${escapeHtml((retryError as Error).message || String(retryError))}</p>`;
-                        }
-                    } else {
-                        // Restart failed
-                        status.setAttribute("data-status", "error");
-                        statusText.textContent = "Error";
-                        output.innerHTML = `<p style="color: #ef4444;">Compiler crashed and could not be restarted. Please refresh the page.</p><p style="color: #6b7280; font-size: 0.75rem; margin-top: 0.5rem;">Original error: ${escapeHtml((error as Error).message || String(error))}</p>`;
-                    }
-                } catch (restartError) {
-                    console.error("WASM restart failed:", restartError);
-                    status.setAttribute("data-status", "error");
-                    statusText.textContent = "Error";
-                    output.innerHTML = `<p style="color: #ef4444;">Compiler crashed and restart failed. Please refresh the page.</p><p style="color: #6b7280; font-size: 0.75rem; margin-top: 0.5rem;">Restart error: ${escapeHtml((restartError as Error).message || String(restartError))}</p>`;
-                }
-            } finally {
+            setStatus("error", "Error");
+            const runMessage =
+                runError instanceof Error
+                    ? runError.message
+                    : String(runError);
+            terminalEvents = [
+                {
+                    type: "system",
+                    html: `<p style="color: #ef4444;">Runtime error: ${escapeHtml(runMessage)}</p>`,
+                },
+            ];
+            runState = "idle";
+            renderTerminal();
+        } finally {
+            if (runState === "idle") {
                 runBtn.disabled = false;
                 setTimeout(() => {
-                    const currentStatus = status.getAttribute("data-status");
-                    if (
-                        currentStatus === "success" ||
-                        currentStatus === "error"
-                    ) {
-                        status.setAttribute("data-status", "ready");
-                        statusText.textContent = "Ready";
+                    if (runState === "idle") {
+                        setStatus("ready", "Ready");
                     }
                 }, 3000);
             }
-        },
-    );
+        }
+    }
+
+    runBtn.addEventListener("click", async function () {
+        const code = editor.getValue();
+
+        console.log("WASM Ready:", wasmReady);
+
+        if (!wasmReady) {
+            console.warn("⚠️ WASM not ready yet");
+            setStatus("error", "Loading...");
+            terminalEvents = [
+                {
+                    type: "system",
+                    html: '<p style="color: #f59e0b;">⏳ Loading compiler... Please wait a few seconds and try again.</p>',
+                },
+            ];
+            runState = "idle";
+            renderTerminal();
+            return;
+        }
+
+        if (typeof window.ferretCompile !== "function") {
+            console.error("ferretCompile function not available");
+            console.log("window.ferretCompile:", window.ferretCompile);
+            setStatus("error", "Error");
+            terminalEvents = [
+                {
+                    type: "system",
+                    html: '<p style="color: #ef4444;">Compiler function not available. Please check console and refresh the page.</p>',
+                },
+            ];
+            runState = "idle";
+            renderTerminal();
+            return;
+        }
+
+        runBtn.disabled = true;
+        runState = "running";
+        inputLines = [];
+        if (inputField) {
+            inputField.value = "";
+        }
+
+    renderTerminal();
+
+    renderTerminal();
+
+    renderTerminal();
+
+        setStatus("running", "Running...");
+        terminalEvents = [
+            {
+                type: "system",
+                text: "⏳ Compiling and running your code...",
+            },
+        ];
+        renderTerminal();
+
+        try {
+            const result = window.ferretCompile(code, false);
+
+            if (result.success) {
+                const wasmBase64 = result.wasm || "";
+                if (!wasmBase64) {
+                    throw new Error("Compiler did not return a wasm module");
+                }
+
+                cachedRun = {
+                    code,
+                    wasm: wasmBase64,
+                    compilerLog: (result.output || "").trim(),
+                };
+
+                await runWithInputs();
+            } else {
+                setStatus("error", "Error");
+                terminalEvents = [
+                    {
+                        type: "system",
+                        html: `<pre>${result.output || '<p style="color: #ef4444;">Compilation failed</p>'}</pre>`,
+                    },
+                ];
+                runState = "idle";
+                renderTerminal();
+                runBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error("💥 Exception during compilation:", error);
+            console.error("Error stack:", (error as Error).stack);
+
+            wasmReady = false;
+
+            console.log("🔄 Attempting to restart WASM compiler...");
+            try {
+                setStatus("loading", "Restarting...");
+                terminalEvents = [
+                    {
+                        type: "system",
+                        text: "🔄 Restarting compiler...",
+                    },
+                ];
+                renderTerminal();
+
+                await initWasm();
+
+                if (wasmReady && typeof window.ferretCompile === "function") {
+                    console.log(
+                        "WASM restarted successfully, retrying compilation...",
+                    );
+                    setStatus("running", "Running...");
+                    terminalEvents = [
+                        {
+                            type: "system",
+                            text: "⏳ Retrying compilation...",
+                        },
+                    ];
+                    renderTerminal();
+
+                    try {
+                        const retryResult = window.ferretCompile(code, false);
+                        if (retryResult.success) {
+                            const wasmBase64 = retryResult.wasm || "";
+                            if (!wasmBase64) {
+                                throw new Error(
+                                    "Compiler did not return a wasm module",
+                                );
+                            }
+
+                            cachedRun = {
+                                code,
+                                wasm: wasmBase64,
+                                compilerLog: (retryResult.output || "").trim(),
+                            };
+
+                            await runWithInputs();
+                        } else {
+                            setStatus("error", "Error");
+                            terminalEvents = [
+                                {
+                                    type: "system",
+                                    html: `<pre>${retryResult.output || '<p style="color: #ef4444;">Compilation failed</p>'}</pre>`,
+                                },
+                            ];
+                            runState = "idle";
+                            renderTerminal();
+                            runBtn.disabled = false;
+                        }
+                    } catch (retryError) {
+                        console.error(
+                            "Retry compilation also failed:",
+                            retryError,
+                        );
+                        setStatus("error", "Error");
+                        terminalEvents = [
+                            {
+                                type: "system",
+                                html: `<p style="color: #ef4444;">Compiler crashed and restart failed. Please refresh the page.</p><p style="color: #6b7280; font-size: 0.75rem; margin-top: 0.5rem;">Error: ${escapeHtml((retryError as Error).message || String(retryError))}</p>`,
+                            },
+                        ];
+                        runState = "idle";
+                        renderTerminal();
+                        runBtn.disabled = false;
+                    }
+                } else {
+                    setStatus("error", "Error");
+                    terminalEvents = [
+                        {
+                            type: "system",
+                            html: `<p style="color: #ef4444;">Compiler crashed and could not be restarted. Please refresh the page.</p><p style="color: #6b7280; font-size: 0.75rem; margin-top: 0.5rem;">Original error: ${escapeHtml((error as Error).message || String(error))}</p>`,
+                        },
+                    ];
+                    runState = "idle";
+                    renderTerminal();
+                    runBtn.disabled = false;
+                }
+            } catch (restartError) {
+                console.error("WASM restart failed:", restartError);
+                setStatus("error", "Error");
+                terminalEvents = [
+                    {
+                        type: "system",
+                        html: `<p style="color: #ef4444;">Compiler crashed and restart failed. Please refresh the page.</p><p style="color: #6b7280; font-size: 0.75rem; margin-top: 0.5rem;">Restart error: ${escapeHtml((restartError as Error).message || String(restartError))}</p>`,
+                    },
+                ];
+                runState = "idle";
+                renderTerminal();
+                runBtn.disabled = false;
+            }
+        }
+    });
+
+    if (inputField) {
+        inputField.addEventListener("keydown", async (event) => {
+            if (event.key !== "Enter" || event.shiftKey) {
+                return;
+            }
+            event.preventDefault();
+
+            if (runState !== "waiting" || !cachedRun) {
+                return;
+            }
+
+            const value = inputField.value.replace(/\r?\n/g, "");
+            inputField.value = "";
+            inputLines.push(value);
+
+            runBtn.disabled = true;
+            runState = "running";
+            setStatus("running", "Running...");
+            renderTerminal();
+
+            await runWithInputs();
+        });
+    }
+
+    renderTerminal();
 
     // Helper function to escape HTML
     function escapeHtml(text: string): string {
@@ -865,11 +1027,19 @@
     ).addEventListener("click", function () {
         if (confirm("Are you sure you want to clear the editor?")) {
             editor.setValue("");
-            (document.getElementById("output") as HTMLElement).innerHTML =
-                '<p class="output-placeholder">Editor cleared</p>';
+            terminalEvents = [
+                {
+                    type: "system",
+                    text: "Editor cleared",
+                },
+            ];
+            inputLines = [];
+            cachedRun = null;
+            runState = "idle";
+            setStatus("ready", "Ready");
+            renderTerminal();
         }
     });
-
     // Make editor globally accessible for future API integration
     window.ferretEditor = editor;
 
@@ -1285,6 +1455,11 @@
         animation: pulse 1.5s ease-in-out infinite;
     }
 
+    .output-status[data-status="input"] .status-dot {
+        background: #f97316; /* Deep orange */
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+
     .output-status[data-status="success"] .status-dot {
         background: #06b6d4; /* Cyan */
     }
@@ -1305,14 +1480,23 @@
 
     .output-content {
         flex: 1;
-        padding: 1rem;
-        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
         font-family:
             "Cascadia Code", "Fira Code", "Consolas", "Monaco", monospace;
         font-size: 0.8125rem;
         line-height: 1.6;
         color: #374151;
-        margin-right: 10px;
+    }
+
+    .output-log {
+        flex: 1;
+        padding: 1rem 1rem 0.75rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
     }
 
     :global([data-theme="dark"]) .output-content {
@@ -1358,41 +1542,128 @@
         margin: 0;
     }
 
-    .output-content pre {
+    :global(.terminal-output) {
         margin: 0;
         white-space: pre;
         overflow-x: auto;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    :global(.terminal-line) {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        white-space: pre-wrap;
+    }
+
+    :global(.terminal-text) {
+        white-space: pre-wrap;
+    }
+
+    .terminal-system {
+        color: #9ca3af;
+        font-size: 0.75rem;
+    }
+
+    :global([data-theme="dark"]) .terminal-system {
+        color: #6b7280;
+    }
+
+    .terminal-input {
+        display: flex;
+        align-items: flex-start;
+        border-top: none;
+        background: transparent;
+    }
+
+    :global([data-theme="dark"]) .terminal-input {
+        border-top: none;
+        background: transparent;
+    }
+
+    .terminal-input-hidden {
+        display: none;
+    }
+
+    .terminal-prompt {
+        font-weight: 600;
+        color: #10b981;
+        line-height: 1.5;
+        padding-top: 0.1rem;
+    }
+
+    :global([data-theme="dark"]) .terminal-prompt {
+        color: #34d399;
+    }
+
+    .terminal-input-field {
+        flex: 1;
+        min-height: 1.6rem;
+        max-height: 7rem;
+        border: none;
+        background: transparent;
+        padding: 0.1rem 0;
+        font-family:
+            "Cascadia Code", "Fira Code", "Consolas", "Monaco", monospace;
+        font-size: 0.8125rem;
+        line-height: 1.5;
+        color: inherit;
+        resize: none;
+        outline: none;
+        overflow-y: auto;
+    }
+
+    .terminal-input-field::placeholder {
+        color: #9ca3af;
+    }
+
+    :global([data-theme="dark"]) .terminal-input-field::placeholder {
+        color: #6b7280;
+    }
+
+    .terminal-input-field:focus {
+        box-shadow: inset 0 -2px 0 rgba(59, 130, 246, 0.4);
+    }
+
+    .terminal-input-field.input-locked {
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+
+    :global([data-theme="dark"]) .terminal-input-field:focus {
+        box-shadow: inset 0 -2px 0 rgba(56, 189, 248, 0.4);
     }
 
     /* Custom scrollbar */
-    .output-content::-webkit-scrollbar {
+    .output-log::-webkit-scrollbar {
         width: 8px;
         height: 8px;
     }
 
-    .output-content::-webkit-scrollbar-track {
+    .output-log::-webkit-scrollbar-track {
         background: transparent;
     }
 
-    .output-content::-webkit-scrollbar-thumb {
+    .output-log::-webkit-scrollbar-thumb {
         background: rgba(0, 0, 0, 0.1);
         border-radius: 4px;
     }
 
-    :global([data-theme="dark"]) .output-content::-webkit-scrollbar-thumb {
+    :global([data-theme="dark"]) .output-log::-webkit-scrollbar-thumb {
         background: rgba(255, 255, 255, 0.1);
     }
 
-    .output-content::-webkit-scrollbar-thumb:hover {
+    .output-log::-webkit-scrollbar-thumb:hover {
         background: rgba(0, 0, 0, 0.15);
     }
 
     :global([data-theme="dark"])
-        .output-content::-webkit-scrollbar-thumb:hover {
+        .output-log::-webkit-scrollbar-thumb:hover {
         background: rgba(255, 255, 255, 0.15);
     }
 
-    .output-content::-webkit-scrollbar-corner {
+    .output-log::-webkit-scrollbar-corner {
         background: transparent;
     }
 
@@ -1485,6 +1756,9 @@
 
         .output-content {
             font-size: 0.75rem;
+        }
+
+        .output-log {
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }
