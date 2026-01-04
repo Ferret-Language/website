@@ -191,7 +191,7 @@ fn find_user(id: i32) -> &User? {
 
 let user_ref := find_user(42);
 if user_ref != none {
-    print(user_ref.name);  // Automatic dereferencing
+    io::Println(user_ref.name);  // Automatic dereferencing
 }
 ```
 

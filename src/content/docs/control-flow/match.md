@@ -13,10 +13,10 @@ Match expressions provide powerful pattern matching capabilities.
 let status := 200;
 
 match status {
-    200 => print("OK"),
-    404 => print("Not Found"),
-    500 => print("Server Error"),
-    _ => print("Unknown Status"),
+    200 => io::Println("OK"),
+    404 => io::Println("Not Found"),
+    500 => io::Println("Server Error"),
+    _ => io::Println("Unknown Status"),
 }
 ```
 
@@ -44,9 +44,9 @@ type Status enum {
 let status := Status::Active;
 
 match status {
-    Status::Pending => print("Waiting"),
-    Status::Active => print("In Progress"),
-    Status::Done => print("Complete"),
+    Status::Pending => io::Println("Waiting"),
+    Status::Active => io::Println("In Progress"),
+    Status::Done => io::Println("Complete"),
 }
 ```
 

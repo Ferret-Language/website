@@ -17,7 +17,7 @@ The simplest form checks one condition. If it's true, the code inside the curly 
 let age := 18;
 
 if age >= 18 {
-    print("You are an adult");
+    io::Println("You are an adult");
 }
 
 // Program continues here either way
@@ -36,19 +36,19 @@ Let's see more examples:
 let temperature := 75;
 
 if temperature > 80 {
-    print("It's hot outside!");
+    io::Println("It's hot outside!");
 }
 
 let has_permission := true;
 
 if has_permission {
-    print("Access granted");
+    io::Println("Access granted");
 }
 
 let score := 95;
 
 if score >= 90 {
-    print("Excellent work!");
+    io::Println("Excellent work!");
 }
 ```
 
@@ -60,9 +60,9 @@ Often you want to do one thing if a condition is true, and something different i
 let score := 75;
 
 if score >= 60 {
-    print("You passed!");
+    io::Println("You passed!");
 } else {
-    print("You failed. Try again!");
+    io::Println("You failed. Try again!");
 }
 ```
 
@@ -83,19 +83,19 @@ More examples:
 let is_weekend := true;
 
 if is_weekend {
-    print("Time to relax!");
+    io::Println("Time to relax!");
 } else {
-    print("Back to work");
+    io::Println("Back to work");
 }
 
 let balance := 50;
 let price := 30;
 
 if balance >= price {
-    print("Purchase approved");
+    io::Println("Purchase approved");
     balance -= price;
 } else {
-    print("Insufficient funds");
+    io::Println("Insufficient funds");
 }
 ```
 
@@ -107,15 +107,15 @@ When you have more than two possibilities, use `else if` to add extra conditions
 let grade := 85;
 
 if grade >= 90 {
-    print("A - Excellent!");
+    io::Println("A - Excellent!");
 } else if grade >= 80 {
-    print("B - Good job!");
+    io::Println("B - Good job!");
 } else if grade >= 70 {
-    print("C - Passing");
+    io::Println("C - Passing");
 } else if grade >= 60 {
-    print("D - Needs improvement");
+    io::Println("D - Needs improvement");
 } else {
-    print("F - Failed");
+    io::Println("F - Failed");
 }
 ```
 
@@ -132,13 +132,13 @@ Ferret checks each condition **in order** from top to bottom:
 let time_of_day := 14;  // 2 PM in 24-hour format
 
 if time_of_day < 12 {
-    print("Good morning!");
+    io::Println("Good morning!");
 } else if time_of_day < 17 {
-    print("Good afternoon!");
+    io::Println("Good afternoon!");
 } else if time_of_day < 21 {
-    print("Good evening!");
+    io::Println("Good evening!");
 } else {
-    print("Good night!");
+    io::Println("Good night!");
 }
 ```
 
@@ -148,9 +148,9 @@ You can have as many `else if` blocks as you need. The final `else` is optional 
 let age := 15;
 
 if age >= 18 {
-    print("You can vote");
+    io::Println("You can vote");
 } else if age >= 16 {
-    print("You can drive");
+    io::Println("You can drive");
 }
 // If age is less than 16, nothing prints
 ```
@@ -177,10 +177,10 @@ if maybe_value != none {
     // Inside here, maybe_value is treated as i32 (not i32?)
     // because Ferret knows it's not none
     let doubled: i32 = maybe_value * 2;  // Works!
-    print(doubled);  // Prints: 84
+    io::Println(doubled);  // Prints: 84
 } else {
     // Inside here, maybe_value is known to be none
-    print("No value");
+    io::Println("No value");
 }
 ```
 
@@ -193,11 +193,11 @@ let username: str? = get_user_input();
 
 if username != none {
     // username is str here
-    print("Hello, " + username + "!");
+    io::Println("Hello, " + username + "!");
     let length: i32 = username.length;
 } else {
     // username is none here
-    print("Please enter a username");
+    io::Println("Please enter a username");
 }
 ```
 
@@ -208,10 +208,10 @@ let opt_count: i32? = get_count();
 
 if opt_count == none {
     // opt_count is none here
-    print("No count available");
+    io::Println("No count available");
 } else {
     // opt_count is i32 here
-    print("Count: " + opt_count.to_string());
+    io::Println("Count: " + opt_count.to_string());
 }
 ```
 
@@ -228,12 +228,12 @@ let has_license := true;
 
 if age >= 18 {
     if has_license {
-        print("You can drive");
+        io::Println("You can drive");
     } else {
-        print("You need a license");
+        io::Println("You need a license");
     }
 } else {
-    print("You're too young to drive");
+    io::Println("You're too young to drive");
 }
 ```
 
@@ -244,11 +244,11 @@ let age := 25;
 let has_license := true;
 
 if age >= 18 and has_license {
-    print("You can drive");
+    io::Println("You can drive");
 } else if age >= 18 {
-    print("You need a license");
+    io::Println("You need a license");
 } else {
-    print("You're too young to drive");
+    io::Println("You're too young to drive");
 }
 ```
 

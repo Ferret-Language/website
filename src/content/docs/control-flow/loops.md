@@ -19,12 +19,12 @@ Ferret provides two range operators for loops:
 ```ferret
 // Exclusive: iterates 0 to 9 (10 iterations)
 for i in 0..10 {
-    print(i);  // Prints: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+    io::Println(i);  // Prints: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
 }
 
 // Inclusive: iterates 0 to 10 (11 iterations)
 for i in 0..=10 {
-    print(i);  // Prints: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+    io::Println(i);  // Prints: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
 }
 ```
 
@@ -36,7 +36,7 @@ let numbers := 0..10;   // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 let numbers_inc := 0..=10;  // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 for i in numbers {
-    print(i);
+    io::Println(i);
 }
 ```
 
@@ -44,12 +44,12 @@ You can specify the step/increment with both operators:
 ```ferret
 // Exclusive with step
 for i in 0..10:2 {
-    print(i);  // Prints: 0, 2, 4, 6, 8
+    io::Println(i);  // Prints: 0, 2, 4, 6, 8
 }
 
 // Inclusive with step
 for i in 0..=10:2 {
-    print(i);  // Prints: 0, 2, 4, 6, 8, 10
+    io::Println(i);  // Prints: 0, 2, 4, 6, 8, 10
 }
 ```
 
@@ -58,7 +58,7 @@ for i in 0..=10:2 {
 ```ferret
 let arr := [10, 20, 30];
 for i, val in arr {
-    print(i, val);  // Prints: 0 10, 1 20, 2 30
+    io::Println(i, val);  // Prints: 0 10, 1 20, 2 30
 }
 ```
 
@@ -69,7 +69,7 @@ for i, val in arr {
 ```ferret
 let x := 0;
 while x < 5 {
-    print(x);
+    io::Println(x);
     x = x + 1;
 }
 ```

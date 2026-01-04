@@ -36,18 +36,18 @@ So you must handle it using `catch` clause:
 ```ferret
 let result := divide(10, 0) catch e { // e holds the error value
     // Handle error case
-    print("Error occurred: " + e);
+    io::Println("Error occurred: " + e);
     return; // Early return
 };
 
 // These line won't reach if there was an error
-print("Result: " + result); // won't run because the program will return early on error
+io::Println("Result: " + result); // won't run because the program will return early on error
 ```
 But what if you want to move forward even with an error? You can provide a default value after the `catch` block. This can be either declared in the block or after it as literal value:
 ```ferret
 let result := divide(10, 0) catch e {
     // handle error case and provide default
-    print("Error occurred: " + e);
+    io::Println("Error occurred: " + e);
     let default_value := -1;
 } default_value; // result will be -1
 ```
@@ -55,7 +55,7 @@ Or more concisely:
 ```ferret
 let result := divide(10, 0) catch e {
     // handle error case and provide default
-    print("Error occurred: " + e);
+    io::Println("Error occurred: " + e);
 } -1 ; // default value if error occurs, result will be -1
 ```
 

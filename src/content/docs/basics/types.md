@@ -224,9 +224,9 @@ let username: str? = get_username();
 
 if username != none {
     // Safe to use username here
-    print("Hello, " + username);
+    io::Println("Hello, " + username);
 } else {
-    print("No username provided");
+    io::Println("No username provided");
 }
 ```
 

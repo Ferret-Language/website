@@ -13,7 +13,7 @@ To declare a function, use the `fn` keyword followed by the function name. Let's
 
 ```ferret
 fn greet() {
-    print("Hello!");
+    io::Println("Hello!");
 }
 ```
 
@@ -23,7 +23,7 @@ Functions can take inputs from outside which are called parameters. Parameters a
 
 ```ferret
 fn greet(name: str) {
-    print("Hello, " + name);
+    io::Println("Hello, " + name);
 }
 ```
 
@@ -31,7 +31,7 @@ fn greet(name: str) {
 
 ```ferret
 let message := greet("World");
-print(message);  // Hello, World
+io::Println(message);  // Hello, World
 ```
 
 ## Return Types
@@ -52,7 +52,7 @@ Functions that don't return a value:
 
 ```ferret
 fn log_message(msg: str) {
-    print("[INFO] " + msg);
+    io::Println("[INFO] " + msg);
 }
 ```
 

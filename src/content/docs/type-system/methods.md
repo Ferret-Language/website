@@ -287,7 +287,7 @@ type Circle struct {
 
 // Implementing Drawable for Circle
 fn (c: Circle) draw() {
-    print("Drawing circle at (" + c.x + ", " + c.y + ")");
+    io::Println("Drawing circle at (" + c.x + ", " + c.y + ")");
 }
 
 fn (c: Circle) get_bounds() -> struct {

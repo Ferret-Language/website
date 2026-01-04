@@ -44,7 +44,7 @@ let opt: str? = "hello";
 
 if opt == none {
     // opt is none here
-    print("No value");
+    io::Println("No value");
 } else {
     // opt is str here (not str?)
     let length: i32 = opt.length;
@@ -125,9 +125,9 @@ fn findUser(id: i32) -> User? {
 let maybeUser: User? = findUser(42);
 
 if maybeUser != none {
-    print(maybeUser.name);
+    io::Println(maybeUser.name);
 } else {
-    print("User not found");
+    io::Println("User not found");
 }
 ```
 

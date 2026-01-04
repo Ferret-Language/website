@@ -35,7 +35,7 @@ Let's break down what's happening:
 
 - `fn main()` - Every Ferret program starts with a `main` function
 - `let greeting: str = "Hello, World!";` - Declares a variable with type annotation
-- `print(greeting);` - Outputs the greeting to the console
+- `io::Println(greeting);` - Outputs the greeting to the console
 
 ## Try It Yourself
 
@@ -49,7 +49,7 @@ fn greet(name: str) -> str {
 fn main() {
     let name: str = "Ferret";
     let message: str = greet(name);
-    print(message);
+    io::Println(message);
 }
 ```
 

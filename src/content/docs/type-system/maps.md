@@ -144,7 +144,7 @@ if has(&user_emails, "alice") {
     let email: str = user_emails["alice"];
     send_email(email);
 } else {
-    print("No email found");
+    io::Println("No email found");
 }
 ```
 
@@ -157,7 +157,7 @@ if email != none {
     // Inside this block, email is str (not str?)
     send_email(email);
 } else {
-    print("No email found");
+    io::Println("No email found");
 }
 ```
 
@@ -226,7 +226,7 @@ fn main() {
     let alice_age := user_ages["alice"] ?? 0;
     let unknown_age := user_ages["nobody"] ?? 18; // Default to 18
 
-    print("Alice is " + alice_age + " years old");
+    io::Println("Alice is " + alice_age + " years old");
 }
 ```
 
@@ -245,7 +245,7 @@ fn main() {
     let grape_count := inventory["grapes"] ?? 0;  // Not in stock
 
     if apple_count > 0 {
-        print("We have apples!");
+        io::Println("We have apples!");
     }
 }
 ```
@@ -263,7 +263,7 @@ fn main() {
     let theme := settings["theme"] ?? "light";
     let font := settings["font_size"] ?? "12";
 
-    print("Theme: " + theme);
+    io::Println("Theme: " + theme);
 }
 ```
 

@@ -312,12 +312,12 @@ This distinction is important when iterating:
 ```ferret
 // Exclusive: iterates 0 to 4 (5 iterations)
 for i in 0..5 {
-    print(i);  // Prints: 0, 1, 2, 3, 4
+    io::Println(i);  // Prints: 0, 1, 2, 3, 4
 }
 
 // Inclusive: iterates 0 to 5 (6 iterations)
 for i in 0..=5 {
-    print(i);  // Prints: 0, 1, 2, 3, 4, 5
+    io::Println(i);  // Prints: 0, 1, 2, 3, 4, 5
 }
 ```
 
