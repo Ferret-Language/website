@@ -136,7 +136,7 @@
 
     import * as monaco from "monaco-editor";
     import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
-    import { createFerretRuntime } from "../lib/ferret-runtime";
+    import { createFerretRuntime } from "../lib/runtime";
 
     // Setup Monaco environment
     self.MonacoEnvironment = {
@@ -608,6 +608,10 @@
         "program-input",
     ) as HTMLTextAreaElement;
     const runBtn = document.getElementById("run-btn") as HTMLButtonElement;
+    const runBtnLabel = runBtn.querySelector("span") as HTMLSpanElement;
+    const runBtnIcon = runBtn.querySelector("svg path") as SVGPathElement;
+    const runIconPath = "M8 5v14l11-7z";
+    const stopIconPath = "M6 6h12v12H6z";
     const status = document.getElementById("output-status") as HTMLElement;
     const statusText = status.querySelector(".status-text") as HTMLElement;
     const terminalPlaceholder = outputLog ? outputLog.innerHTML : "";
@@ -615,6 +619,8 @@
     let terminalEvents: TerminalEvent[] = [];
     let inputLines: string[] = [];
     let runState: "idle" | "running" | "waiting" = "idle";
+    let runToken = 0;
+    let activeRunToken = 0;
     let cachedRun: {
         code: string;
         wasm: string;
@@ -624,6 +630,33 @@
     function setStatus(state: string, text: string) {
         status.setAttribute("data-status", state);
         statusText.textContent = text;
+    }
+
+    function setRunButtonState() {
+        const isActive = runState === "running" || runState === "waiting";
+        if (runBtnLabel) {
+            runBtnLabel.textContent = isActive ? "Abort" : "Run";
+        }
+        if (runBtnIcon) {
+            runBtnIcon.setAttribute("d", isActive ? stopIconPath : runIconPath);
+        }
+        runBtn.title = isActive ? "Abort (Esc)" : "Run Code (Ctrl+Enter)";
+        runBtn.disabled = false;
+        runBtn.classList.toggle("run-button-abort", isActive);
+    }
+
+    function abortRun(message: string) {
+        runToken += 1;
+        activeRunToken = 0;
+        runState = "idle";
+        inputLines = [];
+        cachedRun = null;
+        setStatus("ready", "Ready");
+        setRunButtonState();
+        if (message) {
+            terminalEvents = terminalEvents.concat([{ type: "system", text: message }]);
+        }
+        renderTerminal();
     }
 
     function renderTerminalEvent(event: TerminalEvent): string {
@@ -685,8 +718,8 @@
         ];
     }
 
-    async function runWithInputs() {
-        if (!cachedRun) {
+    async function runWithInputs(token: number) {
+        if (!cachedRun || token == 0 || token !== runToken) {
             return;
         }
 
@@ -707,10 +740,16 @@
                 programBytes,
                 runtime.imports,
             );
+            if (token !== runToken) {
+                return;
+            }
             runtime.bind(program.instance);
             const main = (program.instance.exports as any).main;
             if (typeof main === "function") {
                 main();
+            }
+            if (token !== runToken) {
+                return;
             }
 
             terminalEvents = baseEvents.concat(events);
@@ -728,12 +767,18 @@
 
             setStatus("success", "Success");
             runState = "idle";
+            activeRunToken = 0;
+            setRunButtonState();
             renderTerminal();
         } catch (runError) {
+            if (token !== runToken) {
+                return;
+            }
             if (isInputNeeded(runError)) {
                 terminalEvents = baseEvents.concat(events);
                 setStatus("input", "Input");
                 runState = "waiting";
+                setRunButtonState();
                 renderTerminal();
                 return;
             }
@@ -754,10 +799,15 @@
                 },
             ];
             runState = "idle";
+            activeRunToken = 0;
+            setRunButtonState();
             renderTerminal();
         } finally {
+            if (token !== runToken) {
+                return;
+            }
             if (runState === "idle") {
-                runBtn.disabled = false;
+                setRunButtonState();
                 setTimeout(() => {
                     if (runState === "idle") {
                         setStatus("ready", "Ready");
@@ -768,6 +818,11 @@
     }
 
     runBtn.addEventListener("click", async function () {
+        if (runState === "running" || runState === "waiting") {
+            abortRun("✗ Execution aborted by user.");
+            return;
+        }
+
         const code = editor.getValue();
 
         console.log("WASM Ready:", wasmReady);
@@ -782,6 +837,8 @@
                 },
             ];
             runState = "idle";
+            activeRunToken = 0;
+            setRunButtonState();
             renderTerminal();
             return;
         }
@@ -797,18 +854,22 @@
                 },
             ];
             runState = "idle";
+            activeRunToken = 0;
+            setRunButtonState();
             renderTerminal();
             return;
         }
 
-        runBtn.disabled = true;
         runState = "running";
+        runToken += 1;
+        activeRunToken = runToken;
         inputLines = [];
         if (inputField) {
             inputField.value = "";
         }
 
         setStatus("running", "Running...");
+        setRunButtonState();
         terminalEvents = [
             {
                 type: "system",
@@ -832,7 +893,7 @@
                     compilerLog: (result.output || "").trim(),
                 };
 
-                await runWithInputs();
+                await runWithInputs(activeRunToken);
             } else {
                 setStatus("error", "Error");
                 terminalEvents = [
@@ -846,8 +907,9 @@
                     },
                 ];
                 runState = "idle";
+                activeRunToken = 0;
+                setRunButtonState();
                 renderTerminal();
-                runBtn.disabled = false;
             }
         } catch (error) {
             console.error("💥 Exception during compilation:", error);
@@ -897,7 +959,7 @@
                                 compilerLog: (retryResult.output || "").trim(),
                             };
 
-                            await runWithInputs();
+                            await runWithInputs(activeRunToken);
                         } else {
                             setStatus("error", "Error");
                             terminalEvents = [
@@ -911,8 +973,9 @@
                                 },
                             ];
                             runState = "idle";
+                            activeRunToken = 0;
+                            setRunButtonState();
                             renderTerminal();
-                            runBtn.disabled = false;
                         }
                     } catch (retryError) {
                         console.error(
@@ -931,8 +994,9 @@
                             },
                         ];
                         runState = "idle";
+                        activeRunToken = 0;
+                        setRunButtonState();
                         renderTerminal();
-                        runBtn.disabled = false;
                     }
                 } else {
                     setStatus("error", "Error");
@@ -947,8 +1011,9 @@
                         },
                     ];
                     runState = "idle";
+                    activeRunToken = 0;
+                    setRunButtonState();
                     renderTerminal();
-                    runBtn.disabled = false;
                 }
             } catch (restartError) {
                 console.error("WASM restart failed:", restartError);
@@ -964,8 +1029,9 @@
                     },
                 ];
                 runState = "idle";
+                activeRunToken = 0;
+                setRunButtonState();
                 renderTerminal();
-                runBtn.disabled = false;
             }
         }
     });
@@ -985,16 +1051,30 @@
             inputField.value = "";
             inputLines.push(value);
 
-            runBtn.disabled = true;
             runState = "running";
             setStatus("running", "Running...");
+            setRunButtonState();
             renderTerminal();
 
-            await runWithInputs();
+            if (activeRunToken == 0) {
+                return;
+            }
+
+            await runWithInputs(activeRunToken);
         });
     }
 
+    document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") {
+            return;
+        }
+        if (runState === "running" || runState === "waiting") {
+            abortRun("✗ Execution aborted by user.");
+        }
+    });
+
     renderTerminal();
+    setRunButtonState();
 
     // Helper function to escape HTML
     function escapeHtml(text: string): string {
@@ -1059,7 +1139,9 @@
             inputLines = [];
             cachedRun = null;
             runState = "idle";
+            activeRunToken = 0;
             setStatus("ready", "Ready");
+            setRunButtonState();
             renderTerminal();
         }
     });
@@ -1276,6 +1358,20 @@
     .run-button:hover {
         background: var(--accent-color) !important;
         color: #ffffff !important;
+    }
+
+    .run-button.run-button-abort {
+        background: #ef4444;
+        color: #ffffff;
+    }
+    .run-button.run-button-abort:hover {
+        background: #dc2626 !important;
+        color: #ffffff !important;
+    }
+
+    :global([data-theme="dark"]) .run-button.run-button-abort {
+        background: #f87171;
+        color: #111111;
     }
 
     :global([data-theme="dark"]) .run-button {

@@ -134,6 +134,31 @@ export function createFerretRuntime(options: FerretRuntimeOptions = {}) {
     return arrPtr >>> 0;
   }
 
+  function ferret_array_clone(arrPtr: number) {
+    if (!arrPtr) {
+      return 0;
+    }
+    const dv = view();
+    const dataPtr = dv.getUint32(arrPtr + 0, true);
+    const length = dv.getInt32(arrPtr + 4, true);
+    const capacity = dv.getInt32(arrPtr + 8, true);
+    const elemSize = dv.getUint32(arrPtr + 12, true);
+
+    const dataSize = elemSize * capacity;
+    const newDataPtr = dataSize > 0 ? ferret_alloc(dataSize) : 0;
+    if (dataPtr && length > 0) {
+      const mem = new Uint8Array(memory!.buffer);
+      mem.copyWithin(newDataPtr, dataPtr, dataPtr + length * elemSize);
+    }
+
+    const newArrPtr = ferret_alloc(16);
+    dv.setUint32(newArrPtr + 0, newDataPtr, true);
+    dv.setInt32(newArrPtr + 4, length, true);
+    dv.setInt32(newArrPtr + 8, capacity, true);
+    dv.setUint32(newArrPtr + 12, elemSize, true);
+    return newArrPtr >>> 0;
+  }
+
   function ferret_array_append(arrPtr: number, elemPtr: number) {
     const dv = view();
     let dataPtr = dv.getUint32(arrPtr + 0, true);
@@ -376,6 +401,7 @@ export function createFerretRuntime(options: FerretRuntimeOptions = {}) {
         ferret_alloc,
         ferret_memcpy,
         ferret_array_new,
+        ferret_array_clone,
         ferret_array_append,
         ferret_array_get,
         ferret_array_set,
