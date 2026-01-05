@@ -7,9 +7,27 @@
                 <span class="dot dot-yellow"></span>
                 <span class="dot dot-green"></span>
             </div>
-            <span class="file-name">main.fer</span>
+            <!-- File tabs container -->
+            <div id="file-tabs" class="file-tabs"></div>
         </div>
         <div class="playground-actions">
+            <button id="share-btn" class="icon-button" title="Share Code">
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <circle cx="18" cy="5" r="3"></circle>
+                    <circle cx="6" cy="12" r="3"></circle>
+                    <circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+                <span>Share</span>
+            </button>
             <button id="copy-btn" class="icon-button" title="Copy Code">
                 <span class="copyicon">
                     <svg
@@ -545,13 +563,267 @@
         return "ferret-one-dark-pro";
     }
 
+    // ============================================================================
+    // FILE MANAGEMENT SYSTEM
+    // ============================================================================
+    
+    interface FileData {
+        name: string;
+        model: monaco.editor.ITextModel;
+    }
+
+    class FileManager {
+        private files: Map<string, FileData> = new Map();
+        private activeFileName: string = "main.fer";
+        private editor: monaco.editor.IStandaloneCodeEditor;
+        private onFileChange?: () => void;
+
+        constructor(editor: monaco.editor.IStandaloneCodeEditor, onFileChange?: () => void) {
+            this.editor = editor;
+            this.onFileChange = onFileChange;
+        }
+
+        addFile(name: string, content: string = ""): boolean {
+            if (this.files.has(name)) {
+                return false;
+            }
+            
+            const uri = monaco.Uri.parse(`file:///${name}`);
+            const model = monaco.editor.createModel(content, "ferret", uri);
+            this.files.set(name, { name, model });
+            
+            if (this.onFileChange) {
+                this.onFileChange();
+            }
+            return true;
+        }
+
+        removeFile(name: string): boolean {
+            if (name === "main.fer") {
+                return false; // Cannot remove main file
+            }
+            
+            const file = this.files.get(name);
+            if (!file) {
+                return false;
+            }
+            
+            file.model.dispose();
+            this.files.delete(name);
+            
+            if (this.activeFileName === name) {
+                this.switchToFile("main.fer");
+            }
+            
+            if (this.onFileChange) {
+                this.onFileChange();
+            }
+            return true;
+        }
+
+        switchToFile(name: string): boolean {
+            const file = this.files.get(name);
+            if (!file) {
+                return false;
+            }
+            
+            this.activeFileName = name;
+            this.editor.setModel(file.model);
+            
+            if (this.onFileChange) {
+                this.onFileChange();
+            }
+            return true;
+        }
+
+        getActiveFileName(): string {
+            return this.activeFileName;
+        }
+
+        getAllFiles(): FileData[] {
+            return Array.from(this.files.values());
+        }
+
+        getFileContent(name: string): string | null {
+            const file = this.files.get(name);
+            return file ? file.model.getValue() : null;
+        }
+
+        getAllFilesContent(): Record<string, string> {
+            const result: Record<string, string> = {};
+            this.files.forEach((file, name) => {
+                result[name] = file.model.getValue();
+            });
+            return result;
+        }
+
+        loadFiles(filesData: Record<string, string>): void {
+            // Clear existing files except models
+            this.files.forEach((file) => file.model.dispose());
+            this.files.clear();
+            
+            // Load new files
+            for (const [name, content] of Object.entries(filesData)) {
+                this.addFile(name, content);
+            }
+            
+            // Switch to main.fer or first file
+            const firstFile = filesData["main.fer"] ? "main.fer" : Object.keys(filesData)[0];
+            if (firstFile) {
+                this.switchToFile(firstFile);
+            }
+        }
+
+        saveToLocalStorage(): void {
+            const data = this.getAllFilesContent();
+            localStorage.setItem("ferret-playground-files", JSON.stringify(data));
+            localStorage.setItem("ferret-playground-active", this.activeFileName);
+        }
+
+        loadFromLocalStorage(): boolean {
+            const savedFiles = localStorage.getItem("ferret-playground-files");
+            const savedActive = localStorage.getItem("ferret-playground-active");
+            
+            if (!savedFiles) {
+                return false;
+            }
+            
+            try {
+                const filesData = JSON.parse(savedFiles);
+                this.loadFiles(filesData);
+                
+                if (savedActive && this.files.has(savedActive)) {
+                    this.switchToFile(savedActive);
+                }
+                
+                return true;
+            } catch (e) {
+                console.error("Failed to load from localStorage:", e);
+                return false;
+            }
+        }
+    }
+
+    // ============================================================================
+    // TAB UI RENDERING
+    // ============================================================================
+    
+    function renderTabs(fileManager: FileManager) {
+        const tabsContainer = document.getElementById("file-tabs");
+        if (!tabsContainer) return;
+        
+        const files = fileManager.getAllFiles();
+        const activeFile = fileManager.getActiveFileName();
+        
+        tabsContainer.innerHTML = files
+            .map((file) => {
+                const isActive = file.name === activeFile;
+                const canClose = file.name !== "main.fer";
+                return `
+                    <div class="file-tab ${isActive ? "active" : ""}" data-file="${file.name}">
+                        <span class="tab-name">${file.name}</span>
+                        ${canClose ? `<button class="tab-close" data-file="${file.name}" title="Close">×</button>` : ""}
+                    </div>
+                `;
+            })
+            .join("") + `
+                <button class="file-tab-add" title="Add new file">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </button>
+            `;
+        
+        // Attach event listeners
+        tabsContainer.querySelectorAll(".file-tab").forEach((tab) => {
+            const fileName = (tab as HTMLElement).dataset.file;
+            if (!fileName) return;
+            
+            tab.addEventListener("click", (e) => {
+                if ((e.target as HTMLElement).classList.contains("tab-close")) {
+                    return; // Let close button handle it
+                }
+                fileManager.switchToFile(fileName);
+            });
+        });
+        
+        tabsContainer.querySelectorAll(".tab-close").forEach((btn) => {
+            const fileName = (btn as HTMLElement).dataset.file;
+            if (!fileName) return;
+            
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                if (confirm(`Close ${fileName}?`)) {
+                    fileManager.removeFile(fileName);
+                    fileManager.saveToLocalStorage();
+                }
+            });
+        });
+        
+        const addBtn = tabsContainer.querySelector(".file-tab-add");
+        if (addBtn) {
+            addBtn.addEventListener("click", () => {
+                const fileName = prompt("Enter file name (must end with .fer):");
+                if (!fileName) return;
+                
+                if (!fileName.endsWith(".fer")) {
+                    alert("File name must end with .fer");
+                    return;
+                }
+                
+                if (fileManager.addFile(fileName, "// New file\n")) {
+                    fileManager.switchToFile(fileName);
+                    fileManager.saveToLocalStorage();
+                } else {
+                    alert("File already exists!");
+                }
+            });
+        }
+    }
+
+    // ============================================================================
+    // INITIALIZE EDITOR AND FILE MANAGER
+    // ============================================================================
+    
     let currentTheme = getCurrentTheme();
     const editor = monaco.editor.create(editorContainer, {
-        value: defaultCode,
         language: "ferret",
         theme: currentTheme,
         automaticLayout: true,
     });
+
+    const fileManager = new FileManager(editor, () => {
+        renderTabs(fileManager);
+        fileManager.saveToLocalStorage();
+    });
+
+    // Load files from URL, localStorage, or default
+    const urlParams = new URLSearchParams(window.location.search);
+    const filesParam = urlParams.get("files");
+    
+    let filesLoaded = false;
+    
+    if (filesParam) {
+        try {
+            const filesData = JSON.parse(atob(filesParam));
+            fileManager.loadFiles(filesData);
+            filesLoaded = true;
+        } catch (e) {
+            console.error("Failed to load files from URL:", e);
+        }
+    }
+    
+    if (!filesLoaded) {
+        filesLoaded = fileManager.loadFromLocalStorage();
+    }
+    
+    if (!filesLoaded) {
+        fileManager.addFile("main.fer", defaultCode);
+        fileManager.switchToFile("main.fer");
+    }
+    
+    renderTabs(fileManager);
 
     // Listen for theme changes
     const observer = new MutationObserver(() => {
@@ -823,7 +1095,38 @@
             return;
         }
 
-        const code = editor.getValue();
+        // Get all files and concatenate them
+        // TODO: Update WASM compiler to support multi-file compilation with proper imports
+        // For now, we concatenate files into a single compilation unit
+        const allFiles = fileManager.getAllFilesContent();
+        const fileNames = Object.keys(allFiles);
+        
+        let code: string;
+        if (fileNames.length === 1) {
+            // Single file - use as is
+            code = allFiles[fileNames[0]];
+        } else {
+            // Multiple files - concatenate with comments
+            // Main file should come last (after helper files)
+            // This allows helper functions/types to be defined before main()
+            const orderedFiles = fileNames.sort((a, b) => {
+                if (a === "main.fer") return 1;  // main.fer goes last
+                if (b === "main.fer") return -1;
+                return a.localeCompare(b);
+            });
+            
+            code = orderedFiles
+                .map((name) => {
+                    const content = allFiles[name];
+                    // Don't add separator comments if file starts with import
+                    // (user might be preparing for future multi-file support)
+                    if (content.trim().startsWith("import")) {
+                        return `// File: ${name} (imports will work when multi-file compilation is implemented)\n${content}`;
+                    }
+                    return `// ============ File: ${name} ============\n${content}`;
+                })
+                .join("\n\n");
+        }
 
         console.log("WASM Ready:", wasmReady);
 
@@ -1112,28 +1415,72 @@
         },
     );
 
-    (
-        document.getElementById("export-btn") as HTMLButtonElement
+    (document.getElementById("share-btn") as HTMLButtonElement).addEventListener(
+        "click",
+        function () {
+            const allFiles = fileManager.getAllFilesContent();
+            const filesJson = JSON.stringify(allFiles);
+            const filesBase64 = btoa(filesJson);
+            const shareUrl = `${window.location.origin}${window.location.pathname}?files=${filesBase64}`;
+            
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                const btnText = this.querySelector("span") as HTMLElement;
+                const originalText = btnText.textContent;
+                btnText.textContent = "Copied!";
+                this.style.color = "#10b981";
+                this.disabled = true;
+                setTimeout(() => {
+                    btnText.textContent = originalText;
+                    this.style.color = "";
+                    this.disabled = false;
+                }, 1200);
+            }).catch(() => {
+                alert(`Share this URL:\n\n${shareUrl}`);
+            });
+        },
+    );
+
+    (document.getElementById("export-btn") as HTMLButtonElement
     ).addEventListener("click", function () {
-        const code = editor.getValue();
-        const blob = new Blob([code], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "main.fer";
-        a.click();
-        URL.revokeObjectURL(url);
+        const allFiles = fileManager.getAllFilesContent();
+        const fileCount = Object.keys(allFiles).length;
+        
+        if (fileCount === 1) {
+            // Single file: export as .fer
+            const fileName = Object.keys(allFiles)[0];
+            const code = allFiles[fileName];
+            const blob = new Blob([code], { type: "text/plain" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            URL.revokeObjectURL(url);
+        } else {
+            // Multiple files: export as zip (requires JSZip or manual archive)
+            // For now, export as JSON
+            const json = JSON.stringify(allFiles, null, 2);
+            const blob = new Blob([json], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "ferret-project.json";
+            a.click();
+            URL.revokeObjectURL(url);
+        }
     });
 
     (
         document.getElementById("clear-btn") as HTMLButtonElement
     ).addEventListener("click", function () {
-        if (confirm("Are you sure you want to clear the editor?")) {
-            editor.setValue("");
+        if (confirm("Are you sure you want to clear all files?")) {
+            // Reset to single main.fer with empty content
+            fileManager.loadFiles({ "main.fer": "" });
+            fileManager.saveToLocalStorage();
             terminalEvents = [
                 {
                     type: "system",
-                    text: "Editor cleared",
+                    text: "All files cleared",
                 },
             ];
             inputLines = [];
@@ -1275,6 +1622,130 @@
 
     :global([data-theme="dark"]) .file-name {
         color: #9ca3af;
+    }
+
+    /* File Tabs */
+    .file-tabs {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        flex: 1;
+        overflow-x: auto;
+        scrollbar-width: thin;
+    }
+
+    .file-tabs::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .file-tabs::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 2px;
+    }
+
+    :global([data-theme="dark"]) .file-tabs::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .file-tab {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        color: #6b7280;
+        background: transparent;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+        user-select: none;
+    }
+
+    .file-tab:hover {
+        background: rgba(0, 0, 0, 0.05);
+        color: #374151;
+    }
+
+    .file-tab.active {
+        background: rgba(79, 70, 229, 0.1);
+        color: #4f46e5;
+    }
+
+    :global([data-theme="dark"]) .file-tab {
+        color: #9ca3af;
+    }
+
+    :global([data-theme="dark"]) .file-tab:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: #d1d5db;
+    }
+
+    :global([data-theme="dark"]) .file-tab.active {
+        background: rgba(139, 92, 246, 0.15);
+        color: #a78bfa;
+    }
+
+    .tab-name {
+        line-height: 1;
+    }
+
+    .tab-close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        color: inherit;
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+        opacity: 0.6;
+        transition: opacity 0.15s ease;
+    }
+
+    .tab-close:hover {
+        opacity: 1;
+    }
+
+    .file-tab-add {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        color: #6b7280;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        flex-shrink: 0;
+    }
+
+    .file-tab-add svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .file-tab-add:hover {
+        background: rgba(0, 0, 0, 0.05);
+        color: #374151;
+    }
+
+    :global([data-theme="dark"]) .file-tab-add {
+        color: #9ca3af;
+    }
+
+    :global([data-theme="dark"]) .file-tab-add:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: #d1d5db;
     }
 
     /* Actions */
@@ -1800,6 +2271,7 @@
 
         .header-left {
             flex: 1;
+            overflow: hidden;
         }
 
         .window-dots .dot {
@@ -1807,8 +2279,24 @@
             height: 10px;
         }
 
-        .file-name {
+        .file-tabs {
+            flex: 1;
+            max-width: 100%;
+        }
+
+        .file-tab {
+            padding: 0.25rem 0.5rem;
             font-size: 0.75rem;
+        }
+
+        .file-tab-add {
+            width: 24px;
+            height: 24px;
+        }
+
+        .file-tab-add svg {
+            width: 12px;
+            height: 12px;
         }
 
         .playground-actions {
