@@ -26,7 +26,15 @@ fn main() {
 Compile and run your program:
 
 ```bash
-.\bin\ferret.exe hello.fer
+ferret hello.fer
+./hello
+```
+
+Or compile with a custom output name:
+
+```bash
+ferret -o myapp hello.fer
+./myapp
 ```
 
 ## Understanding the Code
@@ -42,6 +50,8 @@ Let's break down what's happening:
 Try modifying the program:
 
 ```ferret
+import "std/io";
+
 fn greet(name: str) -> str {
     return "Hello, " + name + "!";
 }
@@ -55,6 +65,6 @@ fn main() {
 
 ## Next Steps
 
-- [Learn about Ferret's syntax](/syntax)
-- [Explore the type system](/types)
-- [See more examples](/examples)
+- [Learn about Variables & Constants](/basics/variables)
+- [Explore the Type System](/type-system/structs)
+- [Understand Functions](/functions/basics)

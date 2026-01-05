@@ -293,7 +293,7 @@ let alice_score := scores["Alice"] ?? 0;   // 95
 let charlie_score := scores["Charlie"] ?? 0;  // 0 (key not found)
 ```
 
-Learn more about [Optional Types](/optionals) and [Maps](/type-system/maps).
+Learn more about [Optional Types](/type-system/optionals) and [Maps](/type-system/maps).
 
 ### Range Operators (`..` and `..=`)
 
@@ -454,6 +454,6 @@ You've learned about all the operators in Ferret! Here's what we covered:
 
 Now that you know how to work with values using operators, you're ready to control the flow of your programs:
 
-* [Learn about If Statements](/if-statements)  -  Make decisions in your code
-* [Explore Loops](/loops)  -  Repeat actions efficiently
-* [Understand Optional Types](/optionals)  -  Master safe handling of missing values
+* [Learn about If Statements](/control-flow/if-statements)  -  Make decisions in your code
+* [Explore Loops](/control-flow/loops)  -  Repeat actions efficiently
+* [Understand Optional Types](/type-system/optionals)  -  Master safe handling of missing values

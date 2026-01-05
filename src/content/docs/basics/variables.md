@@ -69,5 +69,5 @@ const DEFAULT_PORT := 8080;
 
 ## Next Steps
 
-* [Learn about Data Types](/types)
-* [Explore Operators](/operators)
+* [Learn about Data Types](/basics/types)
+* [Explore Operators](/basics/operators)

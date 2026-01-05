@@ -202,6 +202,6 @@ Comments are a powerful tool when used right:
 
 Now that you know how to document your code, continue learning:
 
-* [Learn about Variables & Constants](/variables)  -  Store and name values
-* [Explore Data Types](/types)  -  Understand what kinds of data you can work with
-* [Master Operators](/operators)  -  Perform operations on your data
+* [Learn about Variables & Constants](/basics/variables)  -  Store and name values
+* [Explore Data Types](/basics/types)  -  Understand what kinds of data you can work with
+* [Master Operators](/basics/operators)  -  Perform operations on your data

@@ -11,7 +11,7 @@ Ferret provides several built-in functions that are available in every module wi
 
 ## Container Operations
 
-Ferret provides a unified set of built-in functions that work with both arrays and maps. These functions respect Ferret's borrow semantics: read operations use immutable references (`&T`), while write operations require mutable references (`&'T`).
+Ferret provides a unified set of built-in functions that work with both arrays and maps. These functions respect Ferret's borrow semantics: read operations use immutable references (`&T`), while write operations require mutable references (`&mut T`).
 
 ### `len(value) -> i32`
 
@@ -84,7 +84,7 @@ let has_alice := has(&scores, "alice");  // true
 let has_charlie := has(&scores, "charlie"); // false
 ```
 
-### `set(&'container, key, value) -> bool`
+### `set(&mut container, key, value) -> bool`
 
 Sets a value in an array or map. Returns `true` on success, `false` if the operation fails (e.g., out of bounds for arrays).
 
@@ -93,17 +93,17 @@ let arr: []i32 = [10, 20, 30];
 let scores := {"alice" => 95} as map[str]i32;
 
 // Array modification (requires mutable reference)
-set(&'arr, 0, 100);
+set(&mut arr, 0, 100);
 io::Println(arr[0]);  // 100
 
 // Map modification (requires mutable reference)
-set(&'scores, "bob", 87);      // Adds new key
-set(&'scores, "alice", 96);    // Updates existing key
+set(&mut scores, "bob", 87);      // Adds new key
+set(&mut scores, "alice", 96);    // Updates existing key
 ```
 
-**Important:** `set()` requires a mutable reference (`&'T`) because it modifies the container.
+**Important:** `set()` requires a mutable reference (`&mut T`) because it modifies the container.
 
-### `remove(&'container, key) -> bool`
+### `remove(&mut container, key) -> bool`
 
 Removes a key from a map. Returns `true` if the key was found and removed, `false` otherwise.
 
@@ -111,8 +111,8 @@ Removes a key from a map. Returns `true` if the key was found and removed, `fals
 let scores := {"alice" => 95, "bob" => 87} as map[str]i32;
 
 // Remove a key (requires mutable reference)
-let removed := remove(&'scores, "bob");  // true
-let not_found := remove(&'scores, "charlie"); // false
+let removed := remove(&mut scores, "bob");  // true
+let not_found := remove(&mut scores, "charlie"); // false
 
 // Check if key still exists
 let has_bob := has(&scores, "bob");  // false
@@ -124,7 +124,7 @@ let has_bob := has(&scores, "bob");  // false
 
 These functions work specifically with dynamic arrays.
 
-### `append(&'array, value) -> bool`
+### `append(&mut array, value) -> bool`
 
 Appends an element to the end of a dynamic array. Returns `true` on success.
 
@@ -132,14 +132,14 @@ Appends an element to the end of a dynamic array. Returns `true` on success.
 let arr: []i32 = [10, 20, 30];
 
 // Append a value (requires mutable reference)
-append(&'arr, 40);
+append(&mut arr, 40);
 io::Println(len(arr));  // 4
 io::Println(arr[3]);    // 40
 ```
 
 **Note:** `append()` only works with dynamic arrays (`[]T`), not fixed-size arrays (`[N]T`).
 
-### `insert(&'array, index, value) -> bool`
+### `insert(&mut array, index, value) -> bool`
 
 Inserts an element at a specific index in a dynamic array, shifting existing elements. Returns `true` on success, `false` if the index is invalid.
 
@@ -147,7 +147,7 @@ Inserts an element at a specific index in a dynamic array, shifting existing ele
 let arr: []i32 = [10, 20, 30];
 
 // Insert at index 1 (requires mutable reference)
-insert(&'arr, 1, 15);
+insert(&mut arr, 1, 15);
 // arr is now [10, 15, 20, 30]
 
 io::Println(arr[1]);    // 15
@@ -195,7 +195,7 @@ let charlie_score := scores["charlie"]; // ❌ Panic: key not found!
 All built-in functions respect Ferret's borrow semantics:
 
 - **Read operations** (`get`, `get_or`, `has`) use immutable references (`&T`)
-- **Write operations** (`set`, `remove`, `append_arr`, `insert`) require mutable references (`&'T`)
+- **Write operations** (`set`, `remove`, `append`, `insert`) require mutable references (`&mut T`)
 
 ```ferret
 let arr: []i32 = [10, 20, 30];
@@ -205,8 +205,8 @@ let val := get(&arr, 0);
 let exists := has(&arr, 1);
 
 // ✅ OK - write operations with mutable reference
-set(&'arr, 0, 100);
-append(&'arr, 40);
+set(&mut arr, 0, 100);
+append(&mut arr, 40);
 
 // ❌ Error - can't use immutable reference for mutation
 set(&arr, 0, 100);  // Compile error: requires mutable reference
@@ -261,7 +261,7 @@ Use `has()` to check before performing operations:
 let scores := {"alice" => 95} as map[str]i32;
 
 if has(&scores, "bob") {
-    set(&'scores, "bob", 87);
+    set(&mut scores, "bob", 87);
 } else {
     // Handle missing key
 }
@@ -275,10 +275,10 @@ Ferret's built-in functions provide a safe and consistent way to work with conta
 - **`get(&c, k) -> T?`** - Safe access returning optional
 - **`get_or(&c, k, fallback) -> T`** - Access with default value
 - **`has(&c, k) -> bool`** - Check if key/index exists
-- **`set(&'c, k, v) -> bool`** - Set value (requires mutable reference)
-- **`remove(&'c, k) -> bool`** - Remove key from map (requires mutable reference)
-- **`append(&'a, v) -> bool`** - Append to array (requires mutable reference)
-- **`insert(&'a, i, v) -> bool`** - Insert into array (requires mutable reference)
+- **`set(&mut c, k, v) -> bool`** - Set value (requires mutable reference)
+- **`remove(&mut c, k) -> bool`** - Remove key from map (requires mutable reference)
+- **`append(&mut a, v) -> bool`** - Append to array (requires mutable reference)
+- **`insert(&mut a, i, v) -> bool`** - Insert into array (requires mutable reference)
 
 All functions respect Ferret's borrow semantics, ensuring memory safety and preventing data races.
 

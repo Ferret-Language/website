@@ -143,7 +143,7 @@ let scores := [95, 87, 92];  // Inferred as []i32
 
 // Dynamic arrays
 let arr := [1, 2, 4];  // size 3
-append(&'arr, 43);  // Append using mutable reference
+append(&mut arr, 43);  // Append using mutable reference
 ```
 
 Notice the `[]` before the type - this means "an array of" that type. Dynamic arrays have **no bounds checking** - they grow to accommodate any index you use.
@@ -273,8 +273,8 @@ let missing: i32 = ages["unknown"];  // ❌ Panic: key not found!
 let ages := {"alice" => 25, "bob" => 30} as map[str]i32;
 
 // Returns i32? (optional i32) - key might not exist!
-let alice_age: i32? = get(&ages, "alice");  // Returns i32? with value 25
-let missing: i32? = get(&ages, "unknown");   // Returns i32? with value none
+let alice_age: i32? = get(&mut ages, "alice");  // Returns i32? with value 25
+let missing: i32? = get(&mut ages, "unknown");   // Returns i32? with value none
 ```
 <｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
 read_file
@@ -288,15 +288,15 @@ The coalescing operator `??` is perfect for providing default values with `get()
 ```ferret
 let scores := {"alice" => 95} as map[str]i32;
 
-let alice_score := get(&scores, "alice") ?? 0;    // 95
-let bob_score := get(&scores, "bob") ?? 0;        // 0 (key doesn't exist)
+let alice_score := get(&mut scores, "alice") ?? 0;    // 95
+let bob_score := get(&mut scores, "bob") ?? 0;        // 0 (key doesn't exist)
 ```
 
 Or use the `get_or()` builtin for a more concise syntax:
 
 ```ferret
-let alice_score := get_or(&scores, "alice", 0);  // 95
-let bob_score := get_or(&scores, "bob", 0);      // 0 (fallback)
+let alice_score := get_or(&mut scores, "alice", 0);  // 95
+let bob_score := get_or(&mut scores, "bob", 0);      // 0 (fallback)
 ```
 
 This pattern is so common you'll use it all the time when working with maps!
@@ -513,6 +513,6 @@ You've learned about Ferret's type system! Here's what we covered:
 
 Now that you know about types, you're ready to learn what you can do with them:
 
-* [Learn about Operators](/operators)  -  Do math, compare values, and more
-* [Explore Optional Types in depth](/optionals)  -  Master safe handling of missing values
-* [Understand Structs](/structs)  -  Create your own custom types
+* [Learn about Operators](/basics/operators)  -  Do math, compare values, and more
+* [Explore Optional Types in depth](/type-system/optionals)  -  Master safe handling of missing values
+* [Understand Structs](/type-system/structs)  -  Create your own custom types

@@ -33,9 +33,9 @@ fn process_ref(data: &LargeData) {
 Ferret has two kinds of references:
 
 - **Immutable references** (`&T`): Read-only access to a value
-- **Mutable references** (`&'T`): Read-write access to a value
+- **Mutable references** (`&mut T`): Read-write access to a value
 
-Use `&` before a type to declare an immutable reference, and `&'` for a mutable reference:
+Use `&` before a type to declare an immutable reference, and `&mut` for a mutable reference:
 
 ```ferret
 // Function parameter with immutable reference
@@ -44,16 +44,16 @@ fn process(data: &LargeData) {
 }
 
 // Function parameter with mutable reference
-fn modify(data: &'LargeData) {
+fn modify(data: &mut LargeData) {
     // Can both read and modify data
 }
 
 // Variable with reference type
 let config_ref: &Config = get_config();
-let mut_config: &'Config = get_mutable_config();
+let mut_config: &mut Config = get_mutable_config();
 ```
 
-When you call a function with a reference parameter, Ferret automatically passes the argument by reference - no special syntax needed! However, for mutable references, you must use `&'` when taking the reference:
+When you call a function with a reference parameter, you use the `&` or `&mut` operator to create the reference:
 
 ```ferret
 let arr: []i32 = [10, 20, 30];
@@ -63,8 +63,28 @@ let immut_ref := &arr;
 process(immut_ref);
 
 // Mutable reference
-let mut_ref := &'arr;
+let mut_ref := &mut arr;
 modify(mut_ref);
+```
+
+## Explicit Dereferencing
+
+When you need to read the value through a reference, use the dereference operator `*`:
+
+```ferret
+let x := 42;
+let r: &i32 = &x;
+let value := *r;  // Dereference to get the value (42)
+io::Println(*r);  // Print the dereferenced value
+```
+
+To modify through a mutable reference, use `*` on the left side of assignment:
+
+```ferret
+let y := 10;
+let r_mut: &mut i32 = &mut y;
+*r_mut = 20;  // Modify the value through the reference
+io::Println(y);  // Prints: 20
 ```
 
 ## When to Use References
@@ -81,7 +101,7 @@ type GameState struct {
 };
 
 // Efficient - no copy
-fn update_game(state: &GameState) {
+fn update_game(state: &mut GameState) {
     // Read and modify the game state
 }
 ```
@@ -120,18 +140,18 @@ setup_cache(config);
 
 Understanding when to use each:
 
-| Aspect | Value (`T`) | Immutable Ref (`&T`) | Mutable Ref (`&'T`) |
+| Aspect | Value (`T`) | Immutable Ref (`&T`) | Mutable Ref (`&mut T`) |
 |--------|-------------|---------------------|---------------------|
 | **Copying** | Creates a copy | Passes a pointer | Passes a pointer |
 | **Size overhead** | Full size of T | Always 8 bytes | Always 8 bytes |
 | **Mutation** | Can't affect original | Can't modify | Can modify |
 | **Safety** | Always safe | Always safe | Must ensure validity |
 | **Borrowing** | N/A | Multiple allowed | Exclusive (no other borrows) |
-| **Default** | ✅ Ferret default | Opt-in with `&` | Opt-in with `&'` |
+| **Default** | ✅ Ferret default | Opt-in with `&` | Opt-in with `&mut` |
 
-## Automatic Dereferencing
+## Automatic Dereferencing for Field Access
 
-When you have a reference type parameter or variable, Ferret **automatically dereferences** it for field access and method calls. You don't need any special syntax:
+When you have a reference type parameter or variable, Ferret **automatically dereferences** it for field access and method calls. You don't need the `*` operator for these operations:
 
 ```ferret
 type Point struct {
@@ -144,12 +164,30 @@ fn (p: Point) distance() -> f64 {
 }
 
 fn process_point(p_ref: &Point) {
-    // Automatic dereferencing - just use it naturally
+    // Automatic dereferencing for field access and methods
     let x := p_ref.x;              // Access field directly
     let dist := p_ref.distance();  // Call method directly
     
     // No need for (*p_ref).x or (*p_ref).distance()
 }
+
+fn modify_point(p_ref: &mut Point) {
+    // Automatic dereferencing also works for mutable references
+    p_ref.x = 10;  // Modifies the field through the reference
+}
+```
+
+However, when you need the actual value (not a field or method), you must explicitly dereference:
+
+```ferret
+let x := 42;
+let r: &i32 = &x;
+
+// ❌ Error: Can't pass reference where value is expected
+io::Println(r);
+
+// ✅ OK: Explicitly dereference to get the value
+io::Println(*r);
 ```
 
 ## References with Methods
@@ -161,14 +199,17 @@ type Counter struct {
     .value: i32,
 };
 
+fn (c: &mut Counter) increment() {
+    c.value++;  // Auto-dereference for field access
+}
+
 fn (c: &Counter) get_value() -> i32 {
-    c.value++; // original value changed
-    return c.value;
+    return c.value;  // Auto-dereference for field access
 }
 
 let counter := { .value: 0 } as Counter;
-counter.increment();        // Method receiver automatically uses appropriate reference
-let value := counter.get_value();  // Method receiver automatically uses appropriate reference
+counter.increment();           // Method automatically borrows as &mut
+let value := counter.get_value();  // Method automatically borrows as &
 ```
 
 ## References and Optional Types
@@ -206,12 +247,12 @@ type RequestBuilder struct {
     .headers: map[str]str,
 };
 
-fn (b: &RequestBuilder) set_url(url: str) -> &RequestBuilder {
+fn (b: &mut RequestBuilder) set_url(url: str) -> &mut RequestBuilder {
     b.url = url;
     return b;
 }
 
-fn (b: &RequestBuilder) set_method(method: str) -> &RequestBuilder {
+fn (b: &mut RequestBuilder) set_method(method: str) -> &mut RequestBuilder {
     b.method = method;
     return b;
 }
@@ -258,7 +299,12 @@ type HugeStruct struct {
 
 // Good - avoids copying 160KB+
 fn process(data: &HugeStruct) {
-    // ...
+    // Read-only access
+}
+
+// Good - avoids copying and allows modification
+fn modify(data: &mut HugeStruct) {
+    // Can modify the data
 }
 
 // Bad - copies 160KB+ on every call
@@ -299,29 +345,29 @@ Ferret enforces strict borrowing rules to ensure memory safety:
 2. **Only one mutable reference at a time:**
    ```ferret
    let arr: []i32 = [10, 20, 30];
-   let mut_ref1 := &'arr;
-   let mut_ref2 := &'arr;  // ❌ Error - can't have multiple mutable refs
+   let mut_ref1 := &mut arr;
+   let mut_ref2 := &mut arr;  // ❌ Error - can't have multiple mutable refs
    ```
 
 3. **Cannot have mutable and immutable references simultaneously:**
    ```ferret
    let arr: []i32 = [10, 20, 30];
    let immut_ref := &arr;
-   let mut_ref := &'arr;  // ❌ Error - conflicts with immutable ref
+   let mut_ref := &mut arr;  // ❌ Error - conflicts with immutable ref
    ```
 
 4. **Cannot use value while mutably borrowed:**
    ```ferret
    let arr: []i32 = [10, 20, 30];
-   let mut_ref := &'arr;
+   let mut_ref := &mut arr;
    io::Println(arr[0]);  // ❌ Error - can't use arr while mutably borrowed
    ```
 
 5. **Borrows are released after function calls:**
    ```ferret
    let arr: []i32 = [10, 20, 30];
-   set(&'arr, 0, 100);  // Borrow released after call
-   set(&'arr, 1, 200);  // ✅ OK - can borrow again
+   append(&mut arr, 100);  // Borrow released after call
+   append(&mut arr, 200);  // ✅ OK - can borrow again
    ```
 
 These rules prevent data races and ensure memory safety at compile time!
@@ -346,23 +392,24 @@ Unlike pointers in C/C++:
 
 Ferret's built-in functions for containers respect borrow semantics:
 
-- **Read operations** use immutable references (`&T`): `get()`, `get_or()`, `has()`
-- **Write operations** require mutable references (`&'T`): `set()`, `remove()`, `append()`, `insert()`
+- **Read operations** use immutable references (`&T`): `len()`, `cap()`
+- **Write operations** require mutable references (`&mut T`): `append()`
 
 ```ferret
 let arr: []i32 = [10, 20, 30];
 let scores := {"alice" => 95} as map[str]i32;
 
-// ✅ OK - read operations with immutable reference
-let val := get(&arr, 0);
-let exists := has(&scores, "alice");
+// ✅ OK - read operations work with both value and reference
+let length := len(arr);
+let arr_ref := &arr;
+let length2 := len(arr_ref);
 
 // ✅ OK - write operations with mutable reference
-set(&'arr, 0, 100);
-set(&'scores, "bob", 87);
+append(&mut arr, 40);
 
 // ❌ Error - can't use immutable reference for mutation
-set(&arr, 0, 100);  // Compile error: requires mutable reference
+let arr_ref := &arr;
+append(arr_ref, 40);  // Compile error: requires mutable reference
 ```
 
 The compiler enforces these rules:
@@ -370,12 +417,12 @@ The compiler enforces these rules:
 - You cannot have mutable and immutable references simultaneously
 - You cannot use a value while it's mutably borrowed
 
-**Learn more:** See the [Built-in Functions](/basics/builtins) documentation for complete details.
+**Learn more:** See the [Built-in Functions](/advanced/builtins) documentation for complete details.
 
 ## Next Steps
 
+- [Learn about Borrow Checker](/type-system/borrow-checker) - Deep dive into borrowing rules and safety
 - [Learn about Methods](/type-system/methods) - Methods can use reference receivers
 - [Explore Structs](/type-system/structs) - Common place to use references
 - [Understand Optional Types](/type-system/optionals) - Combine with references for `&T?`
-- [Built-in Functions](/basics/builtins) - Container operations with borrow semantics
-- [Master Ownership](TODO) - Deep dive into Ferret's ownership model
+- [Built-in Functions](/advanced/builtins) - Container operations with borrow semantics
