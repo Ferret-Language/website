@@ -1095,38 +1095,8 @@
             return;
         }
 
-        // Get all files and concatenate them
-        // TODO: Update WASM compiler to support multi-file compilation with proper imports
-        // For now, we concatenate files into a single compilation unit
+        // Get all files - send as object for proper multi-file compilation
         const allFiles = fileManager.getAllFilesContent();
-        const fileNames = Object.keys(allFiles);
-        
-        let code: string;
-        if (fileNames.length === 1) {
-            // Single file - use as is
-            code = allFiles[fileNames[0]];
-        } else {
-            // Multiple files - concatenate with comments
-            // Main file should come last (after helper files)
-            // This allows helper functions/types to be defined before main()
-            const orderedFiles = fileNames.sort((a, b) => {
-                if (a === "main.fer") return 1;  // main.fer goes last
-                if (b === "main.fer") return -1;
-                return a.localeCompare(b);
-            });
-            
-            code = orderedFiles
-                .map((name) => {
-                    const content = allFiles[name];
-                    // Don't add separator comments if file starts with import
-                    // (user might be preparing for future multi-file support)
-                    if (content.trim().startsWith("import")) {
-                        return `// File: ${name} (imports will work when multi-file compilation is implemented)\n${content}`;
-                    }
-                    return `// ============ File: ${name} ============\n${content}`;
-                })
-                .join("\n\n");
-        }
 
         console.log("WASM Ready:", wasmReady);
 
@@ -1182,7 +1152,8 @@
         renderTerminal();
 
         try {
-            const result = window.ferretCompile(code, false);
+            // Pass files object directly - WASM compiler now supports multi-file compilation
+            const result = window.ferretCompile(allFiles, false);
 
             if (result.success) {
                 const wasmBase64 = result.wasm || "";
@@ -1190,8 +1161,9 @@
                     throw new Error("Compiler did not return a wasm module");
                 }
 
+                // Cache the entire files object for re-runs with input
                 cachedRun = {
-                    code,
+                    code: JSON.stringify(allFiles), // Store as JSON string for cache key
                     wasm: wasmBase64,
                     compilerLog: (result.output || "").trim(),
                 };
@@ -1247,7 +1219,7 @@
                     renderTerminal();
 
                     try {
-                        const retryResult = window.ferretCompile(code, false);
+                        const retryResult = window.ferretCompile(allFiles, false);
                         if (retryResult.success) {
                             const wasmBase64 = retryResult.wasm || "";
                             if (!wasmBase64) {
@@ -1257,7 +1229,7 @@
                             }
 
                             cachedRun = {
-                                code,
+                                code: JSON.stringify(allFiles),
                                 wasm: wasmBase64,
                                 compilerLog: (retryResult.output || "").trim(),
                             };
@@ -1647,7 +1619,7 @@
         background: rgba(255, 255, 255, 0.2);
     }
 
-    .file-tab {
+    :global(.file-tab) {
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -1664,35 +1636,35 @@
         user-select: none;
     }
 
-    .file-tab:hover {
+    .:global(file-tab):hover {
         background: rgba(0, 0, 0, 0.05);
         color: #374151;
     }
 
-    .file-tab.active {
+    :global(.file-tab).active {
         background: rgba(79, 70, 229, 0.1);
         color: #4f46e5;
     }
 
-    :global([data-theme="dark"]) .file-tab {
+    :global([data-theme="dark"]) :global(.file-tab) {
         color: #9ca3af;
     }
 
-    :global([data-theme="dark"]) .file-tab:hover {
+    :global([data-theme="dark"]) :global(.file-tab):hover {
         background: rgba(255, 255, 255, 0.05);
         color: #d1d5db;
     }
 
-    :global([data-theme="dark"]) .file-tab.active {
+    :global([data-theme="dark"]) :global(.file-tab).active {
         background: rgba(139, 92, 246, 0.15);
         color: #a78bfa;
     }
 
-    .tab-name {
+    :global(.tab-name) {
         line-height: 1;
     }
 
-    .tab-close {
+    :global(.tab-close) {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1709,11 +1681,11 @@
         transition: opacity 0.15s ease;
     }
 
-    .tab-close:hover {
+    :global(.tab-close):hover {
         opacity: 1;
     }
 
-    .file-tab-add {
+    :global(.file-tab-add) {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1729,21 +1701,21 @@
         flex-shrink: 0;
     }
 
-    .file-tab-add svg {
+    :global(.file-tab-add) svg {
         width: 14px;
         height: 14px;
     }
 
-    .file-tab-add:hover {
+    :global(.file-tab-add):hover {
         background: rgba(0, 0, 0, 0.05);
         color: #374151;
     }
 
-    :global([data-theme="dark"]) .file-tab-add {
+    :global([data-theme="dark"]) :global(.file-tab-add) {
         color: #9ca3af;
     }
 
-    :global([data-theme="dark"]) .file-tab-add:hover {
+    :global([data-theme="dark"]) :global(.file-tab-add):hover {
         background: rgba(255, 255, 255, 0.05);
         color: #d1d5db;
     }
@@ -2284,17 +2256,17 @@
             max-width: 100%;
         }
 
-        .file-tab {
+        :global(.file-tab) {
             padding: 0.25rem 0.5rem;
             font-size: 0.75rem;
         }
 
-        .file-tab-add {
+        :global(.file-tab-add) {
             width: 24px;
             height: 24px;
         }
 
-        .file-tab-add svg {
+        :global(.file-tab-add) svg {
             width: 12px;
             height: 12px;
         }
