@@ -1,5 +1,6 @@
 ---
 import StarlightHead from '@astrojs/starlight/components/Head.astro';
+import CodeRunner from './CodeRunner.astro';
 // import { ViewTransitions } from 'astro:transitions';
 // import ProgressBar from './ProgressBar.astro';
 ---
@@ -7,9 +8,7 @@ import StarlightHead from '@astrojs/starlight/components/Head.astro';
 <StarlightHead {...Astro.props}>
 <slot />
 </StarlightHead>
-<!-- View Transitions: Uncomment to enable -->
-<!-- <ViewTransitions /> -->
-<!-- <ProgressBar /> -->
+<CodeRunner />
 
 <script is:inline>
   console.log('Head component loaded');

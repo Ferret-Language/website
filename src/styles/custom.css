@@ -464,6 +464,21 @@ figcaption.header {
     padding: 8px 0;
 }
 
+figcaption .title {
+    margin-left: 0.5rem;
+    border-radius: 5px 5px 0 0;
+    border: none;
+}
+
+figcaption .title[data-variant="runnable"] {
+    background: var(--accent-color);
+    color: white;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+
 .expressive-code .copy {
     position: absolute; /* Position the copy container within the expressive-code block */
     top: 0.5rem; /* Adjust vertical alignment */

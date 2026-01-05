@@ -22,7 +22,7 @@ No more null pointer exceptions! Optional types (`T?`) and the coalescing operat
 
 ## Quick Example
 
-```ferret
+```ferret title="run"
 // Variables with type inference
 // Functions
 fn greet(name: str) -> str {
@@ -44,7 +44,7 @@ fn main() {
     // Coalescing operator for default values
     let value: i32 = maybeValue ?? 0;
 
-    greet(name);
+    io::Println(greet(name));
 }
 
 ```
