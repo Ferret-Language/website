@@ -491,7 +491,7 @@
                 {
                     "comment": "storage keywords",
                     "name": "keyword.other.fer",
-                    "match": "\\b(let|const)\\b"
+                    "match": "\\b(let|const|mut)\\b"
                 },
                 {
                     "comment": "type keyword",
