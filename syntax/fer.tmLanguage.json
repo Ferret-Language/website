@@ -529,14 +529,19 @@
                     "match": "(\\^|\\||\\|\\||&&|<<|>>|!)(?!=)"
                 },
                 {
-                    "comment": "mutable reference operator &'",
+                    "comment": "mutable reference operator &mut",
+                    "name": "keyword.operator.borrow.mutable.fer",
+                    "match": "&mut\\b"
+                },
+                {
+                    "comment": "mutable reference operator &' (legacy)",
                     "name": "keyword.operator.borrow.mutable.fer",
                     "match": "&'"
                 },
                 {
                     "comment": "immutable reference operator, logical AND, borrow references",
                     "name": "keyword.operator.borrow.and.fer",
-                    "match": "&(?![&='])"
+                    "match": "&(?![&='m])"
                 },
                 {
                     "comment": "assignment operators",
