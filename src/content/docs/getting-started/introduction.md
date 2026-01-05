@@ -23,6 +23,7 @@ No more null pointer exceptions! Optional types (`T?`) and the coalescing operat
 ## Quick Example
 
 ```ferret title="run"
+import "std/io";
 // Variables with type inference
 // Functions
 fn greet(name: str) -> str {

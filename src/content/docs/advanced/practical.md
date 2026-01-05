@@ -102,8 +102,9 @@ fn bubble_sort(nums: []i32) {
 
 ## Example Program
 
-```ferret
+```ferret title="run"
 import "std/io";
+
 
 fn factorial(n: i32) -> i32 {
     if n <= 1 {
@@ -117,6 +118,7 @@ fn factorial(n: i32) -> i32 {
     }
     return result;
 }
+
 
 fn fib(n: i32) -> i32 {
     if n <= 1 {
@@ -132,6 +134,7 @@ fn fib(n: i32) -> i32 {
     return b;
 }
 
+
 fn gcd(a: i32, b: i32) -> i32 {
     let x := a;
     let y := b;
@@ -142,6 +145,7 @@ fn gcd(a: i32, b: i32) -> i32 {
     }
     return x;
 }
+
 
 fn binary_search(nums: []i32, target: i32) -> i32 {
     let left := 0;
@@ -161,7 +165,8 @@ fn binary_search(nums: []i32, target: i32) -> i32 {
     return -1;
 }
 
-fn bubble_sort(nums: []i32) {
+
+fn bubble_sort(nums: &mut []i32) {
     let n := len(nums);
     let i := 0;
     while i < n {
@@ -178,15 +183,18 @@ fn bubble_sort(nums: []i32) {
     }
 }
 
+
 fn main() {
     io::Println(factorial(6)); // 720
     io::Println(fib(10));      // 55
     io::Println(gcd(84, 30));  // 6
 
+
     let nums := [9, 4, 1, 7, 3, 8, 2, 6, 5];
-    bubble_sort(nums);
+    bubble_sort(&mut nums);
     io::Println(nums[0]);      // 1
     io::Println(nums[8]);      // 9
+
 
     let idx := binary_search(nums, 7);
     io::Println(idx);          // 6
