@@ -17,11 +17,13 @@
     "mermaid": "^11.12.2",
     "monaco-editor": "^0.55.1",
     "sharp": "^0.34.2",
+    "svelte": "^5.46.1",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3",
     "unist-util-visit": "^5.0.0"
   },
   "devDependencies": {
+    "@astrojs/svelte": "^7.2.4",
     "astro": "^5.16.0"
   }
 }

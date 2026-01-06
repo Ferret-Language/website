@@ -1,3 +1,10 @@
+---
+import Modal from './Modal.svelte';
+---
+
+<!-- Modal Component -->
+<Modal client:load />
+
 <div class="playground-container">
     <!-- Header with macOS-style dots and actions -->
     <div class="playground-header">
@@ -281,6 +288,58 @@
 
     // Initialize WASM on page load
     initWasm();
+
+    // Modal Helper Functions
+    interface ModalController {
+        showAlert: (message: string) => Promise<void>;
+        showConfirm: (message: string) => Promise<boolean>;
+        showPrompt: (message: string, placeholder?: string, defaultValue?: string) => Promise<string | null>;
+    }
+
+    const modal: ModalController = {
+        showAlert: (message: string) => {
+            return new Promise<void>((resolve) => {
+                const event = new CustomEvent('show-modal', {
+                    detail: {
+                        type: 'alert',
+                        message,
+                        onConfirm: () => resolve()
+                    }
+                });
+                window.dispatchEvent(event);
+            });
+        },
+
+        showConfirm: (message: string) => {
+            return new Promise<boolean>((resolve) => {
+                const event = new CustomEvent('show-modal', {
+                    detail: {
+                        type: 'confirm',
+                        message,
+                        onConfirm: () => resolve(true),
+                        onCancel: () => resolve(false)
+                    }
+                });
+                window.dispatchEvent(event);
+            });
+        },
+
+        showPrompt: (message: string, placeholder = '', defaultValue = '') => {
+            return new Promise<string | null>((resolve) => {
+                const event = new CustomEvent('show-modal', {
+                    detail: {
+                        type: 'prompt',
+                        message,
+                        inputPlaceholder: placeholder,
+                        inputValue: defaultValue,
+                        onConfirm: (value: string) => resolve(value),
+                        onCancel: () => resolve(null)
+                    }
+                });
+                window.dispatchEvent(event);
+            });
+        }
+    };
 
     // Register Ferret language
     monaco.languages.register({ id: "ferret" });
@@ -752,9 +811,10 @@
             const fileName = (btn as HTMLElement).dataset.file;
             if (!fileName) return;
             
-            btn.addEventListener("click", (e) => {
+            btn.addEventListener("click", async (e) => {
                 e.stopPropagation();
-                if (confirm(`Close ${fileName}?`)) {
+                const confirmed = await modal.showConfirm(`Close ${fileName}?`);
+                if (confirmed) {
                     fileManager.removeFile(fileName);
                     fileManager.saveToLocalStorage();
                 }
@@ -763,12 +823,12 @@
         
         const addBtn = tabsContainer.querySelector(".file-tab-add");
         if (addBtn) {
-            addBtn.addEventListener("click", () => {
-                const fileName = prompt("Enter file name (must end with .fer):");
+            addBtn.addEventListener("click", async () => {
+                const fileName = await modal.showPrompt("Enter file name (must end with .fer):", "e.g., utils.fer");
                 if (!fileName) return;
                 
                 if (!fileName.endsWith(".fer")) {
-                    alert("File name must end with .fer");
+                    await modal.showAlert("File name must end with .fer");
                     return;
                 }
                 
@@ -776,7 +836,7 @@
                     fileManager.switchToFile(fileName);
                     fileManager.saveToLocalStorage();
                 } else {
-                    alert("File already exists!");
+                    await modal.showAlert("File already exists!");
                 }
             });
         }
@@ -1406,8 +1466,8 @@
                     this.style.color = "";
                     this.disabled = false;
                 }, 1200);
-            }).catch(() => {
-                alert(`Share this URL:\n\n${shareUrl}`);
+            }).catch(async () => {
+                await modal.showAlert(`Share this URL:\n\n${shareUrl}`);
             });
         },
     );
@@ -1444,8 +1504,9 @@
 
     (
         document.getElementById("clear-btn") as HTMLButtonElement
-    ).addEventListener("click", function () {
-        if (confirm("Are you sure you want to clear all files?")) {
+    ).addEventListener("click", async function () {
+        const confirmed = await modal.showConfirm("Are you sure you want to clear all files?");
+        if (confirmed) {
             // Reset to single main.fer with empty content
             fileManager.loadFiles({ "main.fer": "" });
             fileManager.saveToLocalStorage();
@@ -1678,6 +1739,7 @@
         line-height: 1;
         cursor: pointer;
         opacity: 0.6;
+        transform: translateX(5px);
         transition: opacity 0.15s ease;
     }
 
