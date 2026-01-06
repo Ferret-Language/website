@@ -10,6 +10,8 @@
   let inputPlaceholder = $state('');
   let confirmText = $state('OK');
   let cancelText = $state('Cancel');
+  let selectableContent = $state(false);
+  let selectableText = $state('');
   let onConfirm: ((value?: string) => void) | null = null;
   let onCancel: (() => void) | null = null;
 
@@ -26,6 +28,8 @@
         inputValue: defaultValue = '',
         confirmText: confirmTxt = 'OK',
         cancelText: cancelTxt = 'Cancel',
+        selectableContent: selectable = false,
+        selectableText: selectableTxt = '',
         onConfirm: confirmCallback = null,
         onCancel: cancelCallback = null
       } = event.detail;
@@ -38,6 +42,8 @@
       inputValue = defaultValue;
       confirmText = confirmTxt;
       cancelText = cancelTxt;
+      selectableContent = selectable;
+      selectableText = selectableTxt;
       onConfirm = confirmCallback;
       onCancel = cancelCallback;
     };
@@ -107,7 +113,15 @@
       {/if}
       
       <div class="modal-content">
-        <p class="modal-message">{message}</p>
+        {#if message}
+          <p class="modal-message">{message}</p>
+        {/if}
+        
+        {#if selectableContent && selectableText}
+          <div class="modal-selectable-content">
+            <pre class="modal-selectable-text">{selectableText}</pre>
+          </div>
+        {/if}
         
         {#if type === 'prompt'}
           <input
@@ -204,18 +218,82 @@
 
   .modal-content {
     margin-bottom: 1.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Custom scrollbar for modal content */
+  .modal-content::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .modal-content::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 4px;
+  }
+
+  .modal-content::-webkit-scrollbar-thumb {
+    background: #9ca3af;
+    border-radius: 4px;
+  }
+
+  .modal-content::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+  }
+
+  :global([data-theme="dark"]) .modal-content::-webkit-scrollbar-track {
+    background: #1f2937;
+  }
+
+  :global([data-theme="dark"]) .modal-content::-webkit-scrollbar-thumb {
+    background: #4b5563;
+  }
+
+  :global([data-theme="dark"]) .modal-content::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
   }
 
   .modal-message {
     margin: 0 0 1rem 0;
-    font-size: 1.1rem;
-    font-weight: bold;
+    font-size: 1rem;
     line-height: 1.6;
     color: #374151;
+    user-select: none;
+  }
+
+  .modal-selectable-content {
+    margin-top: 1rem;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    padding: 0.875rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    user-select: text;
+    cursor: text;
+  }
+
+  .modal-selectable-text {
+    margin: 0;
+    font-family: 'Courier New', Consolas, monospace;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: #1f2937;
+    word-break: break-all;
+    white-space: pre-wrap;
+    user-select: text;
   }
 
   :global([data-theme="dark"]) .modal-message {
     color: #d1d5db;
+  }
+
+  :global([data-theme="dark"]) .modal-selectable-content {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  :global([data-theme="dark"]) .modal-selectable-text {
+    color: #e5e7eb;
   }
 
   .modal-input {

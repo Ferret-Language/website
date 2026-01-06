@@ -290,19 +290,28 @@ import Modal from './Modal.svelte';
     initWasm();
 
     // Modal Helper Functions
+    interface ModalOptions {
+        title?: string;
+        selectableContent?: boolean;
+        selectableText?: string;
+    }
+
     interface ModalController {
-        showAlert: (message: string) => Promise<void>;
-        showConfirm: (message: string) => Promise<boolean>;
-        showPrompt: (message: string, placeholder?: string, defaultValue?: string) => Promise<string | null>;
+        showAlert: (message: string, options?: ModalOptions) => Promise<void>;
+        showConfirm: (message: string, options?: ModalOptions) => Promise<boolean>;
+        showPrompt: (message: string, placeholder?: string, defaultValue?: string, options?: ModalOptions) => Promise<string | null>;
     }
 
     const modal: ModalController = {
-        showAlert: (message: string) => {
+        showAlert: (message: string, options?: ModalOptions) => {
             return new Promise<void>((resolve) => {
                 const event = new CustomEvent('show-modal', {
                     detail: {
                         type: 'alert',
                         message,
+                        title: options?.title,
+                        selectableContent: options?.selectableContent,
+                        selectableText: options?.selectableText,
                         onConfirm: () => resolve()
                     }
                 });
@@ -310,12 +319,15 @@ import Modal from './Modal.svelte';
             });
         },
 
-        showConfirm: (message: string) => {
+        showConfirm: (message: string, options?: ModalOptions) => {
             return new Promise<boolean>((resolve) => {
                 const event = new CustomEvent('show-modal', {
                     detail: {
                         type: 'confirm',
                         message,
+                        title: options?.title,
+                        selectableContent: options?.selectableContent,
+                        selectableText: options?.selectableText,
                         onConfirm: () => resolve(true),
                         onCancel: () => resolve(false)
                     }
@@ -324,12 +336,15 @@ import Modal from './Modal.svelte';
             });
         },
 
-        showPrompt: (message: string, placeholder = '', defaultValue = '') => {
+        showPrompt: (message: string, placeholder = '', defaultValue = '', options?: ModalOptions) => {
             return new Promise<string | null>((resolve) => {
                 const event = new CustomEvent('show-modal', {
                     detail: {
                         type: 'prompt',
                         message,
+                        title: options?.title,
+                        selectableContent: options?.selectableContent,
+                        selectableText: options?.selectableText,
                         inputPlaceholder: placeholder,
                         inputValue: defaultValue,
                         onConfirm: (value: string) => resolve(value),
@@ -1467,8 +1482,9 @@ import Modal from './Modal.svelte';
                     this.style.color = "";
                     this.disabled = false;
                 }, 1200);
+                //modal.showAlert("Could not copy, copy manually:", { selectableContent: true, selectableText: shareUrl });
             }).catch(async () => {
-                await modal.showAlert(`Share this URL:\n\n${shareUrl}`);
+                await modal.showAlert("Could not copy, copy manually:", { selectableContent: true, selectableText: shareUrl });
             });
         },
     );
