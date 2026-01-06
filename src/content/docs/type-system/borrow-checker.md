@@ -262,7 +262,7 @@ error[B0002]: cannot borrow 'arr' as mutable because it is also borrowed as immu
 2 | let r1 := &arr;
   |           ---- immutable borrow occurs here
 3 | let r2 := &mut arr;
-  |           ^^^^^^^^ mutable borrow occurs here
+  |           ~~~~~~~~ mutable borrow occurs here
 4 | io::Println(*r1);
   |             --- immutable borrow later used here
 ```
