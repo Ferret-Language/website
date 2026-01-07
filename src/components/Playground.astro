@@ -174,7 +174,7 @@ import Modal from './Modal.svelte';
     declare global {
         interface Window {
             ferretCompile?: (
-                code: string,
+                codes: Record<string, string>,
                 debug: boolean,
             ) => {
                 success: boolean;
@@ -1082,7 +1082,7 @@ import Modal from './Modal.svelte';
         });
 
         try {
-            const programBytes = decodeBase64(cachedRun.wasm);
+            const programBytes = decodeBase64(cachedRun.wasm) as BufferSource;
             const program = await WebAssembly.instantiate(
                 programBytes,
                 runtime.imports,
@@ -1090,6 +1090,7 @@ import Modal from './Modal.svelte';
             if (token !== runToken) {
                 return;
             }
+
             runtime.bind(program.instance);
             const main = (program.instance.exports as any).main;
             if (typeof main === "function") {

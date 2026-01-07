@@ -201,7 +201,7 @@
   }
 
   :global([data-theme="dark"]) .modal-container {
-    background: #1f2937;
+    background: var(--border);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
   }
 
