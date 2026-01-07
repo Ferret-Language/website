@@ -26,62 +26,65 @@
     };
   }
 
-  onMount(async () => {
-    if (typeof window === 'undefined'){
-      return;
-    }
+  onMount(() => {
+
     // Register language and themes
     registerFerretLanguage();
     defineThemes();
 
-    const monaco = await import("monaco-editor");
+    let observer: MutationObserver | null = null;
 
-    // Create editor
-    editor = monaco.editor.create(containerRef, {
-      model,
-      language: "ferret",
-      theme: currentTheme,
-      automaticLayout: true,
-    });
+    (async () => {
+      const monaco = await import("monaco-editor");
 
-    // Cursor position tracking
-    editor.onDidChangeCursorPosition((e) => {
-      if (onCursorChange) {
-        onCursorChange(e.position.lineNumber, e.position.column);
-      }
-    });
+      // Create editor
+      editor = monaco.editor.create(containerRef, {
+        model,
+        language: "ferret",
+        theme: currentTheme,
+        automaticLayout: true,
+      });
 
-    // Keyboard shortcut: Ctrl+Enter to run
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-      if (onRun) {
-        onRun();
-      }
-    });
+      // Cursor position tracking
+      editor.onDidChangeCursorPosition((e) => {
+        if (onCursorChange) {
+          onCursorChange(e.position.lineNumber, e.position.column);
+        }
+      });
 
-    // Force layout update
-    requestAnimationFrame(() => {
-      editor?.layout();
-    });
+      // Keyboard shortcut: Ctrl+Enter to run
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+        if (onRun) {
+          onRun();
+        }
+      });
 
-    // Listen for theme changes
-    const observer = new MutationObserver(() => {
-      const newTheme = getCurrentTheme();
-      if (newTheme !== currentTheme) {
-        monaco.editor.setTheme(newTheme);
-        currentTheme = newTheme;
-      }
-    });
-    
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-theme"],
-    });
+      // Force layout update
+      requestAnimationFrame(() => {
+        editor?.layout();
+      });
+
+      // Listen for theme changes
+      observer = new MutationObserver(() => {
+        const newTheme = getCurrentTheme();
+        if (newTheme !== currentTheme) {
+          monaco.editor.setTheme(newTheme);
+          currentTheme = newTheme;
+        }
+      });
+
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["data-theme"],
+      });
+    })();
 
     return () => {
-      observer.disconnect();
+      observer?.disconnect();
       editor?.dispose();
     };
   });
+
 
   // Update model when prop changes
   $effect(() => {

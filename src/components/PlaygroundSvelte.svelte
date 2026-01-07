@@ -2,7 +2,7 @@
   import { initWasm, compile, isWasmReady } from '../lib/compiler';
   import { createFerretRuntime } from '../lib/runtime';
   import { onMount } from 'svelte';
-  //import * as monaco from "monaco-editor";
+  import type * as monaco from "monaco-editor";
   import FileTabs from './playground/FileTabs.svelte';
   import Editor from './playground/Editor.svelte';
   import OutputPanel from './playground/OutputPanel.svelte';
@@ -16,7 +16,7 @@
   }
 
   // State management using Svelte 5 runes
-  let files = $state<Record<string, any>>({});
+  let files = $state<Record<string, monaco.editor.ITextModel>>({});
   let activeFile = $state("main.fer");
   let cursorPosition = $state({ line: 1, column: 1 });
   let compilerVersion = $state("Loading...");
@@ -114,9 +114,6 @@
 
   // File management functions
   async function createFile(name: string, content: string = "") {
-    if (typeof window === 'undefined'){
-      return;
-    }
     const monaco = await import("monaco-editor");
     const uri = monaco.Uri.parse(`file:///${name}`);
     const model = monaco.editor.createModel(content, "ferret", uri);
@@ -575,6 +572,7 @@
   .playground-container {
     display: flex;
     flex-direction: column;
+    margin: 2rem 0;
     border-radius: 16px;
     overflow: hidden;
     background: #ffffff;
