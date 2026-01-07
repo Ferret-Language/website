@@ -162,6 +162,7 @@ import Modal from './Modal.svelte';
     import * as monaco from "monaco-editor";
     import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
     import { createFerretRuntime } from "../lib/runtime";
+    import { base64EncodeUnicode, base64DecodeUnicode } from "../lib/base64";
 
     // Setup Monaco environment
     self.MonacoEnvironment = {
@@ -882,7 +883,7 @@ import Modal from './Modal.svelte';
     
     if (filesParam) {
         try {
-            const filesData = JSON.parse(atob(filesParam));
+            const filesData = JSON.parse(base64DecodeUnicode(filesParam));
             fileManager.loadFiles(filesData);
             filesLoaded = true;
         } catch (e) {
@@ -933,12 +934,10 @@ import Modal from './Modal.svelte';
     // No theme switching: always use 'ferret-one-dark-pro' for consistency with code snippets
 
     function decodeBase64(base64: string): Uint8Array {
-        const binary = atob(base64);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-            bytes[i] = binary.charCodeAt(i);
-        }
-        return bytes;
+        return Uint8Array.from(
+            atob(base64),
+            c => c.charCodeAt(0)
+        );
     }
 
     // Button handlers
@@ -1468,7 +1467,7 @@ import Modal from './Modal.svelte';
         function () {
             const allFiles = fileManager.getAllFilesContent();
             const filesJson = JSON.stringify(allFiles);
-            const filesBase64 = btoa(filesJson);
+            const filesBase64 = base64EncodeUnicode(filesJson);
             const shareUrl = `${window.location.origin}${window.location.pathname}?files=${filesBase64}`;
             
             navigator.clipboard.writeText(shareUrl).then(() => {

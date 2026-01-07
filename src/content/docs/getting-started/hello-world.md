@@ -9,9 +9,9 @@ Let's write your first Ferret program!
 
 ## Create a File
 
-Create a file named `hello.fer`:
+Create a file named `main.fer` in your project directory (folder).:
 
-```ferret
+```ferret title="run"
 // Your first Ferret program
 import "std/io";
 
@@ -26,8 +26,13 @@ fn main() {
 Compile and run your program:
 
 ```bash
-ferret hello.fer
-./hello
+ferret main.fer
+```
+
+The compiler will produce a little program of the same name as your current project folder. So if your project folder is named `hello`, you'll get an executable named `hello` (or `hello.exe` on Windows). Run it like this:
+
+```bash
+./hello # On Windows, use: ./hello.exe
 ```
 
 Or compile with a custom output name:
@@ -49,7 +54,7 @@ Let's break down what's happening:
 
 Try modifying the program:
 
-```ferret
+```ferret title="run"
 import "std/io";
 
 fn greet(name: str) -> str {

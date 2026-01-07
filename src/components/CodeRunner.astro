@@ -5,6 +5,14 @@
 <script is:inline>
   console.log('CodeRunner script loaded!');
   
+  // Unicode-safe base64 encoding
+  function base64EncodeUnicode(str) {
+    return btoa(
+      new TextEncoder().encode(str)
+        .reduce((data, byte) => data + String.fromCharCode(byte), "")
+    );
+  }
+  
   function initCodeRunners() {
     console.log('initCodeRunners called');
     // Find all Ferret code blocks
@@ -56,8 +64,8 @@
       // Add click handler
       button.addEventListener('click', () => {
         const files = { 'main.fer': code };
-        const filesBase64 = btoa(JSON.stringify(files));
-        window.location.href = `/play?files=${encodeURIComponent(filesBase64)}`;
+        const filesBase64 = base64EncodeUnicode(JSON.stringify(files));
+        window.open(`/play?files=${encodeURIComponent(filesBase64)}`, '_blank');
       });
       
       // Add button to the copy button's container
