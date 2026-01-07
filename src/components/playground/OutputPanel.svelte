@@ -103,10 +103,6 @@
       ></textarea>
     </div>
   </div>
-  
-  <div class="editor-footer">
-    <span>Ferret Compiler v{version}</span>
-  </div>
 </div>
 
 <style>
@@ -333,21 +329,5 @@
 
   :global([data-theme="dark"]) .terminal-input-field::placeholder {
     color: #6b7280;
-  }
-
-  .editor-footer {
-    display: flex;
-    gap: 1rem;
-    padding: 0.5rem 1rem;
-    font-size: 0.6875rem;
-    color: #9ca3af;
-    background: rgba(0, 0, 0, 0.02);
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
-  }
-
-  :global([data-theme="dark"]) .editor-footer {
-    color: #6b7280;
-    background: var(--editor-bg, #282C34);
-    border-top-color: rgba(255, 255, 255, 0.06);
   }
 </style>

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { createFerretRuntime } from '../lib/runtime';
   import { initWasm, compile, isWasmReady } from '../lib/compiler';
+  import { createFerretRuntime } from '../lib/runtime';
   import { onMount } from 'svelte';
   import * as monaco from "monaco-editor";
   import FileTabs from './playground/FileTabs.svelte';
@@ -247,8 +247,8 @@
       
       if (token !== runToken) return;
       
-      runtime.bind(program);
-      const main = (program.exports as any).main;
+      runtime.bind(program.instance);
+      const main = (program.instance.exports as any).main;
       if (typeof main === "function") {
         main();
       }
@@ -568,7 +568,6 @@
   .playground-container {
     display: flex;
     flex-direction: column;
-    margin: 2rem 0;
     border-radius: 16px;
     overflow: hidden;
     background: #ffffff;
