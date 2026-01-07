@@ -136,10 +136,9 @@
 
   function handleKeydown(e: KeyboardEvent) {
     if (!isOpen) return;
-    
     if (e.key === 'Escape') {
       handleCancel();
-    } else if (e.key === 'Enter' && type !== 'prompt') {
+    } else if (e.key === 'Enter') {
       e.preventDefault();
       handleConfirm();
     }
@@ -190,12 +189,6 @@
             type="text"
             placeholder={inputPlaceholder}
             class="modal-input"
-            onkeydown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleConfirm();
-              }
-            }}
           />
         {/if}
       </div>

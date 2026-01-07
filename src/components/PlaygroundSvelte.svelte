@@ -428,6 +428,7 @@
     }
 
     if (files[name]) {
+      console.log("File already exists:", name);
       await showAlert("File already exists!");
       return;
     }
