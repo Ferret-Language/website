@@ -80,7 +80,7 @@ const pageTitle = 'Ferret Playground';
     <div class="page-container">
         <Navbar {...Astro.props} showSearch={false} />
         <div class="playground-wrapper">
-            <Playground client:only/>
+            <Playground client:idle/>
         </div>
     </div>
 </body>

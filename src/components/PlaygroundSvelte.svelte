@@ -2,7 +2,7 @@
   import { initWasm, compile, isWasmReady } from '../lib/compiler';
   import { createFerretRuntime } from '../lib/runtime';
   import { onMount } from 'svelte';
-  import * as monaco from "monaco-editor";
+  //import * as monaco from "monaco-editor";
   import FileTabs from './playground/FileTabs.svelte';
   import Editor from './playground/Editor.svelte';
   import OutputPanel from './playground/OutputPanel.svelte';
@@ -16,7 +16,7 @@
   }
 
   // State management using Svelte 5 runes
-  let files = $state<Record<string, monaco.editor.ITextModel>>({});
+  let files = $state<Record<string, any>>({});
   let activeFile = $state("main.fer");
   let cursorPosition = $state({ line: 1, column: 1 });
   let compilerVersion = $state("Loading...");
@@ -43,57 +43,7 @@
 }`;
 
   // Initialize WASM and load files
-  onMount(async () => {
-    // Load default code from file
-    let defaultCode = DEFAULT_CODE;
-    try {
-      const response = await fetch("/examples/default.fer");
-      if (response.ok) {
-        defaultCode = await response.text();
-      }
-    } catch (error) {
-      console.error("Error loading default code:", error);
-    }
-
-    // Check for files in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const filesParam = urlParams.get("files");
-    
-    let filesLoaded = false;
-    
-    if (filesParam) {
-      try {
-        const filesData = JSON.parse(base64DecodeUnicode(filesParam));
-        loadFilesFromData(filesData);
-        filesLoaded = true;
-      } catch (e) {
-        console.error("Failed to load files from URL:", e);
-      }
-    }
-    
-    if (!filesLoaded) {
-      filesLoaded = loadFromLocalStorage();
-    }
-    
-    if (!filesLoaded) {
-      createFile("main.fer", defaultCode);
-    }
-
-    // Initialize WASM
-    const result = await initWasm();
-    if (result.success) {
-      compilerVersion = result.version || "unknown";
-      status = "ready";
-      statusText = "Ready";
-    } else {
-      status = "error";
-      statusText = "Error";
-      terminalEvents = [{
-        type: "system",
-        html: `<p style="color: #ef4444;">Failed to load compiler: ${escapeHtml(result.error || "Unknown error")}</p><p style="color: #6b7280; font-size: 0.75rem; margin-top: 0.5rem;">Please refresh the page to try again.</p>`,
-      }];
-    }
-
+  onMount(() => {
     // Listen for escape key to abort
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isRunning) {
@@ -101,7 +51,59 @@
       }
     };
     document.addEventListener("keydown", handleEscape);
-    
+
+    (async () => {
+      // Load default code from file
+      let defaultCode = DEFAULT_CODE;
+      try {
+        const response = await fetch("/examples/default.fer");
+        if (response.ok) {
+          defaultCode = await response.text();
+        }
+      } catch (error) {
+        console.error("Error loading default code:", error);
+      }
+
+      // Check for files in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const filesParam = urlParams.get("files");
+
+      let filesLoaded = false;
+
+      if (filesParam) {
+        try {
+          const filesData = JSON.parse(base64DecodeUnicode(filesParam));
+          loadFilesFromData(filesData);
+          filesLoaded = true;
+        } catch (e) {
+          console.error("Failed to load files from URL:", e);
+        }
+      }
+
+      if (!filesLoaded) {
+        filesLoaded = loadFromLocalStorage();
+      }
+
+      if (!filesLoaded) {
+        createFile("main.fer", defaultCode);
+      }
+
+      // Initialize WASM
+      const result = await initWasm();
+      if (result.success) {
+        compilerVersion = result.version || "unknown";
+        status = "ready";
+        statusText = "Ready";
+      } else {
+        status = "error";
+        statusText = "Error";
+        terminalEvents = [{
+          type: "system",
+          html: `<p style="color: #ef4444;">Failed to load compiler: ${escapeHtml(result.error || "Unknown error")}</p><p style="color: #6b7280; font-size: 0.75rem; margin-top: 0.5rem;">Please refresh the page to try again.</p>`,
+        }];
+      }
+    })();
+
     return () => {
       document.removeEventListener("keydown", handleEscape);
       // Dispose all models
@@ -109,8 +111,13 @@
     };
   });
 
+
   // File management functions
-  function createFile(name: string, content: string = "") {
+  async function createFile(name: string, content: string = "") {
+    if (typeof window === 'undefined'){
+      return;
+    }
+    const monaco = await import("monaco-editor");
     const uri = monaco.Uri.parse(`file:///${name}`);
     const model = monaco.editor.createModel(content, "ferret", uri);
     files[name] = model;
@@ -242,7 +249,7 @@
     });
 
     try {
-      const programBytes = decodeBase64(cachedRun.wasm);
+      const programBytes = decodeBase64(cachedRun.wasm) as BufferSource;
       const program = await WebAssembly.instantiate(programBytes, runtime.imports);
       
       if (token !== runToken) return;
@@ -734,6 +741,7 @@
     color: #9ca3af;
     background: rgba(0, 0, 0, 0.02);
     border-top: 1px solid rgba(0, 0, 0, 0.06);
+    margin-top: auto;
   }
 
   :global([data-theme="dark"]) .editor-footer {

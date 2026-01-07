@@ -1,6 +1,7 @@
 <script lang="ts">
+
   import { onMount } from 'svelte';
-  import * as monaco from "monaco-editor";
+  import type * as monaco from "monaco-editor";
   import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
   import { registerFerretLanguage, defineThemes, getCurrentTheme } from "../../lib/monaco-config";
 
@@ -25,10 +26,15 @@
     };
   }
 
-  onMount(() => {
+  onMount(async () => {
+    if (typeof window === 'undefined'){
+      return;
+    }
     // Register language and themes
     registerFerretLanguage();
     defineThemes();
+
+    const monaco = await import("monaco-editor");
 
     // Create editor
     editor = monaco.editor.create(containerRef, {

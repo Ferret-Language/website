@@ -1,6 +1,6 @@
 <script lang="ts">
   import type * as monaco from "monaco-editor";
-  import Modal, { showAlert, showPrompt } from "../Modal.svelte";
+  import { showAlert, showPrompt } from "../Modal.svelte";
 
   interface Props {
     files: Record<string, monaco.editor.ITextModel>;

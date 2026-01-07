@@ -1,9 +1,7 @@
-/**
- * Monaco Editor configuration and theme definitions
- */
-import * as monaco from "monaco-editor";
 
-export function registerFerretLanguage() {
+export async function registerFerretLanguage() {
+
+    const monaco = await import("monaco-editor");
     // Register Ferret language
     monaco.languages.register({ id: "ferret" });
 
@@ -102,8 +100,9 @@ export function registerFerretLanguage() {
     });
 }
 
-export function defineThemes() {
+export async function defineThemes() {
     // Dark theme
+    const monaco = await import("monaco-editor");
     monaco.editor.defineTheme("ferret-one-dark-pro", {
         base: "vs-dark",
         inherit: true,
