@@ -1,12 +1,15 @@
 <script lang="ts">
-
-  import { onMount } from 'svelte';
+  import { onMount } from "svelte";
   import type * as monaco from "monaco-editor";
   import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
-  import { registerFerretLanguage, defineThemes, getCurrentTheme } from "../../lib/monaco-config";
+  import {
+    registerFerretLanguage,
+    defineThemes,
+    getCurrentTheme,
+  } from "../../lib/monaco-config";
 
   interface Props {
-    model: monaco.editor.ITextModel;
+    model: monaco.editor.ITextModel | null;
     onCursorChange?: (line: number, column: number) => void;
     onRun?: () => void;
   }
@@ -15,31 +18,32 @@
 
   let containerRef: HTMLDivElement;
   let editor: monaco.editor.IStandaloneCodeEditor | null = null;
-  let currentTheme = $state(getCurrentTheme());
+  let currentTheme = getCurrentTheme();
+  let themeObserver: MutationObserver | null = null;
 
-  // Setup Monaco environment
-  if (typeof window !== 'undefined') {
-    self.MonacoEnvironment = {
-      getWorker() {
-        return new editorWorker();
-      },
-    };
-  }
+  // Monaco worker setup
+  // (Vite/SvelteKit needs this for Monaco to load its editor worker)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).MonacoEnvironment = {
+    getWorker() {
+      return new editorWorker();
+    },
+  };
 
   onMount(() => {
-
-    // Register language and themes
-    registerFerretLanguage();
-    defineThemes();
-
-    let observer: MutationObserver | null = null;
+    let disposed = false;
 
     (async () => {
       const monaco = await import("monaco-editor");
+      await registerFerretLanguage();
+      await defineThemes();
+
+      if (disposed) return;
+      if (!containerRef) return;
 
       // Create editor
       editor = monaco.editor.create(containerRef, {
-        model,
+        model: model ?? undefined,
         language: "ferret",
         theme: currentTheme,
         automaticLayout: true,
@@ -47,25 +51,16 @@
 
       // Cursor position tracking
       editor.onDidChangeCursorPosition((e) => {
-        if (onCursorChange) {
-          onCursorChange(e.position.lineNumber, e.position.column);
-        }
+        onCursorChange?.(e.position.lineNumber, e.position.column);
       });
 
-      // Keyboard shortcut: Ctrl+Enter to run
+      // Keyboard shortcut: Ctrl/Cmd+Enter to run
       editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-        if (onRun) {
-          onRun();
-        }
-      });
-
-      // Force layout update
-      requestAnimationFrame(() => {
-        editor?.layout();
+        onRun?.();
       });
 
       // Listen for theme changes
-      observer = new MutationObserver(() => {
+      themeObserver = new MutationObserver(() => {
         const newTheme = getCurrentTheme();
         if (newTheme !== currentTheme) {
           monaco.editor.setTheme(newTheme);
@@ -73,49 +68,55 @@
         }
       });
 
-      observer.observe(document.documentElement, {
+      themeObserver.observe(document.documentElement, {
         attributes: true,
         attributeFilter: ["data-theme"],
       });
+
+      // Force an initial layout
+      requestAnimationFrame(() => editor?.layout());
     })();
 
     return () => {
-      observer?.disconnect();
+      disposed = true;
+      themeObserver?.disconnect();
+      themeObserver = null;
       editor?.dispose();
+      editor = null;
     };
   });
 
-
-  // Update model when prop changes
+  // ✅ CRITICAL FIX: when the parent switches the active file,
+  // the model prop changes — we must update Monaco's model.
   $effect(() => {
     if (editor && model) {
       editor.setModel(model);
+      // Layout helps avoid rare sizing glitches after model switch
+      requestAnimationFrame(() => editor?.layout());
     }
   });
 </script>
 
-<div class="editor-wrapper">
-  <div bind:this={containerRef} class="editor"></div>
-</div>
+<div class="editor" bind:this={containerRef}></div>
 
 <style>
-  .editor-wrapper {
+  .editor {
     flex: 1;
     width: 100%;
     height: 100%;
-    min-height: 0;
-    position: relative;
+    min-height: 0; /* critical for flex children */
   }
 
-  .editor {
-    width: 100%;
-    height: 100%;
+  /* Ensure Monaco container has explicit dimensions */
+  .editor :global(> div) {
+    width: 100% !important;
+    height: 100% !important;
   }
 
   /* CRITICAL: Override Starlight's global styles that break Monaco */
   .editor :global(.view-lines),
   .editor :global(.view-line),
-  .editor :global(.view-line) > :global(span),
+  .editor :global(.view-line > span),
   .editor :global(.mtk1),
   .editor :global(.mtk2),
   .editor :global(.mtk3),

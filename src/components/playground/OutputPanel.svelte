@@ -25,19 +25,15 @@
 
   let inputValue = $state("");
   let inputElement: HTMLTextAreaElement | null = null;
+  let outputLogElement: HTMLDivElement | null = null;
 
   function handleKeydown(e: KeyboardEvent) {
-    if (e.key === "Enter" && !e.shiftKey && isWaitingInput) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      submitInput();
+      if (!inputValue.trim() || !onInput) return;
+      onInput(inputValue);
+      inputValue = "";
     }
-  }
-
-  function submitInput() {
-    if (!onInput || !isWaitingInput) return;
-    const value = inputValue.replace(/\r?\n/g, "");
-    onInput(value);
-    inputValue = "";
   }
 
   function escapeHtml(text: string): string {
@@ -64,6 +60,21 @@
       inputElement.focus();
     }
   });
+
+  // Keep terminal pinned to the bottom as new events arrive (matches old inline prompt behavior)
+  $effect(() => {
+    // Touch dependencies so this reruns when output changes
+    void events.length;
+    void isWaitingInput;
+
+    if (!outputLogElement) return;
+
+    // Wait a tick so the DOM updates before scrolling
+    queueMicrotask(() => {
+      if (!outputLogElement) return;
+      outputLogElement.scrollTop = outputLogElement.scrollHeight;
+    });
+  });
 </script>
 
 <div class="output-panel">
@@ -76,7 +87,7 @@
   </div>
   
   <div class="output-content terminal">
-    <div class="output-log">
+    <div class="output-log" bind:this={outputLogElement}>
       {#if events.length === 0}
         <p class="output-placeholder">
           Ready to compile and run your Ferret code.
@@ -89,18 +100,19 @@
           {@html renderEvent(event)}
         {/each}
       {/if}
-    </div>
-    
-    <div class="terminal-input" class:terminal-input-hidden={!isWaitingInput}>
-      <span class="terminal-prompt">></span>
-      <textarea
-        bind:this={inputElement}
-        bind:value={inputValue}
-        onkeydown={handleKeydown}
-        class="terminal-input-field"
-        placeholder="Type input and press Enter..."
-        rows="1"
-      ></textarea>
+
+      <!-- Inline input prompt (inside scrollable log) -->
+      <div class="terminal-input" class:terminal-input-hidden={!isWaitingInput}>
+        <span class="terminal-prompt">></span>
+        <textarea
+          bind:this={inputElement}
+          bind:value={inputValue}
+          onkeydown={handleKeydown}
+          class="terminal-input-field"
+          placeholder="Type input and press Enter..."
+          rows="1"
+        ></textarea>
+      </div>
     </div>
   </div>
 </div>
@@ -117,7 +129,8 @@
   }
 
   :global([data-theme="dark"]) .output-panel {
-    background: var(--editor-bg, #282C34);
+    background: var(--editor-bg);
+    border-left-color: rgba(255, 255, 255, 0.05);
   }
 
   .output-header {
@@ -162,10 +175,18 @@
     background: #10b981;
   }
 
-  .output-status[data-status="loading"] .status-dot,
-  .output-status[data-status="running"] .status-dot,
-  .output-status[data-status="input"] .status-dot {
+  .output-status[data-status="loading"] .status-dot {
     background: #f59e0b;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  .output-status[data-status="running"] .status-dot {
+    background: #f59e0b;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  .output-status[data-status="input"] .status-dot {
+    background: #f97316;
     animation: pulse 1.5s ease-in-out infinite;
   }
 
@@ -178,7 +199,8 @@
   }
 
   @keyframes pulse {
-    0%, 100% {
+    0%,
+    100% {
       opacity: 1;
     }
     50% {
@@ -207,23 +229,6 @@
     display: flex;
     flex-direction: column;
     padding: 0.5rem;
-  }
-
-  .output-log::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .output-log::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .output-log::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 4px;
-  }
-
-  :global([data-theme="dark"]) .output-log::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
   }
 
   .output-placeholder {
@@ -265,6 +270,7 @@
     overflow-x: auto;
     padding: 0 !important;
     margin: 0 !important;
+    overflow: visible;
   }
 
   :global(.terminal-line) {
@@ -275,19 +281,27 @@
     font-style: italic;
   }
 
-  :global(.terminal-system) {
+  :global(.terminal-text) {
+    white-space: pre-wrap;
+  }
+
+  .terminal-system {
     color: #9ca3af;
     font-size: 0.75rem;
   }
 
-  :global([data-theme="dark"]) :global(.terminal-system) {
+  :global([data-theme="dark"]) .terminal-system {
     color: #6b7280;
   }
 
   .terminal-input {
     display: flex;
     align-items: flex-start;
-    padding: 0 0.5rem 0.5rem;
+    border-top: none;
+    background: transparent;
+  }
+
+  :global([data-theme="dark"]) .terminal-input {
     border-top: none;
     background: transparent;
   }
@@ -298,13 +312,9 @@
 
   .terminal-prompt {
     font-weight: 600;
-    color: #10b981;
+    color: var(--accent-color);
     line-height: 1.5;
     padding-top: 0.1rem;
-  }
-
-  :global([data-theme="dark"]) .terminal-prompt {
-    color: #34d399;
   }
 
   .terminal-input-field {
@@ -314,6 +324,7 @@
     border: none;
     background: transparent;
     padding: 0.1rem 0;
+    padding-left: 5px;
     font-family: "Cascadia Code", "Fira Code", "Consolas", "Monaco", monospace;
     font-size: 0.8125rem;
     line-height: 1.5;
