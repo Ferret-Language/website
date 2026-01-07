@@ -239,7 +239,7 @@
 
   function buildCompilerEvents(log: string): TerminalEvent[] {
     if (!log) return [];
-    return [{ type: "system", html: `<div class="compiler-log">${log}</div>` }];
+    return [{ type: "system", html: `<pre class="compiler-log">${log}</pre>` }];
   }
 
   function isInputNeeded(error: unknown): boolean {
@@ -377,7 +377,7 @@
         status = "error";
         statusText = "Error";
         terminalEvents = [
-          { type: "system", html: `<div class="compiler-log">${result.error || result.output || "Compilation failed"}</div>` },
+          { type: "system", html: `<pre class="compiler-log">${result.error || result.output || "Compilation failed"}</pre>` },
           { type: "system", html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>` },
         ];
         runState = "idle";
@@ -1259,6 +1259,7 @@
     background: #fafafa;
     box-sizing: border-box;
     overflow: hidden;
+    border-radius: 0 0 16px 0;
   }
 
   :global([data-theme="dark"]) .output-panel {
@@ -1345,10 +1346,14 @@
     font-size: 0.8125rem;
     line-height: 1.6;
     color: #374151;
+    background: #fafafa;
+    border-radius: 0 0 16px 0;
+    overflow: hidden;
   }
 
   :global([data-theme="dark"]) .output-content {
     color: #d1d5db;
+    background: var(--editor-bg);
   }
 
   .output-log {
@@ -1357,6 +1362,66 @@
     display: flex;
     flex-direction: column;
     padding: 0.5rem;
+    border-radius: 0 0 16px 0;
+    background: transparent;
+  }
+  /* Custom scrollbar for output log */
+  .output-log::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .output-log::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 4px;
+  }
+  .output-log::-webkit-scrollbar-thumb {
+    background: #9ca3af;
+    border-radius: 4px;
+  }
+  .output-log::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+  }
+  :global([data-theme="dark"]) .output-log::-webkit-scrollbar-track {
+    background: #1f2937;
+  }
+  :global([data-theme="dark"]) .output-log::-webkit-scrollbar-thumb {
+    background: #4b5563;
+  }
+  :global([data-theme="dark"]) .output-log::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+  }
+
+  /* Custom scrollbar for modal content and output log */
+  .modal-content::-webkit-scrollbar,
+  .output-log::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .modal-content::-webkit-scrollbar-track,
+  .output-log::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 4px;
+  }
+  .modal-content::-webkit-scrollbar-thumb,
+  .output-log::-webkit-scrollbar-thumb {
+    background: #9ca3af;
+    border-radius: 4px;
+  }
+  .modal-content::-webkit-scrollbar-thumb:hover,
+  .output-log::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+  }
+  :global([data-theme="dark"]) .modal-content::-webkit-scrollbar-track,
+  :global([data-theme="dark"]) .output-log::-webkit-scrollbar-track {
+    background: #1f2937;
+  }
+  :global([data-theme="dark"]) .modal-content::-webkit-scrollbar-thumb,
+  :global([data-theme="dark"]) .output-log::-webkit-scrollbar-thumb {
+    background: #4b5563;
+  }
+  :global([data-theme="dark"]) .modal-content::-webkit-scrollbar-thumb:hover,
+  :global([data-theme="dark"]) .output-log::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
   }
 
   .output-placeholder {
@@ -1488,8 +1553,11 @@
     }
 
     .icon-button {
-      padding: 0.375rem 0.625rem;
+      padding: 0.625rem;
       font-size: 0.75rem;
+    }
+    .icon-button > span {
+      display: none;
     }
 
     .playground-content {
