@@ -89,5 +89,8 @@ export default defineConfig({
 
     vite: {
         plugins: [],
+        ssr: {
+            noExternal: ['monaco-editor']
+        }
     },
 });
