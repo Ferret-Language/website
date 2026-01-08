@@ -1,8 +1,7 @@
 ---
-// Dedicated Playground page - completely standalone
 import '../styles/custom.css';
 import Navbar from '../components/Navbar.astro';
-import Playground from '../components/Playground.astro';
+import Playground from '../components/Playground.svelte';
 
 const pageTitle = 'Ferret Playground';
 ---
@@ -81,7 +80,7 @@ const pageTitle = 'Ferret Playground';
     <div class="page-container">
         <Navbar {...Astro.props} showSearch={false} />
         <div class="playground-wrapper">
-            <Playground />
+            <Playground client:load/>
         </div>
     </div>
 </body>

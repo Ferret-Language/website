@@ -1,3 +1,63 @@
+<script lang="ts" module>
+  interface ModalOptions {
+    title?: string;
+    selectableContent?: boolean;
+    selectableText?: string;
+  }
+
+  // Export helper functions that can be imported by other components
+  export function showAlert(message: string, options?: ModalOptions): Promise<void> {
+    return new Promise<void>((resolve) => {
+      const event = new CustomEvent('show-modal', {
+        detail: { 
+          type: 'alert', 
+          message, 
+          ...options, 
+          onConfirm: resolve 
+        }
+      });
+      window.dispatchEvent(event);
+    });
+  }
+
+  export function showConfirm(message: string, options?: ModalOptions): Promise<boolean> {
+    return new Promise<boolean>((resolve) => {
+      const event = new CustomEvent('show-modal', {
+        detail: {
+          type: 'confirm',
+          message,
+          ...options,
+          onConfirm: () => resolve(true),
+          onCancel: () => resolve(false)
+        }
+      });
+      window.dispatchEvent(event);
+    });
+  }
+
+  export function showPrompt(
+    message: string, 
+    placeholder = '', 
+    defaultValue = '', 
+    options?: ModalOptions
+  ): Promise<string | null> {
+    return new Promise<string | null>((resolve) => {
+      const event = new CustomEvent('show-modal', {
+        detail: {
+          type: 'prompt',
+          message,
+          inputPlaceholder: placeholder,
+          inputValue: defaultValue,
+          ...options,
+          onConfirm: (value?: string) => resolve(value || null),
+          onCancel: () => resolve(null)
+        }
+      });
+      window.dispatchEvent(event);
+    });
+  }
+</script>
+
 <script lang="ts">
   import { onMount } from 'svelte';
 
@@ -15,7 +75,7 @@
   let onConfirm: ((value?: string) => void) | null = null;
   let onCancel: (() => void) | null = null;
 
-  let inputElement: HTMLInputElement | null = null;
+  let inputElement: HTMLInputElement | null = $state(null);
 
   // Listen for show-modal events from Playground
   onMount(() => {
@@ -76,10 +136,9 @@
 
   function handleKeydown(e: KeyboardEvent) {
     if (!isOpen) return;
-    
     if (e.key === 'Escape') {
       handleCancel();
-    } else if (e.key === 'Enter' && type !== 'prompt') {
+    } else if (e.key === 'Enter') {
       e.preventDefault();
       handleConfirm();
     }
@@ -130,12 +189,6 @@
             type="text"
             placeholder={inputPlaceholder}
             class="modal-input"
-            onkeydown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleConfirm();
-              }
-            }}
           />
         {/if}
       </div>
