@@ -79,6 +79,8 @@
   let startEditorWidth = 0;
 
   const DEFAULT_CODE_FALLBACK = `// Welcome to Ferret\n\nfn main() {\n  print(\"Hello, Ferret!\");\n}`;
+  const defaultCodeRoute = "/examples/default.fer";
+
 
   // -----------------------------
   // Helpers
@@ -585,11 +587,13 @@
 
       if (disposed) return;
 
-      // Load default code (optional)
+      // Load default code from public folder or fallback
       let defaultCode = DEFAULT_CODE_FALLBACK;
       try {
-        const r = await fetch("/examples/default.fer");
-        if (r.ok) defaultCode = await r.text();
+        const resp = await fetch(defaultCodeRoute);
+        if (resp.ok) {
+          defaultCode = await resp.text();
+        }
       } catch {
         // ignore
       }
