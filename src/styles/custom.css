@@ -157,23 +157,25 @@ mobile-starlight-toc {
     margin-bottom: 4rem !important;
 }
 
-/* Scrollbar design */
-body::-webkit-scrollbar {
-    width: 10px;
+/* ALL scrollbars */
+*::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
 }
 
-body::-webkit-scrollbar-track {
+*::-webkit-scrollbar-track {
     background: var(--background);
 }
 
-body::-webkit-scrollbar-thumb {
+*::-webkit-scrollbar-thumb {
     background: var(--scroll-thumb);
     border-radius: 5px;
 }
 
-body::-webkit-scrollbar-thumb:hover {
+*::-webkit-scrollbar-thumb:hover {
     background: var(--scroll-thumb-hover);
 }
+
 
 /* Hide navbar burger menu on mobile - we show it below TOC instead */
 @media (max-width: 50rem) {
