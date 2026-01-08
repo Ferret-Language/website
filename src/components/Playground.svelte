@@ -883,7 +883,6 @@
   .playground-container {
     display: flex;
     flex-direction: column;
-    margin: 2rem 0;
     border-radius: 16px;
     overflow: hidden;
     background: #ffffff;
@@ -1349,6 +1348,7 @@
     background: #fafafa;
     border-radius: 0 0 16px 0;
     overflow: hidden;
+    padding: 5px;
   }
 
   :global([data-theme="dark"]) .output-content {
@@ -1392,36 +1392,48 @@
   }
 
   /* Custom scrollbar for modal content and output log */
-  .modal-content::-webkit-scrollbar,
-  .output-log::-webkit-scrollbar {
+  :global(.modal-content::-webkit-scrollbar),
+  :global(.output-log::-webkit-scrollbar) {
     width: 8px;
     height: 8px;
   }
-  .modal-content::-webkit-scrollbar-track,
-  .output-log::-webkit-scrollbar-track {
+  :global(.modal-content::-webkit-scrollbar-track),
+  :global(.output-log::-webkit-scrollbar-track) {
     background: #f3f4f6;
     border-radius: 4px;
   }
-  .modal-content::-webkit-scrollbar-thumb,
-  .output-log::-webkit-scrollbar-thumb {
+  :global(.modal-content::-webkit-scrollbar-thumb),
+  :global(.output-log::-webkit-scrollbar-thumb) {
     background: #9ca3af;
     border-radius: 4px;
   }
-  .modal-content::-webkit-scrollbar-thumb:hover,
-  .output-log::-webkit-scrollbar-thumb:hover {
+  :global(.modal-content::-webkit-scrollbar-thumb:hover),
+  :global(.output-log::-webkit-scrollbar-thumb:hover) {
     background: #6b7280;
   }
-  :global([data-theme="dark"]) .modal-content::-webkit-scrollbar-track,
-  :global([data-theme="dark"]) .output-log::-webkit-scrollbar-track {
+  :global([data-theme="dark"] .modal-content::-webkit-scrollbar-track),
+  :global([data-theme="dark"] .output-log::-webkit-scrollbar-track) {
     background: #1f2937;
   }
-  :global([data-theme="dark"]) .modal-content::-webkit-scrollbar-thumb,
-  :global([data-theme="dark"]) .output-log::-webkit-scrollbar-thumb {
+  :global([data-theme="dark"] .modal-content::-webkit-scrollbar-thumb),
+  :global([data-theme="dark"] .output-log::-webkit-scrollbar-thumb) {
     background: #4b5563;
   }
-  :global([data-theme="dark"]) .modal-content::-webkit-scrollbar-thumb:hover,
-  :global([data-theme="dark"]) .output-log::-webkit-scrollbar-thumb:hover {
+  :global([data-theme="dark"] .modal-content::-webkit-scrollbar-thumb:hover),
+  :global([data-theme="dark"] .output-log::-webkit-scrollbar-thumb:hover) {
     background: #6b7280;
+  }
+
+  /** Scrolbar corner square color fix */
+  :global(.modal-content::-webkit-scrollbar-corner),
+  :global(.output-log::-webkit-scrollbar-corner) {
+    background: transparent;
+  }
+
+  /** firefox solution */
+  :global(.modal-content) {
+    scrollbar-color: #9ca3af #f3f4f6;
+    scrollbar-width: thin;
   }
 
   .output-placeholder {
@@ -1478,12 +1490,12 @@
     white-space: pre-wrap;
   }
 
-  .terminal-system {
+  :global(.terminal-system) {
     color: #9ca3af;
     font-size: 0.75rem;
   }
 
-  :global([data-theme="dark"]) .terminal-system {
+  :global([data-theme="dark"] .terminal-system) {
     color: #6b7280;
   }
 
@@ -1500,13 +1512,9 @@
 
   .terminal-prompt {
     font-weight: 600;
-    color: #10b981;
+    color: var(--accent-color);
     line-height: 1.5;
     padding-top: 0.1rem;
-  }
-
-  :global([data-theme="dark"]) .terminal-prompt {
-    color: #34d399;
   }
 
   .terminal-input-field {
@@ -1515,7 +1523,7 @@
     max-height: 7rem;
     border: none;
     background: transparent;
-    padding: 0.1rem 0;
+    padding: .1rem 0 .1rem 0.5rem;
     font-family: "Cascadia Code", "Fira Code", "Consolas", "Monaco", monospace;
     font-size: 0.8125rem;
     line-height: 1.5;
