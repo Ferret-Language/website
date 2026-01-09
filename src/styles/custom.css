@@ -48,9 +48,11 @@
     /* Default; overwritten at runtime by Navbar resize observer for a perfect fit. */
     --sl-nav-height: 3.5rem;
     --sl-z-index-navbar: 1000;
-
-    --scroll-thumb: hsla(var(--accent-hsl), 0.5);
-    --scroll-thumb-hover: hsla(var(--accent-hsl), 0.8);
+    
+    --scroll-color: 200, 20%, 44%;
+    
+    --scroll-thumb: hsla(var(--scroll-color), 0.5);
+    --scroll-thumb-hover: hsla(var(--scroll-color), 0.8);
 }
 
 /* Custom font-face definitions */
@@ -157,6 +159,16 @@ mobile-starlight-toc {
     margin-bottom: 4rem !important;
 }
 
+/** hide scrollbar corner */
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/** firefox fix of corner */
+::-moz-scrollbar-corner {
+    background: transparent;
+}
+
 /* ALL scrollbars */
 *::-webkit-scrollbar {
     width: 8px;
@@ -164,7 +176,7 @@ mobile-starlight-toc {
 }
 
 *::-webkit-scrollbar-track {
-    background: var(--background);
+    background: transparent;
 }
 
 *::-webkit-scrollbar-thumb {

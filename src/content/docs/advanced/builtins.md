@@ -43,8 +43,6 @@ let val2 := get(&arr, 10);  // Returns i32? with value none (out of bounds)
 let score1 := get(&scores, "alice");  // Returns i32? with value 95
 let score2 := get(&scores, "charlie"); // Returns i32? with value none (key doesn't exist)
 ```
-<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
-grep
 
 **Note:** `get()` uses an immutable reference (`&T`) since it only reads from the container.
 

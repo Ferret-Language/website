@@ -114,7 +114,7 @@ Here are some practical examples:
 let age := 18;
 
 let is_adult := age >= 18;        // true
-let is_teenager := age >= 13 and age < 20;  // true
+let is_teenager := age >= 13 && age < 20;  // true
 let can_vote := age >= 18;        // true
 let needs_guardian := age < 18;   // false
 
@@ -144,12 +144,12 @@ The `&&` operator returns `true` only when **both** sides are true:
 let has_ticket := true;
 let has_id := true;
 
-let can_enter := has_ticket and has_id;  // true (both are true)
+let can_enter := has_ticket && has_id;  // true (both are true)
 
 let has_money := false;
 let has_time := true;
 
-let can_go_shopping := has_money and has_time;  // false (one is false)
+let can_go_shopping := has_money && has_time;  // false (one is false)
 ```
 
 ### Understanding `||`
@@ -160,12 +160,12 @@ The `||` operator returns `true` when **at least one** side is true:
 let is_weekend := true;
 let is_holiday := false;
 
-let can_relax := is_weekend or is_holiday;  // true (one is true)
+let can_relax := is_weekend || is_holiday;  // true (one is true)
 
 let is_raining := false;
 let is_snowing := false;
 
-let need_umbrella := is_raining or is_snowing;  // false (both are false)
+let need_umbrella := is_raining || is_snowing;  // false (both are false)
 ```
 
 ### Understanding `!`
@@ -189,12 +189,12 @@ let age := 25;
 let has_license := true;
 let has_insurance := true;
 
-let can_drive := age >= 16 and has_license and has_insurance;
+let can_drive := age >= 16 && has_license && has_insurance;
 
 let is_student := false;
 let is_senior := false;
 
-let gets_discount := is_student or is_senior;
+let gets_discount := is_student || is_senior;
 ```
 
 ### Short-Circuit Evaluation
@@ -205,10 +205,10 @@ Ferret evaluates logical expressions from left to right and stops as soon as it 
 let x := 0;
 
 // Safe: if x is 0, the second part never runs
-let safe := x != 0 and 10 / x > 1;
+let safe := x != 0 && 10 / x > 1;
 
 // This would crash if x is 0!
-// let unsafe := 10 / x > 1 and x != 0;
+// let unsafe := 10 / x > 1 && x != 0;
 ```
 
 This is called "short-circuit evaluation" - if the first part of `&&` is false, Ferret doesn't bother checking the second part because the result will be false anyway.

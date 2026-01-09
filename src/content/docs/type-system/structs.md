@@ -11,9 +11,9 @@ Structs are custom data types that group related data together.
 
 ```ferret
 type Person struct {
-    .name: str,
-    .age: i32,
-    .email: str,
+    .Name: str,
+    .Age: i32,
+    .Email: str,
 };
 ```
 
@@ -23,16 +23,16 @@ Create struct instances using composite literal syntax with the `as` cast:
 
 ```ferret
 let person := {
-    .name: "Alice",
-    .age: 30,
-    .email: "alice@example.com"
+    .Name: "Alice",
+    .Age: 30,
+    .Email: "alice@example.com"
 } as Person;
 
 // Or with explicit type annotation
 let another_person: Person = {
-    .name: "Bob",
-    .age: 25,
-    .email: "bob@example.com"
+    .Name: "Bob",
+    .Age: 25,
+    .Email: "bob@example.com"
 } as Person;
 ```
 
@@ -43,52 +43,46 @@ Notice we use `:` (colon) in struct literals, not `=` (equals). The `.` prefix i
 ## Accessing Fields
 
 ```ferret
-let name := person.name;   // Alice
-let age := person.age;     // 30
+let name := person.Name;   // Alice
+let age := person.Age;     // 30
 ```
 
-Structs can also have methods that define behavior. Since methods work with any named type in Ferret, they're covered in detail on a separate page—see [Methods](/type-system/methods).
+## Visibility
 
-## Nested Structs
-
+Struct fields can be public or private. Which means, they can be accessed from outside the struct's scope. Public fields are prefixed with a capital letter, while private fields are prefixed with a lowercase letter.
 ```ferret
-type Address struct {
-    .street: str,
-    .city: str
-};
+import "std/io";
 
 type Person struct {
-    .name: str,
-    .address: Address
+    .Name: str,
+    .age: i32,
+    .Email: str,
 };
 
-let person := {
-    .name: "Carol",
-    .address: {
-        .street: "123 Main St",
-        .city: "Springfield"
-    } as Address
-} as Person;
+fn main() {
+    let person := {
+        .Name: "Alice",
+        .age: 30,
+        .Email: "alice@example.com"
+    } as Person;
 
-// Access nested fields
-let city := person.address.city;  // "Springfield"
+    io::Println("Name: {}", person.Name);
+    io::Println("Age: {}", person.age); // This is private and cannot be accessed directly
+    io::Println("Email: {}", person.Email);
+}
 ```
-
-## Anonymous Structs
-
-You can create structs without defining a named type. This is useful for temporary data structures:
 
 ```ferret
 // Anonymous struct with explicit type
-let point: struct{ .x: i32, .y: i32 } = {
-    .x: 10,
-    .y: 20
-} as struct{ .x: i32, .y: i32 };
+let point: struct{ .X: i32, .Y: i32 } = {
+    .X: 10,
+    .Y: 20
+} as struct{ .X: i32, .Y: i32 };
 
 // Inferred anonymous struct (Ferret figures out the type)
 let coordinate := {
-    .x: 5,
-    .y: 15
+    .X: 5,
+    .Y: 15
 };  // Type is inferred from the literal
 ```
 

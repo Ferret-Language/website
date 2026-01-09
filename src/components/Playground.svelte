@@ -1340,6 +1340,7 @@
     border-radius: 0 0 16px 0;
     overflow: hidden;
     padding: 5px;
+    line-height: 1rem;
   }
 
   :global([data-theme="dark"]) .output-content {

@@ -276,8 +276,6 @@ let ages := {"alice" => 25, "bob" => 30} as map[str]i32;
 let alice_age: i32? = get(&mut ages, "alice");  // Returns i32? with value 25
 let missing: i32? = get(&mut ages, "unknown");   // Returns i32? with value none
 ```
-<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
-read_file
 
 This is a safety feature! It forces you to think about what happens when a key doesn't exist, preventing crashes.
 
