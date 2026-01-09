@@ -9,7 +9,13 @@ Reference types in Ferret provide a way to pass data by reference rather than by
 
 ## What Are Reference Types?
 
-By default, Ferret passes values by copy (like Go and Rust). When you pass a struct to a function, it gets copied. Reference types let you explicitly pass a reference instead, avoiding the copy.
+By default, Ferret copies values when assigning or passing them. Literals bind directly into the destination without an extra copy. If you want to transfer ownership from a binding, use `@` to move it. Reference types let you explicitly pass a reference instead, avoiding the copy.
+
+```ferret
+let x := 1;
+let y := x;   // copy
+let z := @x;  // move; x is no longer usable
+```
 
 ```ferret
 type LargeData struct {

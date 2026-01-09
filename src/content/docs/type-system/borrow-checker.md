@@ -9,22 +9,31 @@ Ferret's borrow checker is a compile-time analysis system that ensures memory sa
 
 ## Core Concepts
 
-### Ownership
+### Ownership and Copies
 
-Every value in Ferret has a single owner. When the owner goes out of scope, the value is automatically cleaned up:
+Every binding owns its value. Ferret copies by default, so assigning or returning a value creates a copy unless you explicitly move it. Literals bind directly into the destination without an extra copy.
 
 ```ferret
 fn main() {
-    let x := 42;        // x owns the value 42
-    let y := "hello";   // y owns the string "hello"
-    
-    // When this function ends, x and y are cleaned up
+    let x := 42;
+    let y := x;   // copy
+    let z := @x;  // move; x is no longer usable
 }
+```
+
+### Moves (@)
+
+Use `@` to move a value out of a binding. Moves are only allowed on identifiers (phase 1), cannot move references, and cannot happen while the value is borrowed.
+
+```ferret
+let a := 10;
+let b := @a;  // a moved
+// let c := a;  // ❌ Error: use of moved value
 ```
 
 ### Borrowing
 
-Instead of transferring ownership, you can **borrow** a value by taking a reference to it:
+Instead of copying or moving, you can **borrow** a value by taking a reference to it:
 
 ```ferret
 let arr := [1, 2, 3, 4, 5];
@@ -357,10 +366,12 @@ fn create_ref() -> &i32 {
 
 **Solution:** Return the value, not a reference:
 
+Use `return @x;` when you want to move a value instead of copying it.
+
 ```ferret
 fn create_value() -> i32 {
     let x := 42;
-    return x;  // ✅ OK - transfers ownership
+    return x;  // ✅ OK - returns a copy
 }
 ```
 

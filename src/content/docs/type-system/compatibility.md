@@ -154,6 +154,7 @@ fn process(result: Result) {
 }
 ```
 
+See [Union Types](/type-system/unions) for full syntax and usage.
 
 
 ## Special Cases
