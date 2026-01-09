@@ -403,16 +403,16 @@ if maybe_id != none {
 
 ### Setting Values
 
-Use the `set()` builtin function to add or update map entries. It requires a mutable reference (`&'T`):
+Use the `set()` builtin function to add or update map entries. It requires a mutable reference (`&mut T`):
 
 ```ferret
 let scores := {"alice" => 95} as map[str]i32;
 
 // Add new key (requires mutable reference)
-set(&'scores, "bob", 87);
+set(&mut scores, "bob", 87);
 
 // Update existing key
-set(&'scores, "alice", 96);
+set(&mut scores, "alice", 96);
 ```
 
 ### Removing Keys
@@ -423,7 +423,7 @@ Use the `remove()` builtin function to remove a key from a map:
 let scores := {"alice" => 95, "bob" => 87} as map[str]i32;
 
 // Remove a key (requires mutable reference)
-let removed := remove(&'scores, "bob");  // true if found
+let removed := remove(&mut scores, "bob");  // true if found
 
 // Check if key still exists
 let has_bob := has(&scores, "bob");  // false
@@ -446,8 +446,8 @@ Key takeaways:
 - Safe access: `get(&map, key)` → `V?` (returns `none` if missing)
 - Use `get_or()` for defaults: `get_or(&map, key, default)` → `V`
 - Use `has()` to check existence: `has(&map, key)` → `bool`
-- Use `set()` to modify: `set(&'map, key, value)` → `bool`
-- Use `remove()` to delete: `remove(&'map, key)` → `bool`
+- Use `set()` to modify: `set(&mut map, key, value)` → `bool`
+- Use `remove()` to delete: `remove(&mut map, key)` → `bool`
 
 ## What's Next?
 

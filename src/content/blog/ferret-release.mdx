@@ -11,7 +11,7 @@ We're excited to announce **Ferret v0.0.1**, a new systems programming language 
 
 Systems programming has traditionally meant choosing between safety and performance, between high-level abstractions and low-level control. Ferret aims to bridge this gap by combining the best ideas from modern language design:
 
-- **Memory Safety Without GC**: Explicit ownership with reference semantics (`&T` for read-only, `&'T` for mutable) inspired by Rust, but simpler
+- **Memory Safety Without GC**: Explicit ownership with reference semantics (`&T` for read-only, `&mut T` for mutable) inspired by Rust, but simpler
 - **Zero-Cost Abstractions**: Compile-time type checking, constant evaluation, and dead code elimination
 - **Native Performance**: Compiles directly to native machine code via QBE backend
 - **Simple Syntax**: Clean, readable syntax inspired by Go and Rust
@@ -24,10 +24,10 @@ Systems programming has traditionally meant choosing between safety and performa
 Ferret uses explicit reference semantics to prevent memory safety issues at compile time:
 
 - `&T` for immutable references (read-only access)
-- `&'T` for mutable references (can modify the original)
+- `&mut T` for mutable references (can modify the original)
 
 ```ferret
-fn (p: &'Point) scale(factor: f64) {
+fn (p: &mut Point) scale(factor: f64) {
     p.x = p.x * factor  // Modifies original
     p.y = p.y * factor
 }

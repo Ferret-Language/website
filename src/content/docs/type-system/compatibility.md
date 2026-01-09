@@ -188,7 +188,8 @@ let x: i32 = 42;
 let ref_x: &i32 = &x;
 
 let y: &mut i32 = &mut x;  // Mutable reference
-let z: &i32 = y;           // Implicit: &mut -> & (variance)
+let z: &i32 = &x;          // Immutable reference
+let w: &i32 = y;           // Error: mutability must match (no implicit &mut -> &)
 ```
 
 ## Common Pitfalls

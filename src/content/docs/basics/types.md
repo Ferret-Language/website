@@ -303,10 +303,6 @@ This pattern is so common you'll use it all the time when working with maps!
 
 ## Reference Types
 
-:::caution[Experimental Feature]
-Reference types are currently being implemented. This is a preview of planned functionality.
-:::
-
 Reference types let you pass data by reference rather than by copy. Add `&` before a type to make it a reference:
 
 ```ferret
@@ -503,7 +499,7 @@ You've learned about Ferret's type system! Here's what we covered:
 * **Primitive types**: Integers (`i32`, `i64`, `u32`, `u64`), floats (`f32`, `f64`), strings (`str`), booleans (`bool`), and characters (`byte`)
 * **Compound types**: Arrays and maps that hold multiple values
 * **Optional types**: Types that can be a value or `none`
-* **Reference types**: Pass data by reference with `&T` (experimental)
+* **Reference types**: Pass data by reference with `&T`
 * **Type inference**: Letting Ferret figure out types automatically
 * **Type conversion**: Explicitly changing between types
 

@@ -131,9 +131,9 @@ let config := {
     .timeout: 5000
 } as Config;
 
-// Just pass the value - Ferret handles the reference automatically
-setup_database(config);
-setup_cache(config);
+// Borrow explicitly when the parameter expects a reference
+setup_database(&config);
+setup_cache(&config);
 ```
 
 ## References vs Values
@@ -177,7 +177,17 @@ fn modify_point(p_ref: &mut Point) {
 }
 ```
 
-However, when you need the actual value (not a field or method), you must explicitly dereference:
+Assignments to a reference variable or index access through a reference still require explicit dereferencing:
+
+```ferret
+let r: &mut i32 = &mut x;
+*r = 10;      // ✅ OK - explicit deref for assignment
+
+let arr_ref: &mut [2]i32 = &mut arr;
+(*arr_ref)[0] = 99;  // ✅ OK - explicit deref for indexing
+```
+
+When you need the actual value (not a field or method), you must explicitly dereference:
 
 ```ferret
 let x := 42;

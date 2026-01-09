@@ -267,20 +267,19 @@ error[B0002]: cannot borrow 'arr' as mutable because it is also borrowed as immu
   |             --- immutable borrow later used here
 ```
 
-## Advanced: Reborrowing
+## Using &mut in Read Contexts
 
-You can create a new borrow from an existing one:
+You can pass a mutable reference to read-only operations without creating a second borrow:
 
 ```ferret
 fn process(data: &mut []i32) {
     // data is &mut []i32
-    let len := len(data);  // Reborrow as & for len()
-    // Original &mut borrow resumes after len() call
-    append(data, 100);     // Use original &mut borrow
+    let len := len(data);  // Read through &mut
+    append(data, 100);     // Continue using the same &mut
 }
 ```
 
-The borrow checker tracks these temporary borrows automatically.
+The borrow checker treats this as a read through the same mutable reference.
 
 ## Design Rationale
 
