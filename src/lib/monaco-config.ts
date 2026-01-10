@@ -10,7 +10,7 @@ export async function registerFerretLanguage() {
         keywords: [
             "let", "const", "type", "struct", "fn", "interface", "enum",
             "map", "if", "else", "for", "in", "while", "break", "continue",
-            "when", "true", "false", "none", "defer", "import", "catch",
+            "match", "true", "false", "none", "defer", "import", "catch",
             "as", "return", "fork", "mut",
         ],
 
