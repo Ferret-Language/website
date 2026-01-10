@@ -217,7 +217,7 @@ mobile-starlight-toc {
         ),
         radial-gradient(
             circle at 80% 50%,
-            rgb(244 69 192 / 27%) 0%,
+            hsla(var(--accent-hsl), 0.5) 0%,
             transparent 50%
         );
     background-size:
