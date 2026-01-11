@@ -78,6 +78,7 @@
   let isResizing = false;
   let startX = 0;
   let startEditorWidth = 0;
+  let copySuccess = $state(false);
 
   const DEFAULT_CODE_FALLBACK = `// Welcome to Ferret\n\nfn main() {\n  print(\"Hello, Ferret!\");\n}`;
   const defaultCodeRoute = "/examples/default.fer";
@@ -472,7 +473,6 @@
 
   async function handleCopyOutput() {
     if (!outputLogEl) {
-      await showAlert("No output to copy");
       return;
     }
     
@@ -480,13 +480,15 @@
     const textContent = outputLogEl.innerText || outputLogEl.textContent || '';
     
     if (!textContent.trim()) {
-      await showAlert("No output to copy");
       return;
     }
     
     try {
       await navigator.clipboard.writeText(textContent);
-      await showAlert("Output copied to clipboard!");
+      copySuccess = true;
+      setTimeout(() => {
+        copySuccess = false;
+      }, 1200);
     } catch {
       await showAlert("Failed to copy output");
     }
@@ -871,14 +873,21 @@
           <button 
             type="button" 
             class="output-copy-btn" 
+            class:output-copy-success={copySuccess}
             title="Copy Output"
             disabled={!hasOutput}
             onclick={() => void handleCopyOutput()}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
+            {#if copySuccess}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            {:else}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            {/if}
           </button>
           <span class="output-status" data-status={status}>
             <span class="status-dot"></span>
@@ -1335,7 +1344,7 @@
     border: none;
     background: transparent;
     color: #6b7280;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.15s ease;
     flex-shrink: 0;
@@ -1352,8 +1361,12 @@
   }
 
   .output-copy-btn:disabled {
-    opacity: 0.3;
     cursor: not-allowed;
+    visibility: hidden;
+  }
+
+  .output-copy-btn.output-copy-success {
+    color: #10b981 !important;
   }
 
   :global([data-theme="dark"]) .output-copy-btn {
