@@ -63,6 +63,7 @@
   let activeModel = $derived(files[activeFile] ?? null);
   let isWaitingInput = $derived(runState === "waiting");
   let isRunning = $derived(runState === "running" || runState === "waiting");
+  let hasOutput = $derived(terminalEvents.length > 0 && runState !== "idle" || terminalEvents.some(e => e.type === "output" || e.type === "system"));
 
   // Output log ref (for auto-scroll + inline prompt)
   let outputLogEl: HTMLDivElement | null = null;
@@ -241,7 +242,7 @@
 
   function buildCompilerEvents(log: string): TerminalEvent[] {
     if (!log) return [];
-    return [{ type: "system", html: `<pre class="compiler-log">${log}</pre>` }];
+    return [{ type: "system", text: log, html: `<pre class="compiler-log">${log}</pre>` }];
   }
 
   function isInputNeeded(error: unknown): boolean {
@@ -294,6 +295,7 @@
 
       terminalEvents.push({
         type: "system",
+        text: "Program executed successfully with exit status 0.",
         html: `<p style="color: #10b981;">Program executed successfully with exit status 0.</p>`,
       });
 
@@ -316,8 +318,8 @@
       statusText = "Error";
       const msg = err instanceof Error ? err.message : String(err);
       terminalEvents = baseEvents.concat(events).concat([
-        { type: "system", html: `<p style="color: #ef4444;">Runtime error: ${escapeHtml(msg)}</p>` },
-        { type: "system", html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>` },
+        { type: "system", text: `Runtime error: ${msg}`, html: `<p style="color: #ef4444;">Runtime error: ${escapeHtml(msg)}</p>` },
+        { type: "system", text: "Program executed unsuccessfully with exit status 1.", html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>` },
       ]);
 
       runState = "idle";
@@ -378,9 +380,10 @@
       } else {
         status = "error";
         statusText = "Error";
+        const errorText = result.error || result.output || "Compilation failed";
         terminalEvents = [
-          { type: "system", html: `<pre class="compiler-log">${result.error || result.output || "Compilation failed"}</pre>` },
-          { type: "system", html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>` },
+          { type: "system", text: errorText, html: `<pre class="compiler-log">${errorText}</pre>` },
+          { type: "system", text: "Program executed unsuccessfully with exit status 1.", html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>` },
         ];
         runState = "idle";
         activeRunToken = 0;
@@ -388,12 +391,14 @@
     } catch (e) {
       status = "error";
       statusText = "Error";
+      const errorMsg = e instanceof Error ? e.message : String(e);
       terminalEvents = [
         {
           type: "system",
-          html: `<p style="color: #ef4444;">Compiler error: ${escapeHtml(e instanceof Error ? e.message : String(e))}</p>`,
+          text: `Compiler error: ${errorMsg}`,
+          html: `<p style="color: #ef4444;">Compiler error: ${escapeHtml(errorMsg)}</p>`,
         },
-        { type: "system", html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>` },
+        { type: "system", text: "Program executed unsuccessfully with exit status 1.", html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>` },
       ];
       runState = "idle";
       activeRunToken = 0;
@@ -463,6 +468,28 @@
     if (!activeModel) return;
     await navigator.clipboard.writeText(activeModel.getValue());
     await showAlert("Copied current file!");
+  }
+
+  async function handleCopyOutput() {
+    if (!outputLogEl) {
+      await showAlert("No output to copy");
+      return;
+    }
+    
+    // Get the actual rendered text content from the DOM
+    const textContent = outputLogEl.innerText || outputLogEl.textContent || '';
+    
+    if (!textContent.trim()) {
+      await showAlert("No output to copy");
+      return;
+    }
+    
+    try {
+      await navigator.clipboard.writeText(textContent);
+      await showAlert("Output copied to clipboard!");
+    } catch {
+      await showAlert("Failed to copy output");
+    }
   }
 
   function handleExport() {
@@ -840,10 +867,24 @@
     <div class="output-panel">
       <div class="output-header">
         <span>Output</span>
-        <span class="output-status" data-status={status}>
-          <span class="status-dot"></span>
-          <span class="status-text">{statusText}</span>
-        </span>
+        <div class="output-header-right">
+          <button 
+            type="button" 
+            class="output-copy-btn" 
+            title="Copy Output"
+            disabled={!hasOutput}
+            onclick={() => void handleCopyOutput()}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+          <span class="output-status" data-status={status}>
+            <span class="status-dot"></span>
+            <span class="status-text">{statusText}</span>
+          </span>
+        </div>
       </div>
 
       <div class="output-content terminal">
@@ -1277,6 +1318,53 @@
     border-bottom-color: rgba(255, 255, 255, 0.06);
   }
 
+  .output-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .output-copy-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  .output-copy-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .output-copy-btn:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.05);
+    color: #374151;
+  }
+
+  .output-copy-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  :global([data-theme="dark"]) .output-copy-btn {
+    color: #9ca3af;
+  }
+
+  :global([data-theme="dark"]) .output-copy-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05);
+    color: #d1d5db;
+  }
+
   .output-status {
     display: flex;
     align-items: center;
@@ -1334,13 +1422,16 @@
     min-height: 0;
     font-family: "Cascadia Code", "Fira Code", "Consolas", "Monaco", monospace;
     font-size: 0.8125rem;
-    line-height: 1.6;
+    line-height: 1.2;
     color: #374151;
     background: #fafafa;
     border-radius: 0 0 16px 0;
     overflow: hidden;
     padding: 5px;
-    line-height: 1rem;
+  }
+
+  :global(.output-content * ){
+    user-select: text;
   }
 
   :global([data-theme="dark"]) .output-content {

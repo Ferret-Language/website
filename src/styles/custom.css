@@ -501,7 +501,7 @@ figcaption .title {
     color: var(--foreground); /* Match text color */
 }
 
-.expressive-code:has(button) figcaption .title {
+.expressive-code:has(button.run-in-playground-btn) figcaption .title {
     visibility: hidden;
 }
 
