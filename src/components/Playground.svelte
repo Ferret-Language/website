@@ -356,11 +356,15 @@
       return;
     }
 
+    // Clear previous runtime state
+    cachedRun = null;
+    terminalEvents = [];
+    inputLines = [];
+    inputValue = "";
+
     runState = "running";
     runToken += 1;
     activeRunToken = runToken;
-    inputLines = [];
-    inputValue = "";
 
     status = "running";
     statusText = "Running...";
