@@ -56,9 +56,10 @@
   let inputValue = $state("");
   let inputLines = $state<string[]>([]);
 
-  let runToken = $state(0);
-  let activeRunToken = $state(0);
+  let runToken = $state(0); // Incremented each time a new run starts, used to cancel previous runs
+  let activeRunToken = $state(0); // Tracks the token of the currently active run
   let cachedRun = $state<{ code: string; wasm: string; compilerLog: string } | null>(null);
+  let compilationCache = $state<Map<string, { wasm: string; compilerLog: string }>>(new Map()); // Cache compilation results by code hash
 
   let activeModel = $derived(files[activeFile] ?? null);
   let isWaitingInput = $derived(runState === "waiting");
@@ -95,6 +96,15 @@
 
   function decodeBase64(base64: string): Uint8Array {
     return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  }
+
+  // Simple djb2 hash for caching
+  function hashString(str: string): string {
+    let hash = 5381;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) + hash) + str.charCodeAt(i);
+    }
+    return hash.toString();
   }
 
   function createModel(name: string, content: string): monaco.editor.ITextModel {
@@ -327,6 +337,7 @@
       activeRunToken = 0;
     } finally {
       if (token !== runToken) return;
+      runtime.reset();
       if (runState === "idle") {
         setTimeout(() => {
           if (runState === "idle") {
@@ -373,26 +384,38 @@
 
     try {
       const allFiles = serializeFiles();
-      const result = compile(allFiles, false);
+      const codeStr = JSON.stringify(allFiles);
+      const codeHash = hashString(codeStr);
 
-      if (result.success && result.wasm) {
-        cachedRun = {
-          code: JSON.stringify(allFiles),
-          wasm: result.wasm,
-          compilerLog: (result.output || "").trim(),
-        };
-        await runWithInputs(activeRunToken);
-      } else {
-        status = "error";
-        statusText = "Error";
-        const errorText = result.error || result.output || "Compilation failed";
-        terminalEvents = [
-          { type: "system", text: errorText, html: `<pre class="compiler-log">${errorText}</pre>` },
-          { type: "system", text: "Program executed unsuccessfully with exit status 1.", html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>` },
-        ];
-        runState = "idle";
-        activeRunToken = 0;
+      let compileResult = compilationCache.get(codeHash);
+      if (!compileResult) {
+        const result = compile(allFiles, false);
+        if (result.success && result.wasm) {
+          compileResult = {
+            wasm: result.wasm,
+            compilerLog: (result.output || "").trim(),
+          };
+          compilationCache.set(codeHash, compileResult);
+        } else {
+          status = "error";
+          statusText = "Error";
+          const errorText = result.error || result.output || "Compilation failed";
+          terminalEvents = [
+            { type: "system", text: errorText, html: `<pre class="compiler-log">${errorText}</pre>` },
+            { type: "system", text: "Program executed unsuccessfully with exit status 1.", html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>` },
+          ];
+          runState = "idle";
+          activeRunToken = 0;
+          return;
+        }
       }
+
+      cachedRun = {
+        code: codeStr,
+        wasm: compileResult.wasm,
+        compilerLog: compileResult.compilerLog,
+      };
+      await runWithInputs(activeRunToken);
     } catch (e) {
       status = "error";
       statusText = "Error";
