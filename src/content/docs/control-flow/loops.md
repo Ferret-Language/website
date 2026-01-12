@@ -16,15 +16,21 @@ Ferret provides two range operators for loops:
 - `..` - **Exclusive end**: loops from start to end-1
 - `..=` - **Inclusive end**: loops from start to end
 
-```ferret
-// Exclusive: iterates 0 to 9 (10 iterations)
-for i in 0..10 {
-    io::Println(i);  // Prints: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
-}
+```ferret title="run"
+import "std/io";
 
-// Inclusive: iterates 0 to 10 (11 iterations)
-for i in 0..=10 {
-    io::Println(i);  // Prints: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+fn main() {
+    // Exclusive: iterates 0 to 9 (10 iterations)
+    for i in 0..10 {
+        io::Println(i);  // Prints: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+    }
+
+    io::Println("-------");
+
+    // Inclusive: iterates 0 to 10 (11 iterations)
+    for i in 0..=10 {
+        io::Println(i);  // Prints: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+    }
 }
 ```
 
@@ -32,24 +38,40 @@ Loop variables are always declared and scoped to the loop body.
 
 The range operators generate arrays, so this is equivalent to:
 ```ferret
-let numbers := 0..10;   // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-let numbers_inc := 0..=10;  // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+import "std/io";
 
-for i in numbers {
-    io::Println(i);
+fn main() {
+    let numbers := 0..10;   // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    let numbers_inc := 0..=10;  // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+    for i in numbers {
+        io::Println(i);
+    }
+
+    io::Println("-------");
+
+    for i in numbers_inc {
+        io::Println(i);
+    }
 }
 ```
 
 You can specify the step/increment with both operators:
-```ferret
-// Exclusive with step
-for i in 0..10:2 {
-    io::Println(i);  // Prints: 0, 2, 4, 6, 8
-}
+```ferret title="run"
+import "std/io";
 
-// Inclusive with step
-for i in 0..=10:2 {
-    io::Println(i);  // Prints: 0, 2, 4, 6, 8, 10
+fn main() {
+    // Exclusive with step
+    for i in 0..10:2 {
+        io::Println(i);  // Prints: 0, 2, 4, 6, 8
+    }
+
+    io::Println("-------");
+
+    // Inclusive with step
+    for i in 0..=10:2 {
+        io::Println(i);  // Prints: 0, 2, 4, 6, 8, 10
+    }
 }
 ```
 

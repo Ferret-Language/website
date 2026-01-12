@@ -46,5 +46,6 @@ let result := sum(1, 2, 3, 4, 5);  // 15
 
 ## Next Steps
 
-- [Learn about Structs](/structs)
+- [Learn about Anonymous Functions](/functions/anonymous)
+- [Learn about Structs](/type-system/structs)
 - [Explore Methods](/type-system/methods)

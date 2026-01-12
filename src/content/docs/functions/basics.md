@@ -58,7 +58,7 @@ fn log_message(msg: str) {
 
 ## Unnamed or Anonymous Functions
 
-Functions are values in ferret and can be assigned to variables or passed as arguments. We can define unnamed functions using the `fn` keyword without a name:
+Functions are first-class values in Ferret and can be assigned to variables or passed as arguments. We can define unnamed functions using the `fn` keyword without a name:
 
 ```ferret
 let square = fn(x: i32) -> i32 {
@@ -67,9 +67,11 @@ let square = fn(x: i32) -> i32 {
 
 let result = square(5);  // 25
 ```
-This allows for greater flexibility in how functions are used and composed.
+
+This allows for greater flexibility in how functions are used and composed. See the [Anonymous Functions](/functions/anonymous) page for detailed examples.
 
 ## Next Steps
 
-- [Learn about Parameters](/parameters)
-- [Explore Error Handling](/advanced/errors)
+- [Learn about Parameters](/functions/parameters)
+- [Explore Anonymous Functions](/functions/anonymous)
+- [Learn about Error Handling](/advanced/errors)
