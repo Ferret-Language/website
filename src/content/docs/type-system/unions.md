@@ -10,6 +10,8 @@ Union types let a value be **one of several types**. They are useful when you wa
 ## Defining a Union
 
 ```ferret
+import "std/io";
+
 type Result union { i32, str };
 ```
 
@@ -38,6 +40,8 @@ let b: Result = err; // ✅ str is a variant
 To use a union value as a specific type, narrow it with the `is` operator:
 
 ```ferret
+import "std/io";
+
 type Result union { i32, str };
 
 fn print_result(r: Result) {

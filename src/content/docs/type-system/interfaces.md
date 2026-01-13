@@ -99,8 +99,8 @@ Once a type implements an interface, you can use it anywhere that interface is e
 You can declare variables with an interface type:
 
 ```ferret
-let shape1: Shape = { .X: 10, .Y: 20 } as Point;
-let shape2: Shape = { .center: { .X: 0, .Y: 0 }, .radius: 5 } as Circle;
+let shape1: Shape = { .X = 10, .Y = 20 } as Point;
+let shape2: Shape = { .center = { .X = 0, .Y = 0 } as Point, .radius = 5 } as Circle;
 ```
 
 Here, `shape1` and `shape2` are both of type `Shape`, but they hold different concrete types (`Point` and `Circle`).
@@ -110,7 +110,7 @@ Here, `shape1` and `shape2` are both of type `Shape`, but they hold different co
 You can explicitly cast a value to an interface type using the `as` keyword:
 
 ```ferret
-let p: Point = { .X: 10, .Y: 20 };
+let p: Point = { .X = 10, .Y = 20 };
 let shape: Shape = p as Shape;  // Explicit cast (though not required)
 ```
 
@@ -121,8 +121,8 @@ The explicit cast is optional—Ferret will automatically allow the assignment i
 Once you have a variable of interface type, you can call any method defined in that interface:
 
 ```ferret
-let shape1: Shape = { .X: 10, .Y: 20 } as Point;
-let shape2: Shape = { .center: { .X: 0, .Y: 0 }, .radius: 5 } as Circle;
+let shape1: Shape = { .X = 10, .Y = 20 } as Point;
+let shape2: Shape = { .center = { .X = 0, .Y = 0 } as Point, .radius = 5 } as Circle;
 
 // Call methods through the interface
 let area1 := shape1.area();  // Calls Point's area method
@@ -139,13 +139,15 @@ The compiler ensures that whatever concrete type is stored in the interface vari
 One of the most powerful uses of interfaces is writing functions that work with any type that implements a specific interface:
 
 ```ferret
+import "std/io";
+
 fn print_area(shape: Shape) {
     let area := shape.area();
     io::Println("Area: " + area);
 }
 
-let point := { .X: 10, .Y: 20 } as Point;
-let circle := { .center: { .X: 0, .Y: 0 }, .radius: 5 } as Circle;
+let point := { .X = 10, .Y = 20 } as Point;
+let circle := { .center = { .X = 0, .Y = 0 } as Point, .radius = 5 } as Circle;
 
 print_area(point);   // Works! Point implements Shape
 print_area(circle);  // Works! Circle implements Shape
@@ -160,8 +162,8 @@ Ferret supports the **empty interface**, written as `interface{}`. This is a spe
 ```ferret
 type AnyType interface {};
 
-let any1: AnyType = { .X: 10, .Y: 20 } as Point;
-let any2: AnyType = { .center: { .X: 0, .Y: 0 }, .radius: 5 } as Circle;
+let any1: AnyType = { .X = 10, .Y = 20 } as Point;
+let any2: AnyType = { .center = { .X = 0, .Y = 0 } as Point, .radius = 5 } as Circle;
 let any3: AnyType = 42;
 let any4: AnyType = "hello";
 let any5: AnyType = true;
@@ -178,6 +180,8 @@ The empty interface `interface{}` is similar to `any` in TypeScript or `Object` 
 Let's build a more complete example that demonstrates the power of interfaces:
 
 ```ferret
+import "std/io";
+
 // Define what it means to be "drawable"
 type Drawable interface {
     draw(),
@@ -209,10 +213,10 @@ fn (r: Rectangle) get_bounds() -> struct {
     .y_max: i32
 } {
     return {
-        .x_min: r.x,
-        .y_min: r.y,
-        .x_max: r.x + r.width,
-        .y_max: r.y + r.height
+        .x_min = r.x,
+        .y_min = r.y,
+        .x_max = r.x + r.width,
+        .y_max = r.y + r.height
     };
 }
 
@@ -235,10 +239,10 @@ fn (c: Circle) get_bounds() -> struct {
     .y_max: i32
 } {
     return {
-        .x_min: c.center_x - c.radius,
-        .y_min: c.center_y - c.radius,
-        .x_max: c.center_x + c.radius,
-        .y_max: c.center_y + c.radius
+        .x_min = c.center_x - c.radius,
+        .y_min = c.center_y - c.radius,
+        .x_max = c.center_x + c.radius,
+        .y_max = c.center_y + c.radius
     };
 }
 
@@ -251,8 +255,8 @@ fn render_shape(shape: Drawable) {
 }
 
 // Use it with different types
-let rect := { .x: 10, .y: 20, .width: 100, .height: 50 } as Rectangle;
-let circle := { .center_x: 50, .center_y: 50, .radius: 25 } as Circle;
+let rect := { .x = 10, .y = 20, .width = 100, .height = 50 } as Rectangle;
+let circle := { .center_x = 50, .center_y = 50, .radius = 25 } as Circle;
 
 render_shape(rect);    // Works with Rectangle
 render_shape(circle);  // Works with Circle
@@ -468,7 +472,7 @@ type Comparable interface {
 When you have an interface value, you can check what concrete type it holds, but this is generally discouraged in favor of using interface methods:
 
 ```ferret
-let shape: Shape = { .X: 10, .Y: 20 } as Point;
+let shape: Shape = { .X = 10, .Y = 20 } as Point;
 
 // Prefer using interface methods
 let area := shape.area();  // ✅ Good - works with any Shape

@@ -34,6 +34,8 @@ let result := divide(10, 2); // You cannot call the function without handling th
 So you must handle it using `catch` clause:
 
 ```ferret
+import "std/io";
+
 let result := divide(10, 0) catch e { // e holds the error value
     // Handle error case
     io::Println("Error occurred: " + e);
@@ -45,6 +47,8 @@ io::Println("Result: " + result); // won't run because the program will return e
 ```
 But what if you want to move forward even with an error? You can provide a default value after the `catch` block. This can be either declared in the block or after it as literal value:
 ```ferret
+import "std/io";
+
 let result := divide(10, 0) catch e {
     // handle error case and provide default
     io::Println("Error occurred: " + e);
@@ -53,6 +57,8 @@ let result := divide(10, 0) catch e {
 ```
 Or more concisely:
 ```ferret
+import "std/io";
+
 let result := divide(10, 0) catch e {
     // handle error case and provide default
     io::Println("Error occurred: " + e);

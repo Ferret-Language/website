@@ -227,5 +227,4 @@ let process := fn(data: []i32, filter: fn(_: i32) -> bool) -> []i32 {
 
 - [Learn about Error Handling](/advanced/errors)
 - [Explore Generics](/advanced/generics)
-- [Check out the Standard Library](/advanced/builtins)</content>
-<parameter name="filePath">/home/fuad/Dev/Ferret-Language/website/src/content/docs/functions/anonymous.md
+- [Check out the Standard Library](/advanced/builtins)

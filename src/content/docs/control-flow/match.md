@@ -10,6 +10,8 @@ Match expressions provide powerful pattern matching capabilities.
 ## Basic Match
 
 ```ferret
+import "std/io";
+
 let status := 200;
 
 match status {
@@ -35,6 +37,8 @@ let message := match status {
 ## Pattern Matching with Enums
 
 ```ferret
+import "std/io";
+
 type Status enum {
     Pending,
     Active,

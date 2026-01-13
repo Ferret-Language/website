@@ -40,6 +40,8 @@ if x != none {
 ### With Equality Checks
 
 ```ferret
+import "std/io";
+
 let opt: str? = "hello";
 
 if opt == none {
@@ -47,7 +49,7 @@ if opt == none {
     io::Println("No value");
 } else {
     // opt is str here (not str?)
-    let length: i32 = opt.length;
+    let length: i32 = len(opt);
 }
 ```
 
@@ -114,6 +116,8 @@ let num: i32 = none;   // ERROR
 ## Functions with Optional Return Types
 
 ```ferret
+import "std/io";
+
 fn findUser(id: i32) -> User? {
     if userExists(id) {
         return getUser(id);
@@ -192,8 +196,8 @@ type Config struct {
 };
 
 let config := {
-    .port: none,
-    .host: "localhost"
+    .port = none,
+    .host = "localhost"
 } as Config;
 
 let actualPort: i32 = config.port ?? 8080;
@@ -205,5 +209,3 @@ let actualHost: str = config.host ?? "0.0.0.0";
 - [Learn about Maps](/type-system/maps) - See optionals in action with collections
 - [Explore error handling](/advanced/errors) - Handle errors safely
 - [Understand Structs](/type-system/structs) - Create custom types
-
-

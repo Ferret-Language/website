@@ -78,6 +78,8 @@ modify(mut_ref);
 When you need to read the value through a reference, use the dereference operator `*`:
 
 ```ferret
+import "std/io";
+
 let x := 42;
 let r: &i32 = &x;
 let value := *r;  // Dereference to get the value (42)
@@ -87,6 +89,8 @@ io::Println(*r);  // Print the dereferenced value
 To modify through a mutable reference, use `*` on the left side of assignment:
 
 ```ferret
+import "std/io";
+
 let y := 10;
 let r_mut: &mut i32 = &mut y;
 *r_mut = 20;  // Modify the value through the reference
@@ -132,9 +136,9 @@ fn setup_cache(config: &Config) {
 }
 
 let config := { 
-    .database_url: "localhost:5432",
-    .max_connections: 100,
-    .timeout: 5000
+    .database_url = "localhost:5432",
+    .max_connections = 100,
+    .timeout = 5000
 } as Config;
 
 // Borrow explicitly when the parameter expects a reference
@@ -196,6 +200,8 @@ let arr_ref: &mut [2]i32 = &mut arr;
 When you need the actual value (not a field or method), you must explicitly dereference:
 
 ```ferret
+import "std/io";
+
 let x := 42;
 let r: &i32 = &x;
 
@@ -223,7 +229,7 @@ fn (c: &Counter) get_value() -> i32 {
     return c.value;  // Auto-dereference for field access
 }
 
-let counter := { .value: 0 } as Counter;
+let counter := { .value = 0 } as Counter;
 counter.increment();           // Method automatically borrows as &mut
 let value := counter.get_value();  // Method automatically borrows as &
 ```
@@ -233,6 +239,8 @@ let value := counter.get_value();  // Method automatically borrows as &
 References can be optional, allowing functions to return a reference or `none`:
 
 ```ferret
+import "std/io";
+
 type User struct {
     .name: str,
     .age: i32,
@@ -274,10 +282,10 @@ fn (b: &mut RequestBuilder) set_method(method: str) -> &mut RequestBuilder {
 }
 
 fn (b: &RequestBuilder) build() -> Request {
-    return { .url: b.url, .method: b.method } as Request;
+    return { .url = b.url, .method = b.method } as Request;
 }
 
-let builder := { .url: "", .method: "GET", .headers: {} } as RequestBuilder;
+let builder := { .url = "", .method = "GET", .headers = {} } as RequestBuilder;
 let request := builder
     .set_url("https://api.example.com")
     .set_method("POST")
@@ -374,6 +382,8 @@ Ferret enforces strict borrowing rules to ensure memory safety:
 
 4. **Cannot use value while mutably borrowed:**
    ```ferret
+   import "std/io";
+
    let arr: []i32 = [10, 20, 30];
    let mut_ref := &mut arr;
    io::Println(arr[0]);  // ❌ Error - can't use arr while mutably borrowed

@@ -23,7 +23,7 @@ fs::ReadFile(path: str) -> str ! str;
 
 Reads the entire contents of a file as a string. This is the simplest way to read a file.
 
-```ferret
+```ferret title="run"
 import "std/fs";
 import "std/io";
 
@@ -47,6 +47,8 @@ fs::WriteFile(path: str, content: str) -> str ! bool;
 Writes a string to a file, creating it if it doesn't exist or overwriting it if it does.
 
 ```ferret
+import "std/io";
+
 fs::WriteFile("output.txt", "Hello, World!") catch err {
     io::Println("Failed to write: ", err);
     return;
@@ -63,6 +65,8 @@ fs::AppendFile(path: str, content: str) -> str ! bool;
 Appends content to the end of an existing file without overwriting it.
 
 ```ferret
+import "std/io";
+
 fs::AppendFile("log.txt", "New log entry\n") catch err {
     io::Println("Failed to append: ", err);
 };
@@ -79,6 +83,8 @@ fs::Exists(path: str) -> bool;
 Checks if a file or directory exists at the given path.
 
 ```ferret
+import "std/io";
+
 if fs::Exists("config.json") {
     io::Println("Config file found");
 } else {
@@ -95,6 +101,8 @@ fs::Stat(path: str) -> str ! FileInfo;
 Gets detailed information about a file or directory.
 
 ```ferret
+import "std/io";
+
 let info := fs::Stat("myfile.txt") catch err {
     io::Println("Error: ", err);
     return;
@@ -121,6 +129,8 @@ fs::Size(path: str) -> str ! i64;
 Returns the size of a file in bytes (convenience wrapper for `Stat`).
 
 ```ferret
+import "std/io";
+
 let size := fs::Size("large_file.bin") catch err {
     io::Println("Error: ", err);
     return;
@@ -143,6 +153,8 @@ fs::Open(path: str) -> str ! File;
 Opens a file for reading.
 
 ```ferret
+import "std/io";
+
 let file := fs::Open("data.txt") catch err {
     io::Println("Error opening file: ", err);
     return;
@@ -165,6 +177,8 @@ fs::Create(path: str) -> str ! File;
 Creates a new file for writing, or truncates it if it exists.
 
 ```ferret
+import "std/io";
+
 let file := fs::Create("output.txt") catch err {
     io::Println("Error creating file: ", err);
     return;
@@ -182,6 +196,8 @@ fs::OpenAppend(path: str) -> str ! File;
 Opens a file for appending (writing to the end).
 
 ```ferret
+import "std/io";
+
 let file := fs::OpenAppend("log.txt") catch err {
     io::Println("Error opening file: ", err);
     return;
@@ -201,6 +217,8 @@ fs::Close(file: File);
 Closes a file handle. Always close files when done to free resources.
 
 ```ferret
+import "std/io";
+
 let file := fs::Open("data.txt") catch err { return; };
 // ... use file ...
 fs::Close(file);
@@ -213,6 +231,8 @@ fs::ReadLine(file: File) -> str ! str;
 Reads one line from a file (up to and including the newline character).
 
 ```ferret
+import "std/io";
+
 let file := fs::Open("data.txt") catch err { return; };
 
 while true {
@@ -282,6 +302,8 @@ fs::Remove(path: str) -> str ! bool;
 Deletes a file.
 
 ```ferret
+import "std/io";
+
 fs::Remove("temp.txt") catch err {
     io::Println("Failed to remove file: ", err);
 };
@@ -296,6 +318,8 @@ fs::Mkdir(path: str) -> str ! bool;
 Creates a new directory. Fails if parent directories don't exist.
 
 ```ferret
+import "std/io";
+
 fs::Mkdir("new_folder") catch err {
     io::Println("Failed to create directory: ", err);
 };
@@ -310,6 +334,8 @@ fs::Rmdir(path: str) -> str ! bool;
 Removes an empty directory. Fails if the directory is not empty.
 
 ```ferret
+import "std/io";
+
 fs::Rmdir("empty_folder") catch err {
     io::Println("Failed to remove directory: ", err);
 };
@@ -326,6 +352,8 @@ fs::Cwd() -> str ! str;
 Gets the current working directory.
 
 ```ferret
+import "std/io";
+
 let cwd := fs::Cwd() catch err {
     io::Println("Error getting cwd: ", err);
     return;
@@ -482,6 +510,8 @@ fn safe_write(path: str, content: str) -> bool {
 All file operations that can fail return a Result type (`str ! T`). Always use `catch` blocks to handle potential errors:
 
 ```ferret
+import "std/io";
+
 // Good: Handle errors
 let content := fs::ReadFile("data.txt") catch err {
     io::Println("Error: ", err);

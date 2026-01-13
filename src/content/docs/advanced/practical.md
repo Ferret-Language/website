@@ -82,7 +82,7 @@ fn binary_search(nums: []i32, target: i32) -> i32 {
 ## Bubble Sort (in-place)
 
 ```ferret
-fn bubble_sort(nums: []i32) {
+fn bubble_sort(nums: &mut []i32) {
     let n := len(nums);
     let i := 0;
     while i < n {

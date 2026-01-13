@@ -36,6 +36,8 @@ Unlike some languages where defer runs only at function exit, Ferret's defer is 
 ### Block Scopes
 
 ```ferret
+import "std/io";
+
 fn example() {
     io::Println("start");
     
@@ -59,6 +61,8 @@ after block
 Each loop iteration creates a new scope, so defers execute at the end of each iteration:
 
 ```ferret
+import "std/io";
+
 fn loopExample() {
     for i in 0..3 {
         defer io::Println(i);
@@ -78,6 +82,8 @@ iteration
 ### If Statement Scopes
 
 ```ferret
+import "std/io";
+
 fn conditional(x: i32) {
     if x > 0 {
         defer io::Println("positive cleanup");
@@ -162,6 +168,8 @@ Test 2: Error case
 The catch block in defer is for **error logging and diagnostics** only. Unlike regular catch blocks, **it cannot alter control flow or return values**:
 
 ```ferret
+import "std/io";
+
 fn example() -> i32 {
     defer mayFail() catch err {
         // You can log the error
@@ -187,6 +195,8 @@ Defer statements respect control flow:
 ### Break
 
 ```ferret
+import "std/io";
+
 for i in 0..10 {
     if i == 5 {
         defer io::Println("breaking at", i);
@@ -201,6 +211,8 @@ All defers in scopes being exited will execute before the break completes.
 ### Continue
 
 ```ferret
+import "std/io";
+
 for i in 0..5 {
     defer io::Println("end of iteration", i);
     
@@ -215,6 +227,8 @@ for i in 0..5 {
 ### Return
 
 ```ferret
+import "std/io";
+
 fn cleanup() {
     defer io::Println("final cleanup");
     

@@ -297,7 +297,7 @@ Learn more about [Optional Types](/type-system/optionals) and [Maps](/type-syste
 
 ### Range Operators (`..` and `..=`)
 
-Range operators create sequences of numbers. Ferret provides two variants:
+Range operators create sequences of numbers (arrays). Ferret provides two variants:
 
 - `..` - **Exclusive end**: doesn't include the end value
 - `..=` - **Inclusive end**: includes the end value
@@ -309,15 +309,19 @@ let inclusive := 0..=5;  // [0, 1, 2, 3, 4, 5] - includes 5
 
 This distinction is important when iterating:
 
-```ferret
-// Exclusive: iterates 0 to 4 (5 iterations)
-for i in 0..5 {
-    io::Println(i);  // Prints: 0, 1, 2, 3, 4
-}
+```ferret title="run"
+import "std/io";
 
-// Inclusive: iterates 0 to 5 (6 iterations)
-for i in 0..=5 {
-    io::Println(i);  // Prints: 0, 1, 2, 3, 4, 5
+fn main() {
+    // Exclusive: iterates 0 to 4 (5 iterations)
+    for i in 0..5 {
+        io::Println(i);  // Prints: 0, 1, 2, 3, 4
+    }
+
+    // Inclusive: iterates 0 to 5 (6 iterations)
+    for i in 0..=5 {
+        io::Println(i);  // Prints: 0, 1, 2, 3, 4, 5
+    }
 }
 ```
 
@@ -330,9 +334,16 @@ let odds := 1..10:2;      // [1, 3, 5, 7, 9] - exclusive
 let odds_inc := 1..=10:2; // [1, 3, 5, 7, 9] - inclusive (10 not divisible by step)
 ```
 
+Steps default to `1` when omitted: `start..end` and `start..=end`. Float steps require float endpoints:
+
+```ferret
+let thirds := 0.0..1.0:0.25; // [0.0, 0.25, 0.5, 0.75]
+// 0..8:1.5 is invalid; use 0.0..8.0:1.5 instead
+```
+
 **When to use which?**
 
-- Use `..` when you want to exclude the end (like array indices: `0..arr.length`)
+- Use `..` when you want to exclude the end (like array indices: `0..len(arr)`)
 - Use `..=` when you want to include the end (like counting days: `1..=7` for a week)
 
 ## Member Access Operators
@@ -342,12 +353,12 @@ let odds_inc := 1..=10:2; // [1, 3, 5, 7, 9] - inclusive (10 not divisible by st
 The dot operator lets you access fields (data) and methods (functions) that belong to a value.
 
 ```ferret
-struct Point {
+type Point struct {
     .x: i32,
     .y: i32,
-}
+};
 
-let p := Point{ .x: 10, .y: 20 };
+let p: Point = { .x = 10, .y = 20 };
 let x_value := p.x;  // Access the x field: 10
 let y_value := p.y;  // Access the y field: 20
 ```
@@ -356,7 +367,7 @@ You'll use the dot operator constantly when working with strings, arrays, and cu
 
 ```ferret
 let message := "Hello";
-let length := message.length;  // Get the length of the string
+let length := len(message);  // Get the length of the string
 
 let numbers := [1, 2, 3, 4, 5];
 let first := numbers[0];  // Get the first element

@@ -33,8 +33,8 @@ type Box<T> struct {
     .value: T,
 };
 
-let int_box := Box<i32>{.value: 42};
-let str_box := Box<str>{.value: "hello"};
+let int_box := { .value = 42 } as Box<i32>;
+let str_box := { .value = "hello" } as Box<str>;
 ```
 
 ## Generic Interfaces
@@ -54,7 +54,7 @@ type Pair<K, V> struct {
     .value: V,
 };
 
-let entry := Pair<str, i32>{.key: "age", .value: 30};
+let entry := { .key = "age", .value = 30 } as Pair<str, i32>;
 ```
 
 ## Generic Methods

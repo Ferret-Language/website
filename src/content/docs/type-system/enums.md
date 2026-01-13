@@ -21,6 +21,8 @@ type Status enum {
 ## Using Enums
 
 ```ferret
+import "std/io";
+
 let status := Status::Active;
 
 match status {
@@ -30,5 +32,4 @@ match status {
     Status::Cancelled => io::Println("Aborted"),
 }
 ```
-
 

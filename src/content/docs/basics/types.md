@@ -58,7 +58,7 @@ These types store numbers with decimal points. Think of them as numbers that can
 
 The `f` stands for floating-point, and the numbers `32` and `64` represent the bits used to store the value. The bigger the number, the more precise your decimal calculations will be.
 
-When you write a number with a decimal point without specifying a type, Ferret automatically uses the default `f32` because it gives you better precision. But if the value requires more precision, it will promote it to `f64` and so on.
+When you write a number with a decimal point without specifying a type, Ferret automatically uses the default `f64`. If the value requires more precision, it will promote it to `f128` and so on.
 
 ```ferret
 let pi: f32 = 3.14159;
@@ -220,6 +220,8 @@ let age: i32? = none;              // Starts with no value
 Optional types help prevent bugs. Instead of crashing when something is missing, Ferret forces you to check if a value exists before using it.
 
 ```ferret
+import "std/io";
+
 let username: str? = get_username();
 
 if username != none {
@@ -346,7 +348,7 @@ type Color enum {
     Blue
 };
 
-let point: Point = { .x: 10.0, .y: 20.0 } as Point;
+let point: Point = { .x = 10.0, .y = 20.0 } as Point;
 let color: Color = Color::Red;
 ```
 

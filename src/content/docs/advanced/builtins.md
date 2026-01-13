@@ -32,6 +32,8 @@ let map_size := len(scores); // 2
 Safely retrieves a value from an array or map, returning an optional type. Returns `none` if the key/index doesn't exist.
 
 ```ferret
+import "std/io";
+
 let arr: []i32 = [10, 20, 30];
 let scores := {"alice" => 95, "bob" => 87} as map[str]i32;
 
@@ -51,6 +53,8 @@ let score2 := get(&scores, "charlie"); // Returns i32? with value none (key does
 Retrieves a value from an array or map, returning the fallback value if the key/index doesn't exist.
 
 ```ferret
+import "std/io";
+
 let arr: []i32 = [10, 20, 30];
 let scores := {"alice" => 95} as map[str]i32;
 
@@ -70,6 +74,8 @@ This is a convenient alternative to using the coalescing operator with `get()`.
 Checks if a key or index exists in an array or map.
 
 ```ferret
+import "std/io";
+
 let arr: []i32 = [10, 20, 30];
 let scores := {"alice" => 95, "bob" => 87} as map[str]i32;
 
@@ -87,6 +93,8 @@ let has_charlie := has(&scores, "charlie"); // false
 Sets a value in an array or map. Returns `true` on success, `false` if the operation fails (e.g., out of bounds for arrays).
 
 ```ferret
+import "std/io";
+
 let arr: []i32 = [10, 20, 30];
 let scores := {"alice" => 95} as map[str]i32;
 
@@ -127,6 +135,8 @@ These functions work specifically with dynamic arrays.
 Appends an element to the end of a dynamic array. Returns `true` on success.
 
 ```ferret
+import "std/io";
+
 let arr: []i32 = [10, 20, 30];
 
 // Append a value (requires mutable reference)
@@ -142,6 +152,8 @@ io::Println(arr[3]);    // 40
 Inserts an element at a specific index in a dynamic array, shifting existing elements. Returns `true` on success, `false` if the index is invalid.
 
 ```ferret
+import "std/io";
+
 let arr: []i32 = [10, 20, 30];
 
 // Insert at index 1 (requires mutable reference)
@@ -162,6 +174,8 @@ io::Println(len(arr));  // 4
 Direct array indexing `arr[index]` returns the value type `T` directly. For fixed-size arrays with constant indices, Ferret performs compile-time bounds checking:
 
 ```ferret
+import "std/io";
+
 let arr: [5]i32 = [1, 2, 3, 4, 5];
 
 let x := arr[2];   // ✅ OK - returns i32
@@ -279,4 +293,3 @@ Ferret's built-in functions provide a safe and consistent way to work with conta
 - **`insert(&mut a, i, v) -> bool`** - Insert into array (requires mutable reference)
 
 All functions respect Ferret's borrow semantics, ensuring memory safety and preventing data races.
-

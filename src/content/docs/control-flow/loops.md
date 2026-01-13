@@ -16,6 +16,13 @@ Ferret provides two range operators for loops:
 - `..` - **Exclusive end**: loops from start to end-1
 - `..=` - **Inclusive end**: loops from start to end
 
+Range expressions follow these forms:
+
+- `start..end[:step]`
+- `start..=end[:step]`
+
+`step` is optional and defaults to `1`. Float steps require float endpoints (for example, `0.0..8.0:1.5`). `0..8:1.5` is invalid.
+
 ```ferret title="run"
 import "std/io";
 
@@ -37,7 +44,7 @@ fn main() {
 Loop variables are always declared and scoped to the loop body.
 
 The range operators generate arrays, so this is equivalent to:
-```ferret
+```ferret title="run"
 import "std/io";
 
 fn main() {
@@ -77,10 +84,14 @@ fn main() {
 
 ### Index and Value Pairs
 
-```ferret
-let arr := [10, 20, 30];
-for i, val in arr {
-    io::Println(i, val);  // Prints: 0 10, 1 20, 2 30
+```ferret title="run"
+import "std/io";
+
+fn main() {
+    let arr := [10, 20, 30];
+    for i, val in arr {
+        io::Println(i, val);  // Prints: 0 10, 1 20, 2 30
+    }
 }
 ```
 
@@ -88,11 +99,15 @@ for i, val in arr {
 
 ## While Loops
 
-```ferret
-let x := 0;
-while x < 5 {
-    io::Println(x);
-    x = x + 1;
+```ferret title="run"
+import "std/io";
+
+fn main() {
+    let x := 0;
+    while x < 5 {
+        io::Println(x);
+        x = x + 1;
+    }
 }
 ```
 This loop continues as long as the condition `x < 5` is true.

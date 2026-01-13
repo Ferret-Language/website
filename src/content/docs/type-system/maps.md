@@ -133,6 +133,8 @@ This pattern is so useful because:
 You can use the `has()` builtin to check if a key exists before accessing it:
 
 ```ferret
+import "std/io";
+
 let user_emails := {
     "alice" => "alice@example.com",
     "bob" => "bob@example.com"
@@ -151,6 +153,8 @@ if has(&user_emails, "alice") {
 Or use `get()` and check the optional:
 
 ```ferret
+import "std/io";
+
 let email: str? = get(&user_emails, "alice");
 
 if email != none {
@@ -213,7 +217,9 @@ let product_prices := {
 
 ### User Database
 
-```ferret
+```ferret title="run"
+import "std/io";
+
 fn main() {
     // Store user ages
     let user_ages : map[str]i32 = {
@@ -232,7 +238,9 @@ fn main() {
 
 ### Product Inventory
 
-```ferret
+```ferret title="run"
+import "std/io";
+
 fn main() {
     let inventory : map[str]i32 = {
         "apples" => 50,
@@ -252,7 +260,9 @@ fn main() {
 
 ### Configuration Settings
 
-```ferret
+```ferret title="run"
+import "std/io";
+
 fn main() {
     let settings := {
         "theme" => "dark",

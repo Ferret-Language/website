@@ -14,6 +14,8 @@ If statements let your code choose different paths based on conditions. They're 
 The simplest form checks one condition. If it's true, the code inside the curly braces `{ }` runs. If it's false, the code is skipped:
 
 ```ferret
+import "std/io";
+
 let age := 18;
 
 if age >= 18 {
@@ -33,6 +35,8 @@ if condition {
 Let's see more examples:
 
 ```ferret
+import "std/io";
+
 let temperature := 75;
 
 if temperature > 80 {
@@ -57,6 +61,8 @@ if score >= 90 {
 Often you want to do one thing if a condition is true, and something different if it's false. That's what `else` is for:
 
 ```ferret
+import "std/io";
+
 let score := 75;
 
 if score >= 60 {
@@ -80,6 +86,8 @@ if condition {
 More examples:
 
 ```ferret
+import "std/io";
+
 let is_weekend := true;
 
 if is_weekend {
@@ -104,6 +112,8 @@ if balance >= price {
 When you have more than two possibilities, use `else if` to add extra conditions:
 
 ```ferret
+import "std/io";
+
 let grade := 85;
 
 if grade >= 90 {
@@ -129,6 +139,8 @@ Ferret checks each condition **in order** from top to bottom:
 **Important:** As soon as one condition is true, that block runs and the rest are skipped.
 
 ```ferret
+import "std/io";
+
 let time_of_day := 14;  // 2 PM in 24-hour format
 
 if time_of_day < 12 {
@@ -145,6 +157,8 @@ if time_of_day < 12 {
 You can have as many `else if` blocks as you need. The final `else` is optional - if you leave it out and all conditions are false, nothing happens:
 
 ```ferret
+import "std/io";
+
 let age := 15;
 
 if age >= 18 {
@@ -171,6 +185,8 @@ let maybe_value: i32? = 42;
 But after checking for `none`, Ferret knows the type more precisely:
 
 ```ferret
+import "std/io";
+
 let maybe_value: i32? = 42;
 
 if maybe_value != none {
@@ -189,12 +205,14 @@ This is called **type narrowing** or **flow-sensitive typing**. Ferret understan
 Another example:
 
 ```ferret
+import "std/io";
+
 let username: str? = get_user_input();
 
 if username != none {
     // username is str here
     io::Println("Hello, " + username + "!");
-    let length: i32 = username.length;
+    let length: i32 = len(username);
 } else {
     // username is none here
     io::Println("Please enter a username");
@@ -204,6 +222,8 @@ if username != none {
 You can also use `==` to check:
 
 ```ferret
+import "std/io";
+
 let opt_count: i32? = get_count();
 
 if opt_count == none {
@@ -223,6 +243,8 @@ This feature makes working with optional types safe and convenient. You're force
 You can put if statements inside other if statements:
 
 ```ferret
+import "std/io";
+
 let age := 25;
 let has_license := true;
 
@@ -240,6 +262,8 @@ if age >= 18 {
 However, it's often clearer to use logical operators instead:
 
 ```ferret
+import "std/io";
+
 let age := 25;
 let has_license := true;
 

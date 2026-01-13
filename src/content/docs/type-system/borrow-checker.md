@@ -13,7 +13,7 @@ Ferret's borrow checker is a compile-time analysis system that ensures memory sa
 
 Every binding owns its value. Ferret copies by default, so assigning or returning a value creates a copy unless you explicitly move it. Literals bind directly into the destination without an extra copy.
 
-```ferret
+```ferret title="run"
 fn main() {
     let x := 42;
     let y := x;   // copy
@@ -51,6 +51,8 @@ Ferret enforces three fundamental rules at compile time:
 You can have as many immutable references (`&T`) as you want:
 
 ```ferret
+import "std/io";
+
 let data := [10, 20, 30];
 
 let ref1 := &data;
@@ -85,6 +87,8 @@ let mut_ref2 := &mut arr;  // ❌ ERROR: cannot borrow arr as mutable more than 
 You cannot have mutable and immutable borrows at the same time:
 
 ```ferret
+import "std/io";
+
 let data := [1, 2, 3];
 
 let immut_ref := &data;
@@ -101,6 +105,8 @@ io::Println(*immut_ref);  // Reader would see unexpected changes
 Borrows have a scope - they're only active while they're being used:
 
 ```ferret
+import "std/io";
+
 let arr := [10, 20, 30];
 
 {
@@ -117,6 +123,8 @@ let ref2 := &arr;
 Borrows are released when they're no longer needed:
 
 ```ferret
+import "std/io";
+
 let arr := [1, 2, 3];
 
 let immut_ref := &arr;
@@ -162,7 +170,7 @@ fn (c: &Counter) get() -> i32 {
     return c.value;  // Auto-borrows as &
 }
 
-let counter := { .value: 0 } as Counter;
+let counter := { .value = 0 } as Counter;
 
 counter.increment();  // Borrows as &mut
 counter.increment();  // ✅ Previous borrow released
@@ -194,12 +202,14 @@ append(&mut arr, 6);  // ERROR if len borrow still active
 Ferret allows borrowing **different fields** of a struct simultaneously:
 
 ```ferret
+import "std/io";
+
 type Point struct {
     .x: i32,
     .y: i32,
 };
 
-let p := { .x: 10, .y: 20 } as Point;
+let p := { .x = 10, .y = 20 } as Point;
 
 let x_ref := &p.x;
 let y_mut := &mut p.y;  // ✅ OK - different fields
@@ -245,6 +255,8 @@ let r: &i32;  // Declared but not initialized
 When returning references, the borrow checker ensures safety:
 
 ```ferret
+import "std/io";
+
 fn get_first(arr: &[]i32) -> &i32 {
     return &arr[0];  // ✅ OK - returned reference lives as long as input
 }
@@ -295,16 +307,20 @@ The borrow checker treats this as a read through the same mutable reference.
 ### Why Borrow Checking?
 
 **Without borrow checking:**
-```rust
-// C/C++ style - can cause crashes
+```ferret
+import "std/io";
+
+// Unsafe style - can cause crashes
 let arr := [1, 2, 3];
 let ptr1 := &arr[0];
-arr.clear();       // Destroys array
-println(*ptr1);    // ⚠️ Use-after-free bug!
+arr = [];           // Destroys array
+io::Println(*ptr1); // ⚠️ Use-after-free bug!
 ```
 
 **With borrow checking:**
 ```ferret
+import "std/io";
+
 let arr := [1, 2, 3];
 let ref := &arr[0];
 arr = [];          // ❌ ERROR: cannot modify arr while borrowed

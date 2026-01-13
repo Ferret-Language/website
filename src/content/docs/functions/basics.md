@@ -12,6 +12,8 @@ Functions are reusable blocks of code that perform specific tasks.
 To declare a function, use the `fn` keyword followed by the function name. Let's define a function that greets a user:
 
 ```ferret
+import "std/io";
+
 fn greet() {
     io::Println("Hello!");
 }
@@ -22,6 +24,8 @@ fn greet() {
 Functions can take inputs from outside which are called parameters. Parameters are just like variables that are defined in the function signature.
 
 ```ferret
+import "std/io";
+
 fn greet(name: str) {
     io::Println("Hello, " + name);
 }
@@ -30,6 +34,8 @@ fn greet(name: str) {
 ## Calling Functions
 
 ```ferret
+import "std/io";
+
 let message := greet("World");
 io::Println(message);  // Hello, World
 ```
@@ -51,6 +57,8 @@ let sum := add(5, 3);  // 8
 Functions that don't return a value:
 
 ```ferret
+import "std/io";
+
 fn log_message(msg: str) {
     io::Println("[INFO] " + msg);
 }

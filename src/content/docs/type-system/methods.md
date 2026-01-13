@@ -17,7 +17,7 @@ type Counter struct {
 };
 
 fn (c: Counter) increment() -> Counter {
-    return { .value: c.value + 1 } as Counter;
+    return { .value = c.value + 1 } as Counter;
 }
 
 fn (c: Counter) get_value() -> i32 {
@@ -59,7 +59,7 @@ fn (r: Rectangle) is_square() -> bool {
     return r.width == r.height;
 }
 
-let rect := { .width: 10.0, .height: 5.0 } as Rectangle;
+let rect := { .width = 10.0, .height = 5.0 } as Rectangle;
 let area := rect.area();          // 50.0
 let perimeter := rect.perimeter();  // 30.0
 let square := rect.is_square();    // false
@@ -132,15 +132,15 @@ type Vector2D struct {
 
 fn (v: Vector2D) add(other: Vector2D) -> Vector2D {
     return {
-        .x: v.x + other.x,
-        .y: v.y + other.y
+        .x = v.x + other.x,
+        .y = v.y + other.y
     } as Vector2D;
 }
 
 fn (v: Vector2D) scale(factor: f64) -> Vector2D {
     return {
-        .x: v.x * factor,
-        .y: v.y * factor
+        .x = v.x * factor,
+        .y = v.y * factor
     } as Vector2D;
 }
 
@@ -150,11 +150,11 @@ fn (v: Vector2D) distance_to(other: Vector2D) -> f64 {
     return math::sqrt(dx * dx + dy * dy);
 }
 
-let v1 := { .x: 3.0, .y: 4.0 } as Vector2D;
-let v2 := { .x: 6.0, .y: 8.0 } as Vector2D;
+let v1 := { .x = 3.0, .y = 4.0 } as Vector2D;
+let v2 := { .x = 6.0, .y = 8.0 } as Vector2D;
 
-let sum := v1.add(v2);              // { .x: 9.0, .y: 12.0 }
-let scaled := v1.scale(2.0);        // { .x: 6.0, .y: 8.0 }
+let sum := v1.add(v2);              // { .x = 9.0, .y = 12.0 }
+let scaled := v1.scale(2.0);        // { .x = 6.0, .y = 8.0 }
 let distance := v1.distance_to(v2); // 5.0
 ```
 
@@ -185,11 +185,11 @@ fn distance_between(p1: Point, p2: Point) -> f64 {
     return math::sqrt(dx * dx + dy * dy);
 }
 
-let p := { .x: 3.0, .y: 4.0 } as Point;
+let p := { .x = 3.0, .y = 4.0 } as Point;
 p.distance_from_origin();  // Clear: distance of p from origin
 
-let p1 := { .x: 0.0, .y: 0.0 } as Point;
-let p2 := { .x: 3.0, .y: 4.0 } as Point;
+let p1 := { .x = 0.0, .y = 0.0 } as Point;
+let p2 := { .x = 3.0, .y = 4.0 } as Point;
 distance_between(p1, p2);  // Clear: distance between two points
 ```
 
@@ -203,18 +203,18 @@ type StringBuilder struct {
 };
 
 fn (sb: StringBuilder) append(text: str) -> StringBuilder {
-    return { .content: sb.content + text } as StringBuilder;
+    return { .content = sb.content + text } as StringBuilder;
 }
 
 fn (sb: StringBuilder) append_line(text: str) -> StringBuilder {
-    return { .content: sb.content + text + "\n" } as StringBuilder;
+    return { .content = sb.content + text + "\n" } as StringBuilder;
 }
 
 fn (sb: StringBuilder) to_string() -> str {
     return sb.content;
 }
 
-let result := { .content: "" } as StringBuilder
+let result := { .content = "" } as StringBuilder
     .append("Hello, ")
     .append("World!")
     .append_line("")
@@ -255,12 +255,12 @@ fn (c: Config) is_aggressive() -> bool {
 }
 
 let configs := {
-    "production" => { .timeout: 5000, .retries: 3 },
-    "development" => { .timeout: 500, .retries: 10 }
+    "production" => { .timeout = 5000, .retries = 3 },
+    "development" => { .timeout = 500, .retries = 10 }
 } as map[str]Config;
 
 // Get config and call method with default
-let prod_config := configs["production"] ?? { .timeout: 3000, .retries: 2 } as Config;
+let prod_config := configs["production"] ?? { .timeout = 3000, .retries = 2 } as Config;
 let aggressive := prod_config.is_aggressive();  // false
 ```
 
@@ -269,6 +269,8 @@ let aggressive := prod_config.is_aggressive();  // false
 Methods are how you implement interfaces. When you define methods that match an interface's signatures, your type automatically implements that interface:
 
 ```ferret
+import "std/io";
+
 type Drawable interface {
     draw();
     get_bounds() -> struct {
@@ -297,15 +299,15 @@ fn (c: Circle) get_bounds() -> struct {
     .y_max: i32
 } {
     return {
-        .x_min: c.x - c.radius,
-        .y_min: c.y - c.radius,
-        .x_max: c.x + c.radius,
-        .y_max: c.y + c.radius
+        .x_min = c.x - c.radius,
+        .y_min = c.y - c.radius,
+        .x_max = c.x + c.radius,
+        .y_max = c.y + c.radius
     };
 }
 
 // Circle now implements Drawable!
-let circle := { .x: 10, .y: 20, .radius: 5 } as Circle;
+let circle := { .x = 10, .y = 20, .radius = 5 } as Circle;
 circle.draw();
 ```
 
@@ -352,14 +354,14 @@ type Counter struct {
 
 // Returns new Counter instead of modifying in place
 fn (c: Counter) increment() -> Counter {
-    return { .value: c.value + 1 } as Counter;
+    return { .value = c.value + 1 } as Counter;
 }
 
 fn (c: Counter) add(amount: i32) -> Counter {
-    return { .value: c.value + amount } as Counter;
+    return { .value = c.value + amount } as Counter;
 }
 
-let counter := { .value: 0 } as Counter;
+let counter := { .value = 0 } as Counter;
 let counter2 := counter.increment();      // counter is still 0, counter2 is 1
 let counter3 := counter2.add(5);          // counter3 is 6
 ```

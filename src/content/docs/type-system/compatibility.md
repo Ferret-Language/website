@@ -114,6 +114,8 @@ let index: Index = count as Index;  // Explicit cast: different semantic types
 Values can be implicitly assigned to union types if they match one of the variants:
 
 ```ferret
+import "std/io";
+
 type Result union { i32, str };
 
 let success: i32 = 42;
@@ -139,6 +141,8 @@ let union_val: MyUnion = val;  // Implicit
 The `is` operator allows checking and narrowing union types:
 
 ```ferret
+import "std/io";
+
 type Result union { i32, str };
 
 fn process(result: Result) {
