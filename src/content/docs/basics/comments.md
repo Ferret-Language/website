@@ -52,7 +52,7 @@ Calculate the user's discount based on their loyalty level:
 - Gold: 15% off
 - Platinum: 20% off
 */
-let discount := calculate_discount(user.loyalty_tier);
+let discount := calculate_discount(user.LoyaltyTier);
 ```
 
 ## Documentation Comments

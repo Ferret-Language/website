@@ -13,15 +13,15 @@ A method is a function associated with a specific type. Methods are defined usin
 
 ```ferret
 type Counter struct {
-    .value: i32,
+    .Value: i32,
 };
 
 fn (c: Counter) increment() -> Counter {
-    return { .value = c.value + 1 } as Counter;
+    return { .Value = c.Value + 1 } as Counter;
 }
 
 fn (c: Counter) get_value() -> i32 {
-    return c.value;
+    return c.Value;
 }
 ```
 
@@ -43,23 +43,23 @@ The most common use case is defining methods on structs:
 
 ```ferret
 type Rectangle struct {
-    .width: f64,
-    .height: f64,
+    .Width: f64,
+    .Height: f64,
 };
 
 fn (r: Rectangle) area() -> f64 {
-    return r.width * r.height;
+    return r.Width * r.Height;
 }
 
 fn (r: Rectangle) perimeter() -> f64 {
-    return 2.0 * (r.width + r.height);
+    return 2.0 * (r.Width + r.Height);
 }
 
 fn (r: Rectangle) is_square() -> bool {
-    return r.width == r.height;
+    return r.Width == r.Height;
 }
 
-let rect := { .width = 10.0, .height = 5.0 } as Rectangle;
+let rect := { .Width = 10.0, .Height = 5.0 } as Rectangle;
 let area := rect.area();          // 50.0
 let perimeter := rect.perimeter();  // 30.0
 let square := rect.is_square();    // false
@@ -126,35 +126,35 @@ Methods can take additional parameters beyond the receiver:
 
 ```ferret
 type Vector2D struct {
-    .x: f64,
-    .y: f64,
+    .X: f64,
+    .Y: f64,
 };
 
 fn (v: Vector2D) add(other: Vector2D) -> Vector2D {
     return {
-        .x = v.x + other.x,
-        .y = v.y + other.y
+        .X = v.X + other.X,
+        .Y = v.Y + other.Y
     } as Vector2D;
 }
 
 fn (v: Vector2D) scale(factor: f64) -> Vector2D {
     return {
-        .x = v.x * factor,
-        .y = v.y * factor
+        .X = v.X * factor,
+        .Y = v.Y * factor
     } as Vector2D;
 }
 
 fn (v: Vector2D) distance_to(other: Vector2D) -> f64 {
-    let dx := other.x - v.x;
-    let dy := other.y - v.y;
+    let dx := other.X - v.X;
+    let dy := other.Y - v.Y;
     return math::sqrt(dx * dx + dy * dy);
 }
 
-let v1 := { .x = 3.0, .y = 4.0 } as Vector2D;
-let v2 := { .x = 6.0, .y = 8.0 } as Vector2D;
+let v1 := { .X = 3.0, .Y = 4.0 } as Vector2D;
+let v2 := { .X = 6.0, .Y = 8.0 } as Vector2D;
 
-let sum := v1.add(v2);              // { .x = 9.0, .y = 12.0 }
-let scaled := v1.scale(2.0);        // { .x = 6.0, .y = 8.0 }
+let sum := v1.add(v2);              // { .X = 9.0, .Y = 12.0 }
+let scaled := v1.scale(2.0);        // { .X = 6.0, .Y = 8.0 }
 let distance := v1.distance_to(v2); // 5.0
 ```
 
@@ -175,21 +175,21 @@ You might wonder: when should you use a method versus a standalone function?
 ```ferret
 // Method - operation on a type
 fn (p: Point) distance_from_origin() -> f64 {
-    return math::sqrt(p.x * p.x + p.y * p.y);
+    return math::sqrt(p.X * p.X + p.Y * p.Y);
 }
 
 // Function - operation on multiple types
 fn distance_between(p1: Point, p2: Point) -> f64 {
-    let dx := p2.x - p1.x;
-    let dy := p2.y - p1.y;
+    let dx := p2.X - p1.X;
+    let dy := p2.Y - p1.Y;
     return math::sqrt(dx * dx + dy * dy);
 }
 
-let p := { .x = 3.0, .y = 4.0 } as Point;
+let p := { .X = 3.0, .Y = 4.0 } as Point;
 p.distance_from_origin();  // Clear: distance of p from origin
 
-let p1 := { .x = 0.0, .y = 0.0 } as Point;
-let p2 := { .x = 3.0, .y = 4.0 } as Point;
+let p1 := { .X = 0.0, .Y = 0.0 } as Point;
+let p2 := { .X = 3.0, .Y = 4.0 } as Point;
 distance_between(p1, p2);  // Clear: distance between two points
 ```
 
@@ -199,22 +199,22 @@ Methods that return the same type enable method chaining, creating fluent APIs:
 
 ```ferret
 type StringBuilder struct {
-    .content: str,
+    .Content: str,
 };
 
 fn (sb: StringBuilder) append(text: str) -> StringBuilder {
-    return { .content = sb.content + text } as StringBuilder;
+    return { .Content = sb.Content + text } as StringBuilder;
 }
 
 fn (sb: StringBuilder) append_line(text: str) -> StringBuilder {
-    return { .content = sb.content + text + "\n" } as StringBuilder;
+    return { .Content = sb.Content + text + "\n" } as StringBuilder;
 }
 
 fn (sb: StringBuilder) to_string() -> str {
-    return sb.content;
+    return sb.Content;
 }
 
-let result := { .content = "" } as StringBuilder
+let result := { .Content = "" } as StringBuilder
     .append("Hello, ")
     .append("World!")
     .append_line("")
@@ -228,12 +228,12 @@ Methods work seamlessly with optional types. When you have an optional value, yo
 
 ```ferret
 type User struct {
-    .name: str,
-    .email: str,
+    .Name: str,
+    .Email: str,
 };
 
 fn (u: User) get_display_name() -> str {
-    return u.name + " <" + u.email + ">";
+    return u.Name + " <" + u.Email + ">";
 }
 
 let maybe_user: User? = get_user();
@@ -246,21 +246,21 @@ Since map indexing returns optional values, methods on the value type combine ni
 
 ```ferret
 type Config struct {
-    .timeout: i32,
-    .retries: i32,
+    .Timeout: i32,
+    .Retries: i32,
 };
 
 fn (c: Config) is_aggressive() -> bool {
-    return c.timeout < 1000 && c.retries > 5;
+    return c.Timeout < 1000 && c.Retries > 5;
 }
 
 let configs := {
-    "production" => { .timeout = 5000, .retries = 3 },
-    "development" => { .timeout = 500, .retries = 10 }
+    "production" => { .Timeout = 5000, .Retries = 3 },
+    "development" => { .Timeout = 500, .Retries = 10 }
 } as map[str]Config;
 
 // Get config and call method with default
-let prod_config := configs["production"] ?? { .timeout = 3000, .retries = 2 } as Config;
+let prod_config := configs["production"] ?? { .Timeout = 3000, .Retries = 2 } as Config;
 let aggressive := prod_config.is_aggressive();  // false
 ```
 
@@ -274,40 +274,40 @@ import "std/io";
 type Drawable interface {
     draw();
     get_bounds() -> struct {
-        .x_min: i32,
-        .y_min: i32,
-        .x_max: i32,
-        .y_max: i32
+        .XMin: i32,
+        .YMin: i32,
+        .XMax: i32,
+        .YMax: i32
     };
 };
 
 type Circle struct {
-    .x: i32,
-    .y: i32,
-    .radius: i32,
+    .X: i32,
+    .Y: i32,
+    .Radius: i32,
 };
 
 // Implementing Drawable for Circle
 fn (c: Circle) draw() {
-    io::Println("Drawing circle at (" + c.x + ", " + c.y + ")");
+    io::Println("Drawing circle at (" + c.X + ", " + c.Y + ")");
 }
 
 fn (c: Circle) get_bounds() -> struct {
-    .x_min: i32,
-    .y_min: i32,
-    .x_max: i32,
-    .y_max: i32
+    .XMin: i32,
+    .YMin: i32,
+    .XMax: i32,
+    .YMax: i32
 } {
     return {
-        .x_min = c.x - c.radius,
-        .y_min = c.y - c.radius,
-        .x_max = c.x + c.radius,
-        .y_max = c.y + c.radius
+        .XMin = c.X - c.Radius,
+        .YMin = c.Y - c.Radius,
+        .XMax = c.X + c.Radius,
+        .YMax = c.Y + c.Radius
     };
 }
 
 // Circle now implements Drawable!
-let circle := { .x = 10, .y = 20, .radius = 5 } as Circle;
+let circle := { .X = 10, .Y = 20, .Radius = 5 } as Circle;
 circle.draw();
 ```
 
@@ -349,19 +349,19 @@ Since Ferret encourages immutability, methods that "modify" data typically retur
 
 ```ferret
 type Counter struct {
-    .value: i32,
+    .Value: i32,
 };
 
 // Returns new Counter instead of modifying in place
 fn (c: Counter) increment() -> Counter {
-    return { .value = c.value + 1 } as Counter;
+    return { .Value = c.Value + 1 } as Counter;
 }
 
 fn (c: Counter) add(amount: i32) -> Counter {
-    return { .value = c.value + amount } as Counter;
+    return { .Value = c.Value + amount } as Counter;
 }
 
-let counter := { .value = 0 } as Counter;
+let counter := { .Value = 0 } as Counter;
 let counter2 := counter.increment();      // counter is still 0, counter2 is 1
 let counter3 := counter2.add(5);          // counter3 is 6
 ```

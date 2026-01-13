@@ -129,7 +129,7 @@ fn findUser(id: i32) -> User? {
 let maybeUser: User? = findUser(42);
 
 if maybeUser != none {
-    io::Println(maybeUser.name);
+    io::Println(maybeUser.Name);
 } else {
     io::Println("User not found");
 }
@@ -191,17 +191,17 @@ See the [Maps](/type-system/maps) section for more details on how maps use optio
 
 ```ferret
 type Config struct {
-    .port: i32?,
-    .host: str?
+    .Port: i32?,
+    .Host: str?
 };
 
 let config := {
-    .port = none,
-    .host = "localhost"
+    .Port = none,
+    .Host = "localhost"
 } as Config;
 
-let actualPort: i32 = config.port ?? 8080;
-let actualHost: str = config.host ?? "0.0.0.0";
+let actualPort: i32 = config.Port ?? 8080;
+let actualHost: str = config.Host ?? "0.0.0.0";
 ```
 
 ## Next Steps

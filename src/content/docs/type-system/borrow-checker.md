@@ -159,18 +159,18 @@ Methods automatically borrow `self` with the appropriate type:
 
 ```ferret
 type Counter struct {
-    .value: i32,
+    .Value: i32,
 };
 
 fn (c: &mut Counter) increment() {
-    c.value++;  // Auto-borrows as &mut
+    c.Value++;  // Auto-borrows as &mut
 }
 
 fn (c: &Counter) get() -> i32 {
-    return c.value;  // Auto-borrows as &
+    return c.Value;  // Auto-borrows as &
 }
 
-let counter := { .value = 0 } as Counter;
+let counter := { .Value = 0 } as Counter;
 
 counter.increment();  // Borrows as &mut
 counter.increment();  // ✅ Previous borrow released
@@ -205,14 +205,14 @@ Ferret allows borrowing **different fields** of a struct simultaneously:
 import "std/io";
 
 type Point struct {
-    .x: i32,
-    .y: i32,
+    .X: i32,
+    .Y: i32,
 };
 
-let p := { .x = 10, .y = 20 } as Point;
+let p := { .X = 10, .Y = 20 } as Point;
 
-let x_ref := &p.x;
-let y_mut := &mut p.y;  // ✅ OK - different fields
+let x_ref := &p.X;
+let y_mut := &mut p.Y;  // ✅ OK - different fields
 
 io::Println(*x_ref);  // Read x
 *y_mut = 30;          // Modify y
@@ -447,7 +447,7 @@ let arr := [1, 2, 3];
 
 ```ferret
 type HugeData struct {
-    .buffer: [10000]i32,
+    .Buffer: [10000]i32,
     // ... more fields
 };
 

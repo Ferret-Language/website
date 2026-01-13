@@ -19,8 +19,8 @@ let z := @x;  // move; x is no longer usable
 
 ```ferret
 type LargeData struct {
-    .buffer: [1000]i32,
-    .metadata: str,
+    .Buffer: [1000]i32,
+    .Metadata: str,
 };
 
 // Without reference - copies the entire struct (4KB + string)
@@ -105,9 +105,9 @@ References avoid copying large data structures:
 
 ```ferret
 type GameState struct {
-    .players: [100]Player,
-    .world: WorldMap,
-    .physics: PhysicsEngine,
+    .Players: [100]Player,
+    .World: WorldMap,
+    .Physics: PhysicsEngine,
 };
 
 // Efficient - no copy
@@ -122,23 +122,23 @@ Multiple parts of your code can reference the same data:
 
 ```ferret
 type Config struct {
-    .database_url: str,
-    .max_connections: i32,
-    .timeout: i32,
+    .DatabaseUrl: str,
+    .MaxConnections: i32,
+    .Timeout: i32,
 };
 
 fn setup_database(config: &Config) {
-    // Use config.database_url
+    // Use config.DatabaseUrl
 }
 
 fn setup_cache(config: &Config) {
-    // Use config.max_connections
+    // Use config.MaxConnections
 }
 
 let config := { 
-    .database_url = "localhost:5432",
-    .max_connections = 100,
-    .timeout = 5000
+    .DatabaseUrl = "localhost:5432",
+    .MaxConnections = 100,
+    .Timeout = 5000
 } as Config;
 
 // Borrow explicitly when the parameter expects a reference
@@ -165,25 +165,25 @@ When you have a reference type parameter or variable, Ferret **automatically der
 
 ```ferret
 type Point struct {
-    .x: i32,
-    .y: i32,
+    .X: i32,
+    .Y: i32,
 };
 
 fn (p: Point) distance() -> f64 {
-    return math::sqrt(p.x * p.x + p.y * p.y);
+    return math::sqrt(p.X * p.X + p.Y * p.Y);
 }
 
 fn process_point(p_ref: &Point) {
     // Automatic dereferencing for field access and methods
-    let x := p_ref.x;              // Access field directly
+    let x := p_ref.X;              // Access field directly
     let dist := p_ref.distance();  // Call method directly
     
-    // No need for (*p_ref).x or (*p_ref).distance()
+    // No need for (*p_ref).X or (*p_ref).distance()
 }
 
 fn modify_point(p_ref: &mut Point) {
     // Automatic dereferencing also works for mutable references
-    p_ref.x = 10;  // Modifies the field through the reference
+    p_ref.X = 10;  // Modifies the field through the reference
 }
 ```
 
@@ -218,18 +218,18 @@ Methods can take `self` by reference:
 
 ```ferret
 type Counter struct {
-    .value: i32,
+    .Value: i32,
 };
 
 fn (c: &mut Counter) increment() {
-    c.value++;  // Auto-dereference for field access
+    c.Value++;  // Auto-dereference for field access
 }
 
 fn (c: &Counter) get_value() -> i32 {
-    return c.value;  // Auto-dereference for field access
+    return c.Value;  // Auto-dereference for field access
 }
 
-let counter := { .value = 0 } as Counter;
+let counter := { .Value = 0 } as Counter;
 counter.increment();           // Method automatically borrows as &mut
 let value := counter.get_value();  // Method automatically borrows as &
 ```
@@ -242,8 +242,8 @@ References can be optional, allowing functions to return a reference or `none`:
 import "std/io";
 
 type User struct {
-    .name: str,
-    .age: i32,
+    .Name: str,
+    .Age: i32,
 };
 
 fn find_user(id: i32) -> &User? {
@@ -256,7 +256,7 @@ fn find_user(id: i32) -> &User? {
 
 let user_ref := find_user(42);
 if user_ref != none {
-    io::Println(user_ref.name);  // Automatic dereferencing
+    io::Println(user_ref.Name);  // Automatic dereferencing
 }
 ```
 
@@ -266,26 +266,26 @@ if user_ref != none {
 
 ```ferret
 type RequestBuilder struct {
-    .url: str,
-    .method: str,
-    .headers: map[str]str,
+    .Url: str,
+    .Method: str,
+    .Headers: map[str]str,
 };
 
 fn (b: &mut RequestBuilder) set_url(url: str) -> &mut RequestBuilder {
-    b.url = url;
+    b.Url = url;
     return b;
 }
 
 fn (b: &mut RequestBuilder) set_method(method: str) -> &mut RequestBuilder {
-    b.method = method;
+    b.Method = method;
     return b;
 }
 
 fn (b: &RequestBuilder) build() -> Request {
-    return { .url = b.url, .method = b.method } as Request;
+    return { .Url = b.Url, .Method = b.Method } as Request;
 }
 
-let builder := { .url = "", .method = "GET", .headers = {} } as RequestBuilder;
+let builder := { .Url = "", .Method = "GET", .Headers = {} } as RequestBuilder;
 let request := builder
     .set_url("https://api.example.com")
     .set_method("POST")
@@ -316,8 +316,8 @@ Consider references when passing large structs:
 
 ```ferret
 type HugeStruct struct {
-    .data1: [10000]i32,
-    .data2: [10000]f64,
+    .Data1: [10000]i32,
+    .Data2: [10000]f64,
     // ... many more fields
 };
 

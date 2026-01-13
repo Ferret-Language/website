@@ -354,13 +354,13 @@ The dot operator lets you access fields (data) and methods (functions) that belo
 
 ```ferret
 type Point struct {
-    .x: i32,
-    .y: i32,
+    .X: i32,
+    .Y: i32,
 };
 
-let p: Point = { .x = 10, .y = 20 };
-let x_value := p.x;  // Access the x field: 10
-let y_value := p.y;  // Access the y field: 20
+let p: Point = { .X = 10, .Y = 20 };
+let x_value := p.X;  // Access the X field: 10
+let y_value := p.Y;  // Access the Y field: 20
 ```
 
 You'll use the dot operator constantly when working with strings, arrays, and custom types:

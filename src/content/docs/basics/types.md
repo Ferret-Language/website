@@ -309,8 +309,8 @@ Reference types let you pass data by reference rather than by copy. Add `&` befo
 
 ```ferret
 type LargeData struct {
-    .buffer: [1000]i32,
-    .metadata: str,
+    .Buffer: [1000]i32,
+    .Metadata: str,
 };
 
 // Passes by copy (copies entire struct)
@@ -337,8 +337,8 @@ You use the `type` keyword to define new structured types:
 ```ferret
 // Define a struct type
 type Point struct {
-    .x: f64,
-    .y: f64
+    .X: f64,
+    .Y: f64
 };
 
 // Define an enum type
@@ -348,7 +348,7 @@ type Color enum {
     Blue
 };
 
-let point: Point = { .x = 10.0, .y = 20.0 } as Point;
+let point: Point = { .X = 10.0, .Y = 20.0 } as Point;
 let color: Color = Color::Red;
 ```
 

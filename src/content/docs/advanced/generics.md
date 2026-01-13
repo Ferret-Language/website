@@ -30,11 +30,11 @@ let text := identity("hello");   // T = str
 
 ```ferret
 type Box<T> struct {
-    .value: T,
+    .Value: T,
 };
 
-let int_box := { .value = 42 } as Box<i32>;
-let str_box := { .value = "hello" } as Box<str>;
+let int_box := { .Value = 42 } as Box<i32>;
+let str_box := { .Value = "hello" } as Box<str>;
 ```
 
 ## Generic Interfaces
@@ -50,21 +50,21 @@ type Container<T> interface {
 
 ```ferret
 type Pair<K, V> struct {
-    .key: K,
-    .value: V,
+    .Key: K,
+    .Value: V,
 };
 
-let entry := { .key = "age", .value = 30 } as Pair<str, i32>;
+let entry := { .Key = "age", .Value = 30 } as Pair<str, i32>;
 ```
 
 ## Generic Methods
 
 ```ferret
 type Box<T> struct {
-    .value: T,
+    .Value: T,
 };
 
 fn (b: Box<T>) get() -> T {
-    return b.value;
+    return b.Value;
 }
 ```

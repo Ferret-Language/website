@@ -72,13 +72,13 @@ Let's create another type that also implements `Shape`:
 
 ```ferret
 type Circle struct {
-    .center: Point,
-    .radius: i32
+    .Center: Point,
+    .Radius: i32
 };
 
 // Implement area for Circle
 fn (c: Circle) area() -> i32 {
-    return 3 * c.radius * c.radius;  // Approximate: π ≈ 3
+    return 3 * c.Radius * c.Radius;  // Approximate: π ≈ 3
 }
 
 // Implement move for Circle
@@ -100,7 +100,7 @@ You can declare variables with an interface type:
 
 ```ferret
 let shape1: Shape = { .X = 10, .Y = 20 } as Point;
-let shape2: Shape = { .center = { .X = 0, .Y = 0 } as Point, .radius = 5 } as Circle;
+let shape2: Shape = { .Center = { .X = 0, .Y = 0 } as Point, .Radius = 5 } as Circle;
 ```
 
 Here, `shape1` and `shape2` are both of type `Shape`, but they hold different concrete types (`Point` and `Circle`).
@@ -122,7 +122,7 @@ Once you have a variable of interface type, you can call any method defined in t
 
 ```ferret
 let shape1: Shape = { .X = 10, .Y = 20 } as Point;
-let shape2: Shape = { .center = { .X = 0, .Y = 0 } as Point, .radius = 5 } as Circle;
+let shape2: Shape = { .Center = { .X = 0, .Y = 0 } as Point, .Radius = 5 } as Circle;
 
 // Call methods through the interface
 let area1 := shape1.area();  // Calls Point's area method
@@ -147,7 +147,7 @@ fn print_area(shape: Shape) {
 }
 
 let point := { .X = 10, .Y = 20 } as Point;
-let circle := { .center = { .X = 0, .Y = 0 } as Point, .radius = 5 } as Circle;
+let circle := { .Center = { .X = 0, .Y = 0 } as Point, .Radius = 5 } as Circle;
 
 print_area(point);   // Works! Point implements Shape
 print_area(circle);  // Works! Circle implements Shape
@@ -163,7 +163,7 @@ Ferret supports the **empty interface**, written as `interface{}`. This is a spe
 type AnyType interface {};
 
 let any1: AnyType = { .X = 10, .Y = 20 } as Point;
-let any2: AnyType = { .center = { .X = 0, .Y = 0 } as Point, .radius = 5 } as Circle;
+let any2: AnyType = { .Center = { .X = 0, .Y = 0 } as Point, .Radius = 5 } as Circle;
 let any3: AnyType = 42;
 let any4: AnyType = "hello";
 let any5: AnyType = true;
@@ -186,63 +186,63 @@ import "std/io";
 type Drawable interface {
     draw(),
     get_bounds() -> struct {
-        .x_min: i32,
-        .y_min: i32,
-        .x_max: i32,
-        .y_max: i32
+        .XMin: i32,
+        .YMin: i32,
+        .XMax: i32,
+        .YMax: i32
     }
 };
 
 // Implement Drawable for Rectangle
 type Rectangle struct {
-    .x: i32,
-    .y: i32,
-    .width: i32,
-    .height: i32
+    .X: i32,
+    .Y: i32,
+    .Width: i32,
+    .Height: i32
 };
 
 fn (r: Rectangle) draw() {
-    io::Println("Drawing rectangle at (" + r.x + ", " + r.y + 
-                ") with size " + r.width + "x" + r.height);
+    io::Println("Drawing rectangle at (" + r.X + ", " + r.Y + 
+                ") with size " + r.Width + "x" + r.Height);
 }
 
 fn (r: Rectangle) get_bounds() -> struct {
-    .x_min: i32,
-    .y_min: i32,
-    .x_max: i32,
-    .y_max: i32
+    .XMin: i32,
+    .YMin: i32,
+    .XMax: i32,
+    .YMax: i32
 } {
     return {
-        .x_min = r.x,
-        .y_min = r.y,
-        .x_max = r.x + r.width,
-        .y_max = r.y + r.height
+        .XMin = r.X,
+        .YMin = r.Y,
+        .XMax = r.X + r.Width,
+        .YMax = r.Y + r.Height
     };
 }
 
 // Implement Drawable for Circle
 type Circle struct {
-    .center_x: i32,
-    .center_y: i32,
-    .radius: i32
+    .CenterX: i32,
+    .CenterY: i32,
+    .Radius: i32
 };
 
 fn (c: Circle) draw() {
-    io::Println("Drawing circle at (" + c.center_x + ", " + c.center_y + 
-                ") with radius " + c.radius);
+    io::Println("Drawing circle at (" + c.CenterX + ", " + c.CenterY + 
+                ") with radius " + c.Radius);
 }
 
 fn (c: Circle) get_bounds() -> struct {
-    .x_min: i32,
-    .y_min: i32,
-    .x_max: i32,
-    .y_max: i32
+    .XMin: i32,
+    .YMin: i32,
+    .XMax: i32,
+    .YMax: i32
 } {
     return {
-        .x_min = c.center_x - c.radius,
-        .y_min = c.center_y - c.radius,
-        .x_max = c.center_x + c.radius,
-        .y_max = c.center_y + c.radius
+        .XMin = c.CenterX - c.Radius,
+        .YMin = c.CenterY - c.Radius,
+        .XMax = c.CenterX + c.Radius,
+        .YMax = c.CenterY + c.Radius
     };
 }
 
@@ -250,13 +250,13 @@ fn (c: Circle) get_bounds() -> struct {
 fn render_shape(shape: Drawable) {
     shape.draw();
     let bounds := shape.get_bounds();
-    io::Println("Bounds: (" + bounds.x_min + ", " + bounds.y_min + 
-                ") to (" + bounds.x_max + ", " + bounds.y_max + ")");
+    io::Println("Bounds: (" + bounds.XMin + ", " + bounds.YMin + 
+                ") to (" + bounds.XMax + ", " + bounds.YMax + ")");
 }
 
 // Use it with different types
-let rect := { .x = 10, .y = 20, .width = 100, .height = 50 } as Rectangle;
-let circle := { .center_x = 50, .center_y = 50, .radius = 25 } as Circle;
+let rect := { .X = 10, .Y = 20, .Width = 100, .Height = 50 } as Rectangle;
+let circle := { .CenterX = 50, .CenterY = 50, .Radius = 25 } as Circle;
 
 render_shape(rect);    // Works with Rectangle
 render_shape(circle);  // Works with Circle
@@ -342,21 +342,21 @@ type Iterator interface {
 };
 
 type NumberRange struct {
-    .current: i32,
-    .end: i32
+    .Current: i32,
+    .End: i32
 };
 
 fn (r: NumberRange) next() -> i32? {
-    if r.current < r.end {
-        let value := r.current;
-        // In real code, you'd update r.current
+    if r.Current < r.End {
+        let value := r.Current;
+        // In real code, you'd update r.Current
         return value;
     }
     return none;
 }
 
 fn (r: NumberRange) has_next() -> bool {
-    return r.current < r.end;
+    return r.Current < r.End;
 }
 ```
 
@@ -517,18 +517,18 @@ type Shape interface {
 };
 
 type Rectangle struct {
-    .width: i32,
-    .height: i32
+    .Width: i32,
+    .Height: i32
 };
 
 // ❌ Wrong return type - won't implement Shape
 fn (r: Rectangle) area() -> f64 {
-    return r.width * r.height;
+    return r.Width * r.Height;
 }
 
 // ✅ Correct - matches interface
 fn (r: Rectangle) area() -> i32 {
-    return r.width * r.height;
+    return r.Width * r.Height;
 }
 ```
 

@@ -52,7 +52,7 @@ let math := 42;
 fn math() { }
 
 // ❌ Error: 'math' is already used as an import alias
-type math struct { .x: i32; }
+type math struct { .X: i32; }
 ```
 
 This restriction prevents naming conflicts and keeps your code clear. If you need to use the name, provide a different import alias:
@@ -81,7 +81,7 @@ type Point struct { .X: i32, .Y: i32 };
 // Private - starts with lowercase
 const internal_buffer := 256;
 fn helper() { /* ... */ }
-type internal struct { .data: i32 };
+type internal struct { .Data: i32 };
 ```
 
 ### Struct Field Visibility
