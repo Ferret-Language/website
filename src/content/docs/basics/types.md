@@ -107,7 +107,7 @@ Strings are indexable. Indexing returns a `byte` (not a `str`), is byte-based (n
 let s: str = "Hello";
 let first: byte = s[0];
 let last: byte = s[-1]; // last byte
-let n: i32 = len(s);
+let n: i32 = len(&s);
 ```
 
 ### Character Type

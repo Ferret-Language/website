@@ -418,15 +418,15 @@ Unlike pointers in C/C++:
 
 Ferret's built-in functions for containers respect borrow semantics:
 
-- **Read operations** use immutable references (`&T`): `len()`, `cap()`
+- **Read operations** use immutable references (`&T`): `len(&value)`, `cap(&value)`
 - **Write operations** require mutable references (`&mut T`): `append()`
 
 ```ferret
 let arr: []i32 = [10, 20, 30];
 let scores := {"alice" => 95} as map[str]i32;
 
-// ✅ OK - read operations work with both value and reference
-let length := len(arr);
+// ✅ OK - read operations use immutable references
+let length := len(&arr);
 let arr_ref := &arr;
 let length2 := len(arr_ref);
 

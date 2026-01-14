@@ -49,7 +49,7 @@ if opt == none {
     io::Println("No value");
 } else {
     // opt is str here (not str?)
-    let length: i32 = len(opt);
+    let length: i32 = len(&opt);
 }
 ```
 

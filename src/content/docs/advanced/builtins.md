@@ -11,7 +11,7 @@ Ferret provides several built-in functions that are available in every module wi
 
 Ferret provides a unified set of built-in functions that work with both arrays and maps. These functions respect Ferret's borrow semantics: read operations use immutable references (`&T`), while write operations require mutable references (`&mut T`).
 
-### `len(value) -> i32`
+### `len(&value) -> i32`
 
 Returns the length of a string, array, or map.
 
@@ -20,9 +20,9 @@ let s: str = "Hello";
 let arr: []i32 = [1, 2, 3];
 let scores := {"alice" => 95, "bob" => 87} as map[str]i32;
 
-let str_len := len(s);      // 5
-let arr_len := len(arr);     // 3
-let map_size := len(scores); // 2
+let str_len := len(&s);      // 5
+let arr_len := len(&arr);     // 3
+let map_size := len(&scores); // 2
 ```
 
 ### `get(&container, key) -> T?`
@@ -139,7 +139,7 @@ let arr: []i32 = [10, 20, 30];
 
 // Append a value (requires mutable reference)
 append(&mut arr, 40);
-io::Println(len(arr));  // 4
+io::Println(len(&arr));  // 4
 io::Println(arr[3]);    // 40
 ```
 
@@ -160,10 +160,10 @@ insert(&mut arr, 1, 15);
 
 io::Println(arr[1]);    // 15
 io::Println(arr[2]);    // 20 (shifted)
-io::Println(len(arr));  // 4
+io::Println(len(&arr));  // 4
 ```
 
-**Note:** `insert()` only works with dynamic arrays. The index must be between 0 and `len(array)` (inclusive).
+**Note:** `insert()` only works with dynamic arrays. The index must be between 0 and `len(&array)` (inclusive).
 
 ## Direct Container Access
 
@@ -204,7 +204,7 @@ let charlie_score := scores["charlie"]; // ❌ Panic: key not found!
 
 All built-in functions respect Ferret's borrow semantics:
 
-- **Read operations** (`get`, `get_or`, `has`) use immutable references (`&T`)
+- **Read operations** (`len`, `get`, `get_or`, `has`) use immutable references (`&T`)
 - **Write operations** (`set`, `remove`, `append`, `insert`) require mutable references (`&mut T`)
 
 ```ferret
@@ -281,7 +281,7 @@ if has(&scores, "bob") {
 
 Ferret's built-in functions provide a safe and consistent way to work with containers:
 
-- **`len()`** - Get the length/size of strings, arrays, and maps
+- **`len(&value)`** - Get the length/size of strings, arrays, and maps
 - **`get(&c, k) -> T?`** - Safe access returning optional
 - **`get_or(&c, k, fallback) -> T`** - Access with default value
 - **`has(&c, k) -> bool`** - Check if key/index exists

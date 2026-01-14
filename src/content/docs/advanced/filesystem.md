@@ -531,5 +531,5 @@ Path separators use forward slashes `/` on all platforms - the runtime converts 
 ## See Also
 
 - [Error Handling](/docs/advanced/errors) - Learn about Result types and error handling patterns
-- [Built-in Functions](/docs/advanced/builtins) - Other built-in functions like `len()` and `append()`
+- [Built-in Functions](/docs/advanced/builtins) - Other built-in functions like `len(&value)` and `append()`
 - [Modules](/docs/advanced/modules) - How to import and use modules in Ferret

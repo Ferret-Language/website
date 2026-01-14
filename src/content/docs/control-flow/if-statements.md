@@ -212,7 +212,7 @@ let username: str? = get_user_input();
 if username != none {
     // username is str here
     io::Println("Hello, " + username + "!");
-    let length: i32 = len(username);
+    let length: i32 = len(&username);
 } else {
     // username is none here
     io::Println("Please enter a username");

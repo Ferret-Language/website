@@ -62,7 +62,7 @@ fn gcd(a: i32, b: i32) -> i32 {
 ```ferret
 fn binary_search(nums: []i32, target: i32) -> i32 {
     let left := 0;
-    let right := len(nums) - 1;
+    let right := len(&nums) - 1;
     while left <= right {
         let mid := ((left + right) / 2) as i32;
         let val := nums[mid];
@@ -149,7 +149,7 @@ fn gcd(a: i32, b: i32) -> i32 {
 
 fn binary_search(nums: []i32, target: i32) -> i32 {
     let left := 0;
-    let right := len(nums) - 1;
+    let right := len(&nums) - 1;
     while left <= right {
         let mid := ((left + right) / 2) as i32;
         let val := nums[mid];

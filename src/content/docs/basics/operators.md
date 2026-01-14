@@ -343,7 +343,7 @@ let thirds := 0.0..1.0:0.25; // [0.0, 0.25, 0.5, 0.75]
 
 **When to use which?**
 
-- Use `..` when you want to exclude the end (like array indices: `0..len(arr)`)
+- Use `..` when you want to exclude the end (like array indices: `0..len(&arr)`)
 - Use `..=` when you want to include the end (like counting days: `1..=7` for a week)
 
 ## Member Access Operators
@@ -367,7 +367,7 @@ You'll use the dot operator constantly when working with strings, arrays, and cu
 
 ```ferret
 let message := "Hello";
-let length := len(message);  // Get the length of the string
+let length := len(&message);  // Get the length of the string
 
 let numbers := [1, 2, 3, 4, 5];
 let first := numbers[0];  // Get the first element
