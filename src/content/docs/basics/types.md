@@ -45,25 +45,40 @@ let very_big: u128 = 340282366920938463463374607431768211455;
 let huge: u256 = 115792089237316195423570985008687907853269984665640564039457584007913129639935;
 ```
 
+#### Integer Literal Defaults
+
+Integer literals are untyped until a concrete integer type is required. With a typed context (annotation, parameter, struct field, and so on), the literal is checked to fit and treated as that type. Without a typed context, Ferret uses the default integer type (currently `i32`). If the literal does not fit, it is a compile-time error and you must annotate the type.
+
+```ferret
+let a := 10;               // Defaults to i32
+let b: i8 = 10;            // OK: fits in i8
+let big := 5000000000;     // Error: doesn't fit in default i32
+let big: i64 = 5000000000; // OK
+
+let a := 10;               // i32
+let b: i8 = a;             // Error: narrowing from i32 to i8 needs a cast
+let b: i8 = a as i8;        // Explicit cast
+```
+
 ### Floating‑Point Types
 
 These types store numbers with decimal points. Think of them as numbers that can have fractional parts.
 
 | Type  | Size   | Precision  | Description                |
 | ----- | ------ | ---------- | -------------------------- |
-| `f32` | 32‑bit | ~7 digits  | Single precision float     |
-| `f64` | 64‑bit | ~15 digits | Double precision (default) |
+| `f32` | 32‑bit | ~7 digits  | Single precision (default) |
+| `f64` | 64‑bit | ~15 digits | Double precision           |
 | `f128` | 128‑bit | ~34 digits | Quadruple precision float  |
 | `f256` | 256‑bit | ~71 digits | Octuple precision float    |
 
 The `f` stands for floating-point, and the numbers `32` and `64` represent the bits used to store the value. The bigger the number, the more precise your decimal calculations will be.
 
-When you write a number with a decimal point without specifying a type, Ferret automatically uses the default `f64`. If the value requires more precision, it will promote it to `f128` and so on.
+When you write a number with a decimal point without specifying a type and there is no typed context, Ferret uses the default float type (currently `f32`). If the literal does not fit in the default type, it is a compile-time error and you must annotate it with a wider float type. There is no automatic promotion.
 
 ```ferret
 let pi: f32 = 3.14159;
 let e: f64 = 2.718281828459045;
-let price := 19.99;  // Inferred as f64
+let price := 19.99;  // Inferred as f32
 let large_value: f128 = 1.2345678901234567890123456789012345;
 let precise_value: f256 = 1.2345678901234567890123456789012345678901234567890123456789012345678901234567890;
 ```

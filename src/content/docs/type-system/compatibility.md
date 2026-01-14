@@ -165,14 +165,19 @@ See [Union Types](/type-system/unions) for full syntax and usage.
 
 ### Untyped Literals
 
-Untyped integer and float literals can be implicitly assigned to compatible types:
+Integer and float literals are untyped until a concrete type is required. With a typed context (annotation, parameter, struct field, and so on), the literal is checked to fit and treated as that type. Without a typed context, Ferret defaults to the compiler's default integer and float types (currently `i32` and `f32`). If the literal does not fit, it is a compile-time error and you must annotate it. There is no automatic promotion.
 
 ```ferret
-let int_var: i32 = 42;     // Implicit: untyped int -> i32
-let float_var: f64 = 3.14; // Implicit: untyped float -> f64
+let int_var: i32 = 42;     // OK: fits in i32
+let float_var: f64 = 3.14; // OK: fits in f64
 
-// But not to incompatible types:
-let wrong: f64 = 42;  // Error: untyped int cannot be assigned to f64
+let a := 10;               // Defaults to i32
+let b: i8 = a;             // Error: narrowing from i32 to i8 needs a cast
+
+let big := 5000000000;     // Error: doesn't fit default i32
+let big: i64 = 5000000000; // OK
+
+let wrong: f64 = 42;        // Error: integer literal cannot be assigned to f64 without a cast
 ```
 
 ### Optional Types

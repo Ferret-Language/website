@@ -5,8 +5,6 @@ sidebar:
   order: 1
 ---
 
-# Built-in Functions
-
 Ferret provides several built-in functions that are available in every module without needing to import them. These functions help you work with arrays, maps, and perform common operations.
 
 ## Container Operations
