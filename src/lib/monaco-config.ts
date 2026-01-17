@@ -63,12 +63,12 @@ export async function registerFerretLanguage() {
                     },
                 ],
 
-                // Numbers
-                [/\d*\.\d+([eE][\-+]?\d+)?/, "number.float"],
-                [/0[xX][0-9a-fA-F]+/, "number.hex"],
-                [/\d+/, "number"],
-
-                // Strings
+          // Numbers
+          [/\d*\.\d+([eE][\-+]?\d+)?/, "number.float"],
+          [/0[xX][0-9a-fA-F_]+/, "number.hex"],
+          [/0[oO][0-7_]+/, "number.oct"],
+          [/0[bB][01_]+/, "number.bin"],
+          [/\d+/, "number"],                // Strings
                 [/"([^"\\]|\\.)*$/, "string.invalid"],
                 [/"/, "string", "@string"],
 
