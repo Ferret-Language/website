@@ -248,7 +248,8 @@
     if (ev.type === "system") {
       return `<div class="terminal-line terminal-system">${escapeHtml(ev.text || "")}</div>`;
     }
-    return `<pre class="terminal-output">${escapeHtml(ev.text || "")}</pre>`;
+    // For output, preserve formatting without extra wrapping
+    return escapeHtml(ev.text || "");
   }
 
   function buildCompilerEvents(log: string): TerminalEvent[] {
@@ -931,9 +932,8 @@
               <span class="keyboard-tip">💡 Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to run</span>
             </p>
           {:else}
-            {#each terminalEvents as ev (ev)}
-              {@html renderEvent(ev)}
-            {/each}
+            <pre class="terminal-output">{#each terminalEvents as ev (ev)}{@html renderEvent(ev)}{/each}
+            </pre>
           {/if}
 
           <div class="terminal-input" class:terminal-input-hidden={!isWaitingInput}>
