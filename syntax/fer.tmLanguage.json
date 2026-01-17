@@ -776,7 +776,7 @@
                 {
                     "comment": "primitive types",
                     "name": "entity.name.type.primitive.fer",
-                    "match": "\\b(bool|byte|str)\\b"
+                    "match": "\\b(bool|byte|char|str)\\b"
                 },
                 {
                     "comment": "struct declarations",

@@ -97,6 +97,85 @@ let r_mut: &mut i32 = &mut y;
 io::Println(y);  // Prints: 20
 ```
 
+## Reference Iteration in Loops
+
+References are commonly used in for-loops to avoid copying array elements or to modify them in place:
+
+### Immutable Reference Iteration
+
+Use `&v` to iterate with read-only references:
+
+```ferret
+import "std/io";
+
+let numbers := [100, 200, 300];
+
+for i, &v in numbers {
+    // v is &i32 (reference to i32)
+    io::Println(i, *v);  // Dereference to read
+}
+```
+
+This avoids copying each element, which is useful for large structures:
+
+```ferret
+type LargeStruct struct {
+    .Data: [1000]i32,
+    .Name: str,
+};
+
+let items: []LargeStruct = [...];
+
+for i, &item in items {
+    // item is &LargeStruct (no copy!)
+    io::Println(item.Name);  // Auto-dereference for fields
+}
+```
+
+### Mutable Reference Iteration
+
+Use `&mut v` to modify array elements in place:
+
+```ferret
+import "std/io";
+
+let numbers := [1, 2, 3];
+
+io::Println("Before:", numbers[0], numbers[1], numbers[2]);
+
+for i, &mut v in numbers {
+    // v is &mut i32 (mutable reference)
+    *v = *v + 10;  // Modify through reference
+}
+
+io::Println("After:", numbers[0], numbers[1], numbers[2]);
+// Prints: After: 11 12 13
+```
+
+This is essential for modifying large structures without copying:
+
+```ferret
+type Player struct {
+    .Health: i32,
+    .Score: i32,
+};
+
+let players: []Player = [...];
+
+// Update all player scores efficiently
+for i, &mut player in players {
+    player.Score = player.Score + 10;  // Auto-dereference for fields
+    player.Health = 100;                // Modifies original array
+}
+```
+
+**Important notes about reference iteration:**
+- Only the **second** iterator variable (value) can be a reference
+- The index variable is always a value copy
+- Use `&v` for read-only access (prevents copying)
+- Use `&mut v` for read-write access (modifies original array)
+- Dereference with `*` is needed for arithmetic but not for field access
+
 ## When to Use References
 
 ### Performance Optimization

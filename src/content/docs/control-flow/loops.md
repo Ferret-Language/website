@@ -97,6 +97,102 @@ fn main() {
 
 **Note:** The index variable (first in a `for i, val in ...` loop) is read-only. Loop variables are always mutable otherwise, and you cannot use `const` for loop iterators.
 
+### Reference Iteration
+
+By default, iterating over an array **copies** each element. To modify the original array elements or avoid copying large structures, use **reference iteration**:
+
+#### Immutable References (`&v`)
+
+Use `&v` to get a read-only reference to each element:
+
+```ferret title="run"
+import "std/io";
+
+fn main() {
+    let numbers := [100, 200, 300];
+    
+    for i, &v in numbers {
+        // v is &i32 (reference to i32)
+        io::Println(i, *v);  // Dereference with * to read
+    }
+}
+```
+
+#### Mutable References (`&mut v`)
+
+Use `&mut v` to get a reference that allows modification:
+
+```ferret title="run"
+import "std/io";
+
+fn main() {
+    let numbers := [1, 2, 3];
+    
+    io::Println("Before:", numbers[0], numbers[1], numbers[2]);
+    
+    for i, &mut v in numbers {
+        // v is &mut i32 (mutable reference to i32)
+        *v = *v + 10;  // Modify through reference with *
+    }
+    
+    io::Println("After:", numbers[0], numbers[1], numbers[2]);
+    // Prints: After: 11 12 13
+}
+```
+
+**Key points about reference iteration:**
+- Use `&v` for read-only access (prevents copying, cannot modify)
+- Use `&mut v` for read-write access (modifies original array)
+- Dereference with `*` to access the value: `*v`
+- Only the **second** iterator variable can be a reference
+- The index variable is always a value copy
+
+### Iterating Over Strings
+
+**Important:** Strings are **not directly iterable**. You must convert them to an array first:
+
+```ferret title="run"
+import "std/io";
+
+fn main() {
+    let text := "Hello";
+    
+    // ❌ ERROR: Cannot iterate strings directly
+    // for i, ch in text { ... }
+    
+    // ✅ CORRECT: Convert to []char for Unicode characters
+    for i, ch in (text as []char) {
+        io::Println(i, ch);
+    }
+    
+    // ✅ CORRECT: Convert to []byte for UTF-8 bytes
+    for i, b in (text as []byte) {
+        io::Println(i, b);
+    }
+}
+```
+
+You can also use references with converted strings:
+
+```ferret title="run"
+import "std/io";
+
+fn main() {
+    let chars := "ABC" as []char;
+    
+    io::Println("Before:", chars[0], chars[1], chars[2]);
+    
+    // Modify each character
+    for i, &mut ch in chars {
+        // Increment ASCII value: A→B, B→C, C→D
+        *ch = ((*ch) as i32 + 1) as char;
+    }
+    
+    io::Println("After:", chars[0], chars[1], chars[2]);
+    // Prints: After: B C D
+}
+```
+
 ## While Loops
 
 ```ferret title="run"

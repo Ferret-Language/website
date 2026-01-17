@@ -101,29 +101,140 @@ World";
 
 Strings are one of the most common types you'll work with. They're perfect for storing names, messages, file paths, and any other text data.
 
-Strings are indexable. Indexing returns a `byte` (not a `str`), is byte-based (not Unicode code points), and uses runtime bounds checks. Negative indices count from the end (`-1` is last byte):
+#### String Indexing and Iteration
+
+**Important:** Strings are **not directly indexable or iterable** in Ferret. To work with individual characters or bytes, you must explicitly convert the string to an array:
+
+```ferret
+import "std/io";
+
+// ❌ ERROR: Cannot index strings directly
+// let s: str = "Hello";
+// let first := s[0];  // Compile error!
+
+// ✅ CORRECT: Convert to array first
+let s: str = "Hello";
+
+// Convert to []char for Unicode characters
+let chars: []char = s as []char;
+let first_char: char = chars[0];  // 'H'
+io::Println(first_char);
+
+// Convert to []byte for raw UTF-8 bytes
+let bytes: []byte = s as []byte;
+let first_byte: byte = bytes[0];  // 'H' (as byte)
+io::Println(first_byte);
+```
+
+#### Iterating Over Strings
+
+To iterate over a string, convert it to an array first:
+
+```ferret
+import "std/io";
+
+let text := "Hello";
+
+// Iterate over Unicode characters
+for i, ch in (text as []char) {
+    io::Println(i, ch);
+}
+
+// Iterate over UTF-8 bytes
+for i, b in (text as []byte) {
+    io::Println(i, b);
+}
+```
+
+**Why explicit conversion?** Ferret makes the distinction clear:
+- `[]char` gives you Unicode code points (4 bytes each)
+- `[]byte` gives you raw UTF-8 bytes (1 byte each)
+- This prevents confusion about what iteration means for multi-byte characters
+
+#### String Length
+
+Use the `len()` builtin function to get the UTF-8 byte length:
 
 ```ferret
 let s: str = "Hello";
-let first: byte = s[0];
-let last: byte = s[-1]; // last byte
-let n: i32 = len(&s);
+let byte_len: i32 = len(&s);  // 5 (bytes)
+
+let emoji: str = "💡";
+let emoji_len: i32 = len(&emoji);  // 4 (bytes in UTF-8)
+
+// To get character count, convert to array
+let char_count: i32 = len(&(emoji as []char));  // 1 (Unicode character)
 ```
 
-### Character Type
+### Character Type (`char`)
 
-A character represents a single letter, symbol, or emoji. Unlike strings that can hold multiple characters, the `byte` type holds exactly one character. It is called byte because it typically uses one byte (8 bits) of memory to store the value. Internally `byte` and `u8` are the same.
+The `char` type represents a **Unicode scalar value** - a single Unicode code point. Characters are 32-bit values (4 bytes) that can hold any valid Unicode character, from ASCII letters to emojis.
 
-Characters are created using single quotes `'` instead of double quotes.
+Characters are created using single quotes `'`:
 
 ```ferret
-let letter: byte = 'A';
-let newline: byte = '\n';  // Special characters use backslash
+let letter: char = 'A';
+let emoji: char = '💡';
+let chinese: char = '中';
+let newline: char = '\n';  // Special characters use backslash
 ```
 
-Think of a `byte` as a single building block, while a `str` (string) is like a sequence of these blocks.
+Unlike strings which hold multiple characters, a `char` holds exactly one Unicode scalar value. Think of `char` as a single Unicode character, while `str` is a sequence of these characters encoded as UTF-8 bytes.
 
-When printing, `byte` displays as a character while `u8` prints as a number.
+### Byte Type (`byte`)
+
+The `byte` type represents a **single 8-bit unsigned integer** (0-255). It is identical to `u8` internally, but they differ in how they display:
+
+- **`byte`** displays as a character when printed
+- **`u8`** displays as a number when printed
+
+Bytes are created using the `b'...'` prefix:
+
+```ferret
+import "std/io";
+
+let ascii_byte: byte = b'A';  // Byte literal
+let raw_byte: byte = 65;       // Same as b'A' (ASCII value)
+let as_u8: u8 = 65;            // Displays as number
+
+io::Println(ascii_byte);  // Prints: A (as character)
+io::Println(as_u8);       // Prints: 65 (as number)
+```
+
+### Differences: `char` vs `byte` vs `u8`
+
+| Type | Size | Range | Purpose | Literal | Display |
+|------|------|-------|---------|---------|----------|
+| `char` | 4 bytes | Unicode scalars (0 to 0x10FFFF) | Unicode character | `'A'`, `'💡'` | Character |
+| `byte` | 1 byte | 0 to 255 | Raw byte data | `b'A'` | Character |
+| `u8` | 1 byte | 0 to 255 | Unsigned integer | `65` | Number |
+
+**When to use each:**
+- Use `char` for text processing with full Unicode support
+- Use `byte` for ASCII text or when you want to display bytes as characters
+- Use `u8` for raw numeric byte values or binary data
+
+### Conversions Between char/byte/u8
+
+```ferret
+import "std/io";
+
+// char to numeric
+let c: char = 'A';
+let num: i32 = c as i32;      // 65 (Unicode code point)
+
+// byte to char
+let b: byte = b'X';
+let ch: char = b as char;      // 'X'
+
+// Numeric to char
+let code := 66;
+let letter: char = code as char;  // 'B'
+
+// char to byte (truncates to 8 bits)
+let emoji: char = '💡';
+let truncated: byte = emoji as byte;  // Loses data! Use with ASCII only
+```
 
 ### Boolean Type
 
@@ -513,7 +624,9 @@ There is no built-in way to convert between strings and other types yet. This is
 
 You've learned about Ferret's type system! Here's what we covered:
 
-* **Primitive types**: Integers (`i32`, `i64`, `u32`, `u64`), floats (`f32`, `f64`), strings (`str`), booleans (`bool`), and characters (`byte`)
+* **Primitive types**: Integers (`i32`, `i64`, `u32`, `u64`), floats (`f32`, `f64`), strings (`str`), booleans (`bool`), characters (`char`), and bytes (`byte`)
+* **char vs byte vs u8**: Unicode characters (4 bytes), character bytes (1 byte, displays as char), and numeric bytes (1 byte, displays as number)
+* **String handling**: Strings require explicit conversion to `[]char` or `[]byte` for indexing and iteration
 * **Compound types**: Arrays and maps that hold multiple values
 * **Optional types**: Types that can be a value or `none`
 * **Reference types**: Pass data by reference with `&T`
