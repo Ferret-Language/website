@@ -83,6 +83,77 @@ let large_value: f128 = 1.2345678901234567890123456789012345;
 let precise_value: f256 = 1.2345678901234567890123456789012345678901234567890123456789012345678901234567890;
 ```
 
+### Character Type (`char`)
+
+The `char` type represents a **Unicode scalar value** - a single Unicode code point. Characters are 32-bit values (4 bytes) that can hold any valid Unicode character, from ASCII letters to emojis.
+
+Characters are created using single quotes `'`:
+
+```ferret
+let letter: char = 'A';
+let emoji: char = '💡';
+let chinese: char = '中';
+let newline: char = '\n';  // Special characters use backslash
+```
+
+Unlike strings which hold multiple characters, a `char` holds exactly one Unicode scalar value. Think of `char` as a single Unicode character, while `str` is a sequence of these characters encoded as UTF-8 bytes.
+
+### Byte Type (`byte`)
+
+The `byte` type represents a **single 8-bit unsigned integer** (0-255). It is identical to `u8` internally, but they differ in how they display:
+
+- **`byte`** displays as a character when printed
+- **`u8`** displays as a number when printed
+
+Bytes are created using the `b'...'` prefix:
+
+```ferret
+import "std/io";
+
+let ascii_byte: byte = b'A';  // Byte literal
+let raw_byte: byte = 65;       // Same as b'A' (ASCII value)
+let as_u8: u8 = 65;            // Displays as number
+
+io::Println(ascii_byte);  // Prints: A (as character)
+io::Println(as_u8);       // Prints: 65 (as number)
+```
+
+### Differences: `char` vs `byte` vs `u8`
+
+| Type | Size | Range | Purpose | Literal | Display |
+|------|------|-------|---------|---------|----------|
+| `char` | 4 bytes | Unicode scalars (0 to 0x10FFFF) | Unicode character | `'A'`, `'💡'` | Character |
+| `byte` | 1 byte | 0 to 255 | Raw byte data | `b'A'` | Character |
+| `u8` | 1 byte | 0 to 255 | Unsigned integer | `65` | Number |
+
+**When to use each:**
+- Use `char` for text processing with full Unicode support
+- Use `byte` for ASCII text or when you want to display bytes as characters
+- Use `u8` for raw numeric byte values or binary data
+
+### Conversions Between char/byte/u8
+
+```ferret
+import "std/io";
+
+// char to numeric
+let c: char = 'A';
+let num: i32 = c as i32;      // 65 (Unicode code point)
+
+// byte to char
+let b: byte = b'X';
+let ch: char = b as char;      // 'X'
+
+// Numeric to char
+let code := 66;
+let letter: char = code as char;  // 'B'
+
+// char to byte (truncates to 8 bits)
+let emoji: char = '💡';
+let truncated: byte = emoji as byte;  // Loses data! Use with ASCII only
+```
+
+
 ### String Type
 
 Strings store text - anything from single letters to entire paragraphs. In Ferret, strings are represented by the `str` type.
@@ -164,76 +235,6 @@ let emoji_len: i32 = len(&emoji);  // 4 (bytes in UTF-8)
 
 // To get character count, convert to array
 let char_count: i32 = len(&(emoji as []char));  // 1 (Unicode character)
-```
-
-### Character Type (`char`)
-
-The `char` type represents a **Unicode scalar value** - a single Unicode code point. Characters are 32-bit values (4 bytes) that can hold any valid Unicode character, from ASCII letters to emojis.
-
-Characters are created using single quotes `'`:
-
-```ferret
-let letter: char = 'A';
-let emoji: char = '💡';
-let chinese: char = '中';
-let newline: char = '\n';  // Special characters use backslash
-```
-
-Unlike strings which hold multiple characters, a `char` holds exactly one Unicode scalar value. Think of `char` as a single Unicode character, while `str` is a sequence of these characters encoded as UTF-8 bytes.
-
-### Byte Type (`byte`)
-
-The `byte` type represents a **single 8-bit unsigned integer** (0-255). It is identical to `u8` internally, but they differ in how they display:
-
-- **`byte`** displays as a character when printed
-- **`u8`** displays as a number when printed
-
-Bytes are created using the `b'...'` prefix:
-
-```ferret
-import "std/io";
-
-let ascii_byte: byte = b'A';  // Byte literal
-let raw_byte: byte = 65;       // Same as b'A' (ASCII value)
-let as_u8: u8 = 65;            // Displays as number
-
-io::Println(ascii_byte);  // Prints: A (as character)
-io::Println(as_u8);       // Prints: 65 (as number)
-```
-
-### Differences: `char` vs `byte` vs `u8`
-
-| Type | Size | Range | Purpose | Literal | Display |
-|------|------|-------|---------|---------|----------|
-| `char` | 4 bytes | Unicode scalars (0 to 0x10FFFF) | Unicode character | `'A'`, `'💡'` | Character |
-| `byte` | 1 byte | 0 to 255 | Raw byte data | `b'A'` | Character |
-| `u8` | 1 byte | 0 to 255 | Unsigned integer | `65` | Number |
-
-**When to use each:**
-- Use `char` for text processing with full Unicode support
-- Use `byte` for ASCII text or when you want to display bytes as characters
-- Use `u8` for raw numeric byte values or binary data
-
-### Conversions Between char/byte/u8
-
-```ferret
-import "std/io";
-
-// char to numeric
-let c: char = 'A';
-let num: i32 = c as i32;      // 65 (Unicode code point)
-
-// byte to char
-let b: byte = b'X';
-let ch: char = b as char;      // 'X'
-
-// Numeric to char
-let code := 66;
-let letter: char = code as char;  // 'B'
-
-// char to byte (truncates to 8 bits)
-let emoji: char = '💡';
-let truncated: byte = emoji as byte;  // Loses data! Use with ASCII only
 ```
 
 ### Boolean Type
