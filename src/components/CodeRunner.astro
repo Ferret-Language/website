@@ -18,8 +18,6 @@
     // Find all Ferret code blocks
     const figures = document.querySelectorAll('.expressive-code');
     
-    console.log('Found', figures.length, 'code blocks');
-    
     figures.forEach((figure) => {
       // Check if already has a run button
       if (figure.querySelector('.run-in-playground-btn')) return;
@@ -27,25 +25,25 @@
       // Check if it's Ferret code
       const pre = figure.querySelector('pre[data-language="ferret"]');
       if (!pre) return;
-      
-      console.log('Found Ferret code block');
-      
+
       // Check if the figcaption/header contains "runnable"
       const figcaption = figure.querySelector('figcaption');
       const headerText = figcaption ? figcaption.textContent || '' : '';
-      
-      console.log('Header text:', headerText);
-      
+
       // If "runnable" not in header, skip
       if (!headerText.toLowerCase().includes('run')) return;
-      
-      console.log('Found runnable block!');
       
       // Extract code from the pre element, preserving line breaks
       // Expressive Code wraps each line in a .ec-line div
       const lines = pre.querySelectorAll('.ec-line');
       const code = Array.from(lines)
-        .map(line => line.textContent || '')
+        .map(line => {
+          const t = line.textContent;
+          if (t == '\n') {
+            return '';
+          }
+          return t;
+        })
         .join('\n');
       
       if (!code.trim()) return;
