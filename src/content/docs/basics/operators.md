@@ -225,6 +225,8 @@ Assignment operators put values into variables. They can also modify the existin
 | `*=`     | Multiply and assign | `x *= 3`  | `x = x * 3`   | Multiply x by 3, store in x       |
 | `/=`     | Divide and assign   | `x /= 3`  | `x = x / 3`   | Divide x by 3, store in x         |
 | `%=`     | Modulo and assign   | `x %= 3`  | `x = x % 3`   | Get remainder of x/3, store in x  |
+| `**=`    | Power and assign    | `x **= 3` | `x = x ** 3`  | Raise x to power 3, store in x    |
+| `^=`     | XOR and assign      | `x ^= 3`  | `x = x ^ 3`   | Bitwise XOR x with 3, store in x  |
 
 The compound operators (`+=`, `-=`, etc.) are shortcuts. They modify a variable based on its current value:
 
@@ -236,6 +238,8 @@ score -= 3;   // score is now 12 (same as: score = score - 3)
 score *= 2;   // score is now 24 (same as: score = score * 2)
 score /= 4;   // score is now 6  (same as: score = score / 4)
 score %= 5;   // score is now 1  (same as: score = score % 5)
+score **= 2;  // score is now 1  (same as: score = score ** 2)
+score ^= 3;   // score is now 2  (same as: score = score ^ 3)
 ```
 
 These compound operators make your code shorter and often easier to read:
@@ -382,8 +386,10 @@ Bitwise operators work with the individual bits (0s and 1s) that make up numbers
 | `&`      | Bitwise AND | `5 & 3`           | `1`         | Bits on in both            |
 | `\|`     | Bitwise OR  | `5 \| 3`          | `7`         | Bits on in either          |
 | `^`      | Bitwise XOR | `5 ^ 3`           | `6`         | Bits on in one, not both   |
-| `<<`     | Left shift  | `5 << 1`          | `10`        | Shift bits left (×2)       |
-| `>>`     | Right shift | `5 >> 1`          | `2`         | Shift bits right (÷2)      |
+| `~`      | Bitwise NOT | `~5`              | `-6`        | Flips all bits             |
+
+Bitwise operators work only on integer types (including `byte`), and both operands must have the same type.
+
 
 Here's a quick example using binary literals (numbers starting with `0b`):
 
@@ -394,8 +400,7 @@ let b := 0b1100;  // 12 in binary
 let and_result := a & b;   // 0b1000 (8)
 let or_result := a | b;    // 0b1110 (14) 
 let xor_result := a ^ b;   // 0b0110 (6)
-let shifted_left := a << 1;  // 0b10100 (20)
-let shifted_right := a >> 1; // 0b101 (5)
+let not_result := ~a;      // flips all bits
 ```
 
 Don't worry if this seems complex - most of the time you won't need bitwise operators. They're mainly used for:
@@ -410,20 +415,19 @@ When you have multiple operators in one expression, Ferret follows specific rule
 Here's the order from highest priority (done first) to lowest (done last):
 
 1. **Member access** - `.`, `?.`
-2. **Unary operators** - `!`, `-`, `+`
+2. **Unary operators** - `!`, `-`, `+`, `~`
 3. **Exponentiation** - `**`
 4. **Multiplication, Division, Modulo** - `*`, `/`, `%`
 5. **Addition, Subtraction** - `+`, `-`
-6. **Bit shifts** - `<<`, `>>`
-7. **Comparison** - `<`, `>`, `<=`, `>=`
-8. **Equality** - `==`, `!=`
-9. **Bitwise AND** - `&`
-10. **Bitwise XOR** - `^`
-11. **Bitwise OR** - `|`
-12. **Logical AND** - `&&`
-13. **Logical OR** - `||`
-14. **Coalescing operator** - `??`
-15. **Assignment** - `=`, `+=`, `-=`, etc.
+6. **Comparison** - `<`, `>`, `<=`, `>=`
+7. **Equality** - `==`, `!=`
+8. **Bitwise AND** - `&`
+9. **Bitwise XOR** - `^`
+10. **Bitwise OR** - `|`
+11. **Logical AND** - `&&`
+12. **Logical OR** - `||`
+13. **Coalescing operator** - `??`
+14. **Assignment** - `=`, `+=`, `-=`, etc.
 
 Let's see this in action:
 
