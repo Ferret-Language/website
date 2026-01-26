@@ -483,99 +483,105 @@ These custom types make your code more organized and type-safe. We'll dive deepe
 
 ## Strict Type Checking
 
-Ferret enforces **strict type matching** for all numeric operations, similar to Rust. This means you cannot mix different numeric types in arithmetic operations without explicit casting.
+Ferret enforces **strict numeric compatibility** for arithmetic operations. Smaller types can be widened implicitly, and the result uses the widened type. Narrowing or lossy conversions still require explicit casting.
 
-### Why Strict Typing?
+### Why This Rule?
 
-1. **No Surprises**: You always know exactly what type you're working with
+1. **No Surprises**: Only safe widening happens implicitly
 2. **Performance**: No hidden runtime conversions or checks
 3. **Safety**: Prevents accidental truncation or precision loss
-4. **Predictability**: The type system is simple and deterministic
-5. **Explicit Intent**: Casts document your intentions in code
+4. **Predictability**: The result type is the widest compatible type
+5. **Explicit Intent**: Casts document when precision might be lost
 
-### All Operands Must Match
+### Operands Must Be Compatible
 
-When performing arithmetic operations, **both operands must be the same type**, and the result will be that same type:
+When performing arithmetic operations, operands must be **compatible numeric types**. If one can be safely widened to the other, the operation is allowed and the result uses the wider type:
+
+```ferret
+let a: i16 = 100;
+let b: i32 = 200;
+
+// ✅ OK: i16 widens to i32
+let result := a + b;  // i32
+```
+
+If the conversion could lose precision, Ferret requires an explicit cast:
 
 ```ferret
 let a: i32 = 100;
-let b: i256 = 340282366920938463463374607431768211456;
+let b: f32 = 3.5;
 
-// ❌ ERROR: mismatched types in arithmetic: i32 and i256
+// ❌ ERROR: mismatched types in arithmetic: i32 and f32
 // let result := a + b;
 
-// ✅ CORRECT: Explicit cast required
-let result := (a as i256) + b;  // result is i256
+// ✅ CORRECT: choose a wider float
+let result := (a as f64) + (b as f64);  // f64
 ```
 
 This applies to **all arithmetic operators**: `+`, `-`, `*`, `/`, `%`, and `**`.
 
 ### Mixing Integer and Float Types
 
-You cannot mix integers and floats without explicit casting:
+Integers and floats can be mixed when the integer can be represented exactly in the float type. Otherwise, use an explicit cast:
 
 ```ferret
+let tiny: i8 = 42;
+let floating: f32 = 3.14159;
+
+// ✅ OK: lossless widening to f32
+let sum := tiny + floating;  // f32
+
 let integer: i32 = 42;
-let floating: f64 = 3.14159;
 
-// ❌ ERROR: mismatched types
-// let sum := integer + floating;
+// ❌ ERROR: potentially lossy
+// let sum2 := integer + floating;
 
-// ✅ CORRECT: Cast integer to float
-let sum := (integer as f64) + floating;  // result is f64
+// ✅ CORRECT: widen both sides explicitly
+let sum2 := (integer as f64) + (floating as f64);  // f64
 ```
 
 ### Different Sized Integers
 
-Even integers of different sizes require explicit casting:
+Widening between integer sizes is implicit:
 
 ```ferret
 let small: i32 = 100;
 let large: i64 = 9223372036854775807;
 
-// ❌ ERROR: mismatched types
-// let result := small + large;
+// ✅ OK: i32 widens to i64
+let result := small + large;  // i64
 
-// ✅ CORRECT: Cast to matching type
-let result := (small as i64) + large;  // result is i64
-
-// Or cast down (with potential overflow):
-let result2 := small + (large as i32);  // result is i32
+// Explicit narrowing if needed:
+let result2 := small + (large as i32);  // i32
 ```
 
 ### Different Sized Floats
 
-The same rule applies to floating-point types:
+Widening between float sizes is also implicit:
 
 ```ferret
 let f32val: f32 = 3.14;
 let f64val: f64 = 2.718281828;
 
-// ❌ ERROR: mismatched types
-// let result := f32val + f64val;
-
-// ✅ CORRECT: Cast to matching type
-let result := (f32val as f64) + f64val;  // result is f64
+// ✅ OK: f32 widens to f64
+let result := f32val + f64val;  // f64
 ```
 
 ### Power Operator
 
-The power operator (`**`) follows the same strict typing rules:
+The power operator (`**`) follows the same compatibility rules:
 
 ```ferret
 let base: i256 = 2;
 let exp: i32 = 10;
 
-// ❌ ERROR: mismatched types
-// let result := base ** exp;
-
-// ✅ CORRECT: Cast to matching type
-let result := base ** (exp as i256);  // result is i256
+// ✅ OK: i32 widens to i256
+let result := base ** exp;  // result is i256
 ```
 
 ## Type Conversion
 
-Ferret requires explicit type conversions for all numeric operations. Use the `as` keyword to cast between types.
+Ferret requires explicit casts for narrowing or potentially lossy numeric conversions. Use the `as` keyword to cast between types.
 
 ### Casting Between Number Types
 

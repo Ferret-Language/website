@@ -40,29 +40,39 @@ let is_even := 10 % 2 == 0;  // true
 let is_odd := 11 % 2 == 1;   // true
 ```
 
-### Strict Type Matching
+### Numeric Compatibility
 
-**Important:** Ferret requires all operands in arithmetic operations to have **the same type**. You cannot mix different numeric types without explicit casting.
+**Important:** Ferret allows arithmetic between compatible numeric types. Smaller types are implicitly widened to a larger compatible type, and the result uses that widened type. Narrowing or lossy conversions still require an explicit cast.
+
+```ferret
+let a: i16 = 100;
+let b: i32 = 200;
+
+// ✅ OK: a is widened to i32
+let result := a + b;  // i32
+```
+
+If a conversion could lose precision, use `as`:
 
 ```ferret
 let a: i32 = 100;
-let b: i64 = 200;
+let b: f32 = 3.5;
 
-// ❌ ERROR: Cannot mix i32 and i64
+// ❌ ERROR: incompatible numeric types (potential precision loss)
 // let result := a + b;
 
-// ✅ CORRECT: Cast to matching type
-let result := (a as i64) + b;  // Both are now i64
+// ✅ CORRECT: choose a wider float
+let result := (a as f64) + (b as f64);  // f64
 ```
 
 This applies to **all** arithmetic operators: `+`, `-`, `*`, `/`, `%`, and `**`.
 
-#### Why Strict Typing?
+#### Why This Rule?
 
-Ferret's strict type checking prevents bugs and surprises:
-- **No hidden conversions** that might lose precision or cause overflow
-- **Performance** - the compiler knows exact types at compile time
-- **Explicit intent** - casts show what you meant to do
+Ferret's numeric rules keep math safe and predictable:
+- **No hidden lossy conversions** - only safe widening is implicit
+- **Performance** - the compiler knows the exact result type
+- **Explicit intent** - casts show when precision might be lost
 
 #### Common Type Mixing Scenarios
 
@@ -71,17 +81,25 @@ Ferret's strict type checking prevents bugs and surprises:
 let small: i32 = 10;
 let large: i64 = 1000000000;
 
-// Cast the smaller type to the larger
-let sum := (small as i64) + large;  // i64
+// Implicit widening to i64
+let sum := small + large;  // i64
+
+// Explicit narrowing if you really want it
+let sum32 := small + (large as i32);  // i32
 ```
 
 **Integers and floats:**
 ```ferret
-let integer: i32 = 42;
-let floating: f64 = 3.14;
+let tiny: i8 = 42;
+let floating: f32 = 3.14;
 
-// Cast integer to float
-let result := (integer as f64) + floating;  // f64
+// Lossless widening is allowed
+let result := tiny + floating;  // f32
+
+let integer: i32 = 42;
+
+// Potentially lossy: must cast explicitly
+let result2 := (integer as f64) + (floating as f64);  // f64
 ```
 
 **Different float sizes:**
@@ -89,11 +107,9 @@ let result := (integer as f64) + floating;  // f64
 let f32val: f32 = 3.14;
 let f64val: f64 = 2.718;
 
-// Cast to matching precision
-let result := (f32val as f64) + f64val;  // f64
+// Implicit widening to f64
+let result := f32val + f64val;  // f64
 ```
-
-**Learn more:** See the [Data Types](/docs/basics/types#strict-type-checking) section for complete details on Ferret's type system.
 
 ## Comparison Operators
 
