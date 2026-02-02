@@ -862,6 +862,7 @@
 
       <button
         type="button"
+        disabled={status=="loading"}
         class="icon-button run-button"
         class:run-button-abort={isRunning}
         title={isRunning ? "Abort (Esc)" : "Run Code (Ctrl+Enter)"}
@@ -1184,11 +1185,11 @@
   }
 
   .run-button {
-    background: #000000;
-    color: #ffffff;
+    background: #000000 !important;
+    color: #ffffff !important;
   }
 
-  .run-button:hover {
+  .run-button:not(:disabled):hover {
     background: var(--accent-color) !important;
     color: #ffffff !important;
   }
@@ -1204,13 +1205,18 @@
   }
 
   :global([data-theme="dark"]) .run-button {
-    background: #ffffff;
-    color: #000000;
+    background: #ffffff !important;
+    color: #000000 !important;
   }
 
   :global([data-theme="dark"]) .run-button.run-button-abort {
     background: #f87171;
     color: #111111;
+  }
+  
+  .run-button:disabled {
+      cursor: not-allowed;
+      filter: brightness(0.8);
   }
 
   /* Layout */
