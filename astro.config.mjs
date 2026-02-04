@@ -79,6 +79,10 @@ export default defineConfig({
                 label: 'Advanced',
                 autogenerate: { directory: 'advanced' },
             },
+            {
+                label: 'Standard Library',
+                autogenerate: { directory: 'stdlib' },
+            }
         ],
     }), d2({
       sketch: true,
