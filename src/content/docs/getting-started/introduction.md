@@ -18,7 +18,7 @@ Clean, expressive syntax that's easy to learn and pleasant to write. Inspired by
 First-class error handling with result types (`E ! T`) that make dealing with failures explicit and safe.
 
 ### Optional Types
-No more null pointer exceptions! Optional types (`T?`) and the coalescing operator (`??`) make handling missing values a breeze.
+No more null pointer exceptions! Optional types (`?T`) and the coalescing operator (`??`) make handling missing values a breeze.
 
 ## Quick Example
 
@@ -35,7 +35,7 @@ fn main() {
     let version: i32 = 1;
 
     // Optional types
-    let maybeValue: i32? = 42;
+    let maybeValue: ?i32 = 42;
 
     if maybeValue != none {
         // Type narrowing - maybeValue is i32 here

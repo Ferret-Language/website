@@ -25,7 +25,7 @@ let arr_len := len(&arr);     // 3
 let map_size := len(&scores); // 2
 ```
 
-### `get(&container, key) -> T?`
+### `get(&container, key) -> ?T`
 
 Safely retrieves a value from an array or map, returning an optional type. Returns `none` if the key/index doesn't exist.
 
@@ -36,12 +36,12 @@ let arr: []i32 = [10, 20, 30];
 let scores := {"alice" => 95, "bob" => 87} as map[str]i32;
 
 // Array access
-let val1 := get(&arr, 0);   // Returns i32? with value 10
-let val2 := get(&arr, 10);  // Returns i32? with value none (out of bounds)
+let val1 := get(&arr, 0);   // Returns ?i32 with value 10
+let val2 := get(&arr, 10);  // Returns ?i32 with value none (out of bounds)
 
 // Map access
-let score1 := get(&scores, "alice");  // Returns i32? with value 95
-let score2 := get(&scores, "charlie"); // Returns i32? with value none (key doesn't exist)
+let score1 := get(&scores, "alice");  // Returns ?i32 with value 95
+let score2 := get(&scores, "charlie"); // Returns ?i32 with value none (key doesn't exist)
 ```
 
 **Note:** `get()` uses an immutable reference (`&T`) since it only reads from the container.
@@ -188,7 +188,7 @@ let z := arr[i];   // ❌ Runtime panic: index out of bounds!
 
 ### Map Indexing
 
-Direct map indexing `map[key]` returns the value type `T` directly (not `T?`). If the key doesn't exist, the program will panic:
+Direct map indexing `map[key]` returns the value type `T` directly (not `?T`). If the key doesn't exist, the program will panic:
 
 ```ferret
 let scores := {"alice" => 95, "bob" => 87} as map[str]i32;
@@ -282,7 +282,7 @@ if has(&scores, "bob") {
 Ferret's built-in functions provide a safe and consistent way to work with containers:
 
 - **`len(&value)`** - Get the length/size of strings, arrays, and maps
-- **`get(&c, k) -> T?`** - Safe access returning optional
+- **`get(&c, k) -> ?T`** - Safe access returning optional
 - **`get_or(&c, k, fallback) -> T`** - Access with default value
 - **`has(&c, k) -> bool`** - Check if key/index exists
 - **`set(&mut c, k, v) -> bool`** - Set value (requires mutable reference)

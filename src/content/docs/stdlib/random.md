@@ -108,7 +108,7 @@ fn main() {
 import "random";
 import "std/io";
 
-fn RandomChoice(choices: []str) -> str? {
+fn RandomChoice(choices: []str) -> ?str {
     if len(&choices) == 0 {
         return none;
     }

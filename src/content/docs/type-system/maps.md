@@ -79,7 +79,7 @@ Direct map indexing `map[key]` returns the value type `T` directly. **If the key
 ```ferret
 let scores := {"alice" => 95, "bob" => 87} as map[str]i32;
 
-// Returns i32 directly (not i32?)
+// Returns i32 directly (not ?i32)
 let alice_score: i32 = scores["alice"];  // ✅ 95
 let bob_score: i32 = scores["bob"];      // ✅ 87
 let charlie_score: i32 = scores["charlie"]; // ❌ Panic: key not found!
@@ -87,16 +87,16 @@ let charlie_score: i32 = scores["charlie"]; // ❌ Panic: key not found!
 
 **Use direct indexing only when you're certain the key exists.**
 
-### Safe Access with `get()` (Returns `T?`)
+### Safe Access with `get()` (Returns `?T`)
 
-The `get()` builtin function safely retrieves a value, returning an optional type (`T?`) if the key doesn't exist:
+The `get()` builtin function safely retrieves a value, returning an optional type (`?T`) if the key doesn't exist:
 
 ```ferret
 let ages := {"alice" => 25, "bob" => 30} as map[str]i32;
 
-// Returns i32? (optional), not i32!
-let alice_age: i32? = get(&ages, "alice");    // Returns i32? with value 25
-let unknown_age: i32? = get(&ages, "nobody"); // Returns i32? with value none
+// Returns ?i32 (optional), not i32!
+let alice_age: ?i32 = get(&ages, "alice");    // Returns ?i32 with value 25
+let unknown_age: ?i32 = get(&ages, "nobody"); // Returns ?i32 with value none
 ```
 
 This design prevents common bugs! You can't forget to check if a key exists because the type system reminds you.
@@ -155,10 +155,10 @@ Or use `get()` and check the optional:
 ```ferret
 import "std/io";
 
-let email: str? = get(&user_emails, "alice");
+let email: ?str = get(&user_emails, "alice");
 
 if email != none {
-    // Inside this block, email is str (not str?)
+    // Inside this block, email is str (not ?str)
     send_email(email);
 } else {
     io::Println("No email found");
@@ -286,13 +286,13 @@ Ferret validates your map operations at compile time:
 ```ferret
 let scores := {"alice" => 95};
 
-// ✅ Correct: returns i32?
-let score: i32? = scores["alice"];
+// ✅ Correct: returns ?i32
+let score: ?i32 = scores["alice"];
 
 // ✅ Correct: unwrap with coalescing
 let value: i32 = scores["alice"] ?? 0;
 
-// ❌ Error: can't assign i32? to i32
+// ❌ Error: can't assign ?i32 to i32
 let bad: i32 = scores["alice"];
 ```
 
@@ -349,7 +349,7 @@ let cache := {"page1" => "content"};
 let content := cache["page1"] ?? "Loading...";
 
 // Option 2: Check explicitly
-let maybe_content: str? = cache["page2"];
+let maybe_content: ?str = cache["page2"];
 if maybe_content != none {
     display(maybe_content);
 } else {
@@ -363,9 +363,9 @@ Understanding how Ferret maps differ from other languages:
 
 | Language | Missing Key Behavior |
 |----------|---------------------|
-| **Ferret** | Returns `V?` (optional) ✅ |
+| **Ferret** | Returns `?V` (optional) ✅ |
 | **Rust** | `HashMap::get()` returns `Option<&V>` |
-| **Swift** | `Dictionary[key]` returns `V?` |
+| **Swift** | `Dictionary[key]` returns `?V` |
 | **Go** | Dual return `value, ok := map[key]` |
 | **Python** | Raises `KeyError` exception ❌ |
 | **JavaScript** | Returns `undefined` |
@@ -401,7 +401,7 @@ Store the optional for later checking:
 ```ferret
 let user_data := {"id" => 123};
 
-let maybe_id: i32? = user_data["id"];
+let maybe_id: ?i32 = user_data["id"];
 
 // Check later
 if maybe_id != none {
@@ -453,7 +453,7 @@ Key takeaways:
 - Map syntax: `map[KeyType]ValueType`
 - Map literals: `{ key => value } as map[K]V`
 - Direct indexing: `map[key]` → `V` (panics if key missing)
-- Safe access: `get(&map, key)` → `V?` (returns `none` if missing)
+- Safe access: `get(&map, key)` → `?V` (returns `none` if missing)
 - Use `get_or()` for defaults: `get_or(&map, key, default)` → `V`
 - Use `has()` to check existence: `has(&map, key)` → `bool`
 - Use `set()` to modify: `set(&mut map, key, value)` → `bool`

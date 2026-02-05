@@ -319,7 +319,7 @@ let unsafe := arr[i];   // Runtime panic: index out of bounds!
 ```
 
 **Important:** For safe array access without panics, use the built-in functions:
-- `get(&arr, index)` - Returns `T?` (optional), `none` if out of bounds
+- `get(&arr, index)` - Returns `?T` (optional), `none` if out of bounds
 - `get_or(&arr, index, fallback)` - Returns `T` with fallback if out of bounds
 - `has(&arr, index)` - Returns `bool` to check if index is valid
 
@@ -336,12 +336,12 @@ let unsafe := arr[i];   // Runtime panic: index out of bounds!
 
 Sometimes you need to represent "I might have a value, or I might not." That's what optional types do.
 
-You make any type optional by adding a question mark `?` after it. An optional type `T?` can hold either a value of type `T` or `none`. The `none` keyword is a constant (like `true` and `false`) that represents the absence of a value.
+You make any type optional by adding a question mark `?` before it. An optional type `?T` can hold either a value of type `T` or `none`. The `none` keyword is a constant (like `true` and `false`) that represents the absence of a value.
 
 ```ferret
-let maybe_number: i32? = 42;      // Has a value (42)
-let no_value: str? = none;        // No value (none is a constant like true/false)
-let age: i32? = none;              // Starts with no value
+let maybe_number: ?i32 = 42;      // Has a value (42)
+let no_value: ?str = none;        // No value (none is a constant like true/false)
+let age: ?i32 = none;              // Starts with no value
 ```
 
 Optional types help prevent bugs. Instead of crashing when something is missing, Ferret forces you to check if a value exists before using it.
@@ -349,7 +349,7 @@ Optional types help prevent bugs. Instead of crashing when something is missing,
 ```ferret
 import "std/io";
 
-let username: str? = get_username();
+let username: ?str = get_username();
 
 if username != none {
     // Safe to use username here
@@ -391,7 +391,7 @@ Ferret provides two ways to access map values:
 ```ferret
 let ages := {"alice" => 25, "bob" => 30} as map[str]i32;
 
-// Returns i32 directly (not i32?)
+// Returns i32 directly (not ?i32)
 let alice_age: i32 = ages["alice"];  // ✅ 25
 let missing: i32 = ages["unknown"];  // ❌ Panic: key not found!
 ```
@@ -401,9 +401,9 @@ let missing: i32 = ages["unknown"];  // ❌ Panic: key not found!
 ```ferret
 let ages := {"alice" => 25, "bob" => 30} as map[str]i32;
 
-// Returns i32? (optional i32) - key might not exist!
-let alice_age: i32? = get(&mut ages, "alice");  // Returns i32? with value 25
-let missing: i32? = get(&mut ages, "unknown");   // Returns i32? with value none
+// Returns ?i32 (optional i32) - key might not exist!
+let alice_age: ?i32 = get(&mut ages, "alice");  // Returns ?i32 with value 25
+let missing: ?i32 = get(&mut ages, "unknown");   // Returns ?i32 with value none
 ```
 
 This is a safety feature! It forces you to think about what happens when a key doesn't exist, preventing crashes.

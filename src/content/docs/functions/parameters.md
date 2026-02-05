@@ -20,7 +20,7 @@ fn add(a: i32, b: i32) -> i32 {
 Parameters can be optional:
 
 ```ferret
-fn greet(name: str, title: str?) -> str {
+fn greet(name: str, title: ?str) -> str {
     if title != none {
         return "Hello, " + title + " " + name;
     }

@@ -11,28 +11,28 @@ Optional types are one of Ferret's key safety features, helping you avoid null p
 
 ## What are Optional Types?
 
-An optional type `T?` can hold either a value of type `T` or `none`. The `none` keyword is a constant (like `true` and `false`) that represents the absence of a value. This makes the possibility of missing values explicit in your type system.
+An optional type `?T` can hold either a value of type `T` or `none`. The `none` keyword is a constant (like `true` and `false`) that represents the absence of a value. This makes the possibility of missing values explicit in your type system.
 
 ```ferret
-let someNumber: i32? = 42;      // Has a value (42)
-let noNumber: i32? = none;      // No value (none is a constant like true/false)
+let someNumber: ?i32 = 42;      // Has a value (42)
+let noNumber: ?i32 = none;      // No value (none is a constant like true/false)
 ```
 
-**Important:** Ferret doesn't use wrapper types like `Some()` or `None()`. An optional `T?` is simply either a value of type `T` or the constant `none`.
+**Important:** Ferret doesn't use wrapper types like `Some()` or `None()`. An optional `?T` is simply either a value of type `T` or the constant `none`.
 
 ## Type Narrowing
 
 Ferret uses **flow-sensitive typing** to automatically narrow optional types in conditionals:
 
 ```ferret
-let x: i32? = 10;
+let x: ?i32 = 10;
 
 if x != none {
-    // Inside this block, x is narrowed to i32 (not i32?)
+    // Inside this block, x is narrowed to i32 (not ?i32)
     let doubled: i32 = x * 2;  // OK
 } else {
     // Inside this block, x is narrowed to none
-    let value: i32? = x;  // OK - can assign none to optional
+    let value: ?i32 = x;  // OK - can assign none to optional
     let num: i32 = x;     // ERROR - cannot assign none to i32
 }
 ```
@@ -42,13 +42,13 @@ if x != none {
 ```ferret
 import "std/io";
 
-let opt: str? = "hello";
+let opt: ?str = "hello";
 
 if opt == none {
     // opt is none here
     io::Println("No value");
 } else {
-    // opt is str here (not str?)
+    // opt is str here (not ?str)
     let length: i32 = len(&opt);
 }
 ```
@@ -58,38 +58,38 @@ if opt == none {
 The coalescing operator `??` provides a default value when an optional is `none`:
 
 ```ferret
-let maybeValue: i32? = none;
+let maybeValue: ?i32 = none;
 let value: i32 = maybeValue ?? 0;  // value is 0
 
-let someValue: i32? = 42;
+let someValue: ?i32 = 42;
 let result: i32 = someValue ?? 0;  // result is 42
 ```
 
 ### Chaining Coalescing Operators
 
 ```ferret
-let a: i32? = none;
-let b: i32? = none;
-let c: i32? = 42;
+let a: ?i32 = none;
+let b: ?i32 = none;
+let c: ?i32 = 42;
 
 let result: i32 = a ?? b ?? c ?? 0;  // result is 42
 ```
 
 ## Assignment Rules
 
-### Wrapping (T → T?)
+### Wrapping (T → ?T)
 You can assign a value to an optional type (automatic wrapping):
 
 ```ferret
 let num: i32 = 42;
-let optNum: i32? = num;  // OK - wrapped automatically
+let optNum: ?i32 = num;  // OK - wrapped automatically
 ```
 
-### Unwrapping (T? → T)
+### Unwrapping (?T → T)
 You cannot directly assign an optional to a non-optional:
 
 ```ferret
-let optNum: i32? = 42;
+let optNum: ?i32 = 42;
 let num: i32 = optNum;  // ERROR - must unwrap first
 ```
 
@@ -109,7 +109,7 @@ let num: i32 = optNum ?? 0;  // OK
 `none` can only be assigned to optional types:
 
 ```ferret
-let opt: i32? = none;  // OK
+let opt: ?i32 = none;  // OK
 let num: i32 = none;   // ERROR
 ```
 
@@ -118,7 +118,7 @@ let num: i32 = none;   // ERROR
 ```ferret
 import "std/io";
 
-fn findUser(id: i32) -> User? {
+fn findUser(id: i32) -> ?User {
     if userExists(id) {
         return getUser(id);
     }
@@ -126,7 +126,7 @@ fn findUser(id: i32) -> User? {
 }
 
 // Using the result
-let maybeUser: User? = findUser(42);
+let maybeUser: ?User = findUser(42);
 
 if maybeUser != none {
     io::Println(maybeUser.Name);
@@ -152,14 +152,14 @@ if maybeUser != none {
 ### Safe Division
 
 ```ferret
-fn safeDivide(a: i32, b: i32) -> i32? {
+fn safeDivide(a: i32, b: i32) -> ?i32 {
     if b == 0 {
         return none;
     }
     return a / b;
 }
 
-let result: i32? = safeDivide(10, 2);
+let result: ?i32 = safeDivide(10, 2);
 let value: i32 = result ?? 0;  // value is 5
 ```
 
@@ -173,9 +173,9 @@ let scores := {
     "bob" => 87
 } as map[str]i32;
 
-// Map access returns i32?
-let alice_score: i32? = scores["alice"];  // Returns i32? with value 95
-let carol_score: i32? = scores["carol"];  // Returns i32? with value none
+// Map access returns ?i32
+let alice_score: ?i32 = scores["alice"];  // Returns ?i32 with value 95
+let carol_score: ?i32 = scores["carol"];  // Returns ?i32 with value none
 
 // Use coalescing for defaults
 let score1 := scores["alice"] ?? 0;  // 95
@@ -191,8 +191,8 @@ See the [Maps](/type-system/maps) section for more details on how maps use optio
 
 ```ferret
 type Config struct {
-    .Port: i32?,
-    .Host: str?
+    .Port: ?i32,
+    .Host: ?str
 };
 
 let config := {

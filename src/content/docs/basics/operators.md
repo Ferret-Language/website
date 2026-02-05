@@ -288,20 +288,20 @@ It's called the "walrus" operator because `:=` looks like a walrus if you tilt y
 The coalescing operator gives you a way to provide a default value when dealing with optional types. If the left side is `none`, it uses the right side instead.
 
 ```ferret
-let maybe_value: i32? = none;
+let maybe_value: ?i32 = none;
 let value := maybe_value ?? 0;  // value is 0 (because maybe_value is none)
 
-let some_value: i32? = 42;
+let some_value: ?i32 = 42;
 let result := some_value ?? 0;  // result is 42 (because some_value has a value)
 ```
 
 It's super useful for providing defaults:
 
 ```ferret
-let username: str? = get_input();
+let username: ?str = get_input();
 let display_name := username ?? "Guest";  // Show "Guest" if no username
 
-let max_items: i32? = get_config("max");
+let max_items: ?i32 = get_config("max");
 let limit := max_items ?? 100;  // Default to 100 if not configured
 ```
 

@@ -58,7 +58,7 @@ append(&mut numbers, 4);
 
 ### at()
 ```ferret
-fn at(value: SequenceView, index: i32) -> Type?
+fn at(value: SequenceView, index: i32) -> ?Type
 ```
 Safely accesses an element by index. Returns `none` if index is out of bounds.
 
@@ -81,7 +81,7 @@ let count := size(&ages); // 2
 
 ### get()
 ```ferret
-fn get(value: MapView, key: Type1) -> Type2?
+fn get(value: MapView, key: Type1) -> ?Type2
 ```
 Safely retrieves a value from a map. Returns `none` if key doesn't exist.
 
@@ -153,7 +153,7 @@ Standard library modules fully integrate with Ferret's type system:
 
 - **Generics**: Functions work with any compatible type
 - **Union Types**: Many functions accept flexible input types
-- **Optional Types**: Safe operations return `Type?` instead of null
+- **Optional Types**: Safe operations return `?Type` instead of null
 - **References**: Functions accept both owned values and references
 
 ```ferret title="example"

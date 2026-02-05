@@ -607,7 +607,7 @@ fn (c: &mut Cache) makeKey(key: str) -> str {
     return c.prefix + ":" + key;
 }
 
-fn (c: &mut Cache) set(key: str, value: str, ttl: i32?) -> str ! bool {
+fn (c: &mut Cache) set(key: str, value: str, ttl: ?i32) -> str ! bool {
     let cacheKey := c.makeKey(key);
     
     c.client.Set(cacheKey, value) catch |err| err;

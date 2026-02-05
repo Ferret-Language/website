@@ -46,7 +46,7 @@ import HomepageAnimations from '../../components/HomepageAnimations.astro';
       <h2>Optional Types</h2>
     </div>
     <p class="feature-description">
-      No more null pointer exceptions! Optional types <code>T?</code> make handling missing values safe and elegant.
+      No more null pointer exceptions! Optional types <code>?T</code> make handling missing values safe and elegant.
     </p>
   </div>
 
@@ -81,7 +81,7 @@ let name: str = "Ferret";
 let version := 1;
 
 // Optional types with type narrowing
-let maybeValue: i32? = 42;
+let maybeValue: ?i32 = 42;
 
 if maybeValue != none {
     let doubled: i32 = maybeValue * 2;

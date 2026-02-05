@@ -176,10 +176,10 @@ Here's where Ferret gets really clever. When you check if an optional value is `
 Remember optional types from the Types lesson? They can be either a value or `none`. Normally, you can't use them directly:
 
 ```ferret
-let maybe_value: i32? = 42;
+let maybe_value: ?i32 = 42;
 
 // This won't work:
-// let doubled := maybe_value * 2;  // ERROR: Can't multiply i32?
+// let doubled := maybe_value * 2;  // ERROR: Can't multiply ?i32
 ```
 
 But after checking for `none`, Ferret knows the type more precisely:
@@ -187,10 +187,10 @@ But after checking for `none`, Ferret knows the type more precisely:
 ```ferret
 import "std/io";
 
-let maybe_value: i32? = 42;
+let maybe_value: ?i32 = 42;
 
 if maybe_value != none {
-    // Inside here, maybe_value is treated as i32 (not i32?)
+    // Inside here, maybe_value is treated as i32 (not ?i32)
     // because Ferret knows it's not none
     let doubled: i32 = maybe_value * 2;  // Works!
     io::Println(doubled);  // Prints: 84
@@ -207,7 +207,7 @@ Another example:
 ```ferret
 import "std/io";
 
-let username: str? = get_user_input();
+let username: ?str = get_user_input();
 
 if username != none {
     // username is str here
@@ -224,7 +224,7 @@ You can also use `==` to check:
 ```ferret
 import "std/io";
 
-let opt_count: i32? = get_count();
+let opt_count: ?i32 = get_count();
 
 if opt_count == none {
     // opt_count is none here

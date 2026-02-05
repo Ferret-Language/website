@@ -337,7 +337,7 @@ Interfaces are perfect for creating iterators:
 
 ```ferret
 type Iterator interface {
-    next() -> i32?,
+    next() -> ?i32,
     has_next() -> bool
 };
 
@@ -346,7 +346,7 @@ type NumberRange struct {
     .End: i32
 };
 
-fn (r: NumberRange) next() -> i32? {
+fn (r: NumberRange) next() -> ?i32 {
     if r.Current < r.End {
         let value := r.Current;
         // In real code, you'd update r.Current

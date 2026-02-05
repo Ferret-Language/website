@@ -296,19 +296,19 @@ app.Listen(3000) catch |err| {
 
 ### Header()
 ```ferret
-fn (req: &Request) Header(name: str) -> str?
+fn (req: &Request) Header(name: str) -> ?str
 ```
 Retrieves a request header value.
 
 ### Query()
 ```ferret
-fn (req: &Request) Query(name: str) -> str?
+fn (req: &Request) Query(name: str) -> ?str
 ```
 Retrieves a query parameter value.
 
 ### Param()
 ```ferret
-fn (req: &Request) Param(name: str) -> str?
+fn (req: &Request) Param(name: str) -> ?str
 ```
 Retrieves a route parameter value.
 
@@ -462,7 +462,7 @@ fn newApiServer() -> ApiServer {
     };
 }
 
-fn findUser(server: &ApiServer, id: i32) -> User? {
+fn findUser(server: &ApiServer, id: i32) -> ?User {
     for user in server.users {
         if user.id == id {
             return some(user);

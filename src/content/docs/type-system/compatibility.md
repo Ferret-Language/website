@@ -185,8 +185,8 @@ let wrong: f64 = 42;        // Error: integer literal cannot be assigned to f64 
 The `none` value can be implicitly assigned to any optional type:
 
 ```ferret
-let optional_int: i32? = none;  // Implicit
-let optional_str: str? = none;  // Implicit
+let optional_int: ?i32 = none;  // Implicit
+let optional_str: ?str = none;  // Implicit
 ```
 
 ### References

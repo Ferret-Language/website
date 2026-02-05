@@ -236,7 +236,7 @@ fn (u: User) get_display_name() -> str {
     return u.Name + " <" + u.Email + ">";
 }
 
-let maybe_user: User? = get_user();
+let maybe_user: ?User = get_user();
 let display := maybe_user?.get_display_name() ?? "Guest";
 ```
 

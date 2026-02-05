@@ -325,7 +325,7 @@ type User struct {
     .Age: i32,
 };
 
-fn find_user(id: i32) -> &User? {
+fn find_user(id: i32) -> ?&User {
     // Returns optional reference to User
     if user_exists(id) {
         return ref_to_user();  // Returns &User (automatically wrapped in optional)
@@ -487,7 +487,7 @@ Ferret's reference types are similar to:
 - **Go**: More explicit than Go's automatic pointer handling
 
 Unlike pointers in C/C++:
-- ✅ No null references (use `&T?` for optional references)
+- ✅ No null references (use `?&T` for optional references)
 - ✅ No dangling references (checked at compile time)
 - ✅ No pointer arithmetic
 - ✅ Automatic lifetime checking
@@ -529,5 +529,5 @@ The compiler enforces these rules:
 - [Learn about Borrow Checker](/type-system/borrow-checker) - Deep dive into borrowing rules and safety
 - [Learn about Methods](/type-system/methods) - Methods can use reference receivers
 - [Explore Structs](/type-system/structs) - Common place to use references
-- [Understand Optional Types](/type-system/optionals) - Combine with references for `&T?`
+- [Understand Optional Types](/type-system/optionals) - Combine with references for `?&T`
 - [Built-in Functions](/advanced/builtins) - Container operations with borrow semantics
