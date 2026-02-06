@@ -51,6 +51,10 @@ echo "Downloading ${DOWNLOAD_URL}..."
 TEMP_DIR=$(mktemp -d)
 trap "rm -rf ${TEMP_DIR}" EXIT
 
+# Remove previous Ferret install (keep other tools in DEST_DIR/bin)
+rm -f "${DEST_DIR}/bin/ferret"
+rm -rf "${DEST_DIR}/lib/ferret"
+
 # Download and extract
 cd "${TEMP_DIR}"
 curl -L -o ferret.tar.gz "${DOWNLOAD_URL}"
