@@ -1,0 +1,163 @@
+---
+title: Package Manager
+description: Understanding Ferret's built-in dependency management
+sidebar:
+  order: 1
+---
+
+Ferret includes a built-in package manager that handles dependency management, version resolution, and code sharing across projects.
+
+## Why a Package Manager?
+
+### The Problem
+
+Without a package manager, developers face:
+
+- **Manual dependency tracking** - Copy-pasting code between projects
+- **Version conflicts** - No systematic way to handle incompatible versions
+- **No reproducibility** - Different team members get different dependency versions
+- **Update nightmares** - Manually checking and updating each dependency
+- **Broken builds** - Missing dependencies cause compilation failures
+
+### The Solution
+
+Ferret's package manager provides:
+
+- **Automatic resolution** - Fetches dependencies and their dependencies recursively
+- **Version management** - Semantic versioning with flexible constraints
+- **Reproducible builds** - Lock file ensures everyone gets the same versions
+- **Multi-source support** - GitHub, GitLab, Bitbucket, and local packages
+- **Smart caching** - Downloads once, reuses across projects
+- **Clean workflows** - Simple commands for common tasks
+
+## How It Works
+
+### 1. Declare Dependencies
+
+Create a `fer.ret` manifest file:
+
+```toml
+[package]
+name = "myapp"
+version = "v1.0.0"
+compiler = "<=0.0.3"
+
+[dependencies]
+logger = "github.com/user/logger@^v1.0.0"
+```
+
+### 2. Install Packages
+
+```bash
+ferret get
+```
+
+The package manager:
+- Reads `fer.ret`
+- Resolves version constraints
+- Downloads packages from Git providers
+- Generates `ferret.lock` with exact versions
+- Caches packages in `.ferret/modules/`
+
+### 3. Use in Code
+
+```ferret
+import "github.com/user/logger";
+
+fn main() {
+    logger::Info("Hello!");
+}
+```
+
+## Key Features
+
+### 🚀 Fast & Efficient
+- Parallel downloads
+- Smart caching
+- Incremental updates
+
+### 🔒 Reproducible Builds
+- Lock file tracks exact versions
+- Deterministic resolution
+- Team consistency
+
+### 🌐 Multi-Provider Support
+- GitHub (github.com)
+- GitLab (gitlab.com)
+- Bitbucket (bitbucket.org)
+- Local packages (../path)
+
+### 📦 Transitive Dependencies
+- Automatic recursive resolution
+- Conflict detection
+- Orphan cleanup
+
+### 🎯 Flexible Versioning
+- Semantic versioning (vX.Y.Z)
+- Constraint operators `(^, ~, >=, >, <=, <)`
+- Exact pinning
+- Latest tracking
+
+### 🎨 Developer Experience
+- Interactive project initialization
+- Colorful progress indicators
+- Clear error messages
+- Helpful suggestions
+
+## Core Concepts
+
+### Manifest File (fer.ret)
+
+TOML file declaring:
+- Package metadata (name, version, author)
+- Dependencies with version constraints
+- Compiler compatibility
+- Development options
+
+### Lock File (ferret.lock)
+
+JSON file recording:
+- Exact resolved versions
+- Dependency tree
+- Generation timestamp
+
+**Always commit to version control.**
+
+### Package Cache (.ferret/modules/)
+
+Local directory storing:
+- Downloaded packages
+- Multiple versions
+- Extracted source code
+
+**Add to .gitignore.**
+
+## When to Use
+
+✅ **Use the package manager when:**
+- Importing external packages (non-stdlib)
+- Building multi-file projects
+- Sharing code across projects
+- Working in a team
+- Publishing libraries
+
+❌ **Not needed for:**
+- Single-file scripts with only stdlib imports
+- Quick prototypes
+- Learning exercises
+
+:::caution[Manifest Required]
+A `fer.ret` manifest is **required** for any non-stdlib imports (`std/`, `net/`, `db/`).
+
+Without it, you'll see:
+```
+error: manifest file (fer.ret) is required for non-stdlib imports.
+```
+:::
+
+## Getting Started
+
+Ready to use the package manager? Check out:
+
+- **[Usage Guide](/package-manager/usage)** - Learn the commands and workflows
+- **[Advanced Features](/package-manager/advanced)** - Version constraints, cleanup, and more

@@ -1,0 +1,556 @@
+---
+title: Advanced Features
+description: Version constraints, cleanup, and advanced package management
+sidebar:
+  order: 3
+---
+
+import { FileTree } from '@astrojs/starlight/components';
+
+Advanced package management features including version resolution, cache management, and development workflows.
+
+## Version Constraints
+
+### Semantic Versioning
+
+Versions follow: `vMAJOR.MINOR.PATCH`
+
+- **MAJOR** - Incompatible API changes
+- **MINOR** - Backwards-compatible features  
+- **PATCH** - Backwards-compatible bug fixes
+
+Examples: `v1.0.0`, `v2.3.1`, `v0.1.0`
+
+### Constraint Operators
+
+#### Caret (^) - Compatible Releases
+
+Matches same major version (allows minor/patch updates):
+
+```toml
+logger = "github.com/user/logger@^v1.2.3"
+```
+
+**Matches:** `v1.2.3`, `v1.2.4`, `v1.3.0`, `v1.9.9`  
+**Excludes:** `v2.0.0`
+
+**Best for:** Most dependencies
+
+#### Tilde (~) - Patch Releases
+
+Matches same major and minor (patch updates only):
+
+```toml
+http = "github.com/user/http@~v2.5.0"
+```
+
+**Matches:** `v2.5.0`, `v2.5.1`, `v2.5.9`  
+**Excludes:** `v2.6.0`, `v3.0.0`
+
+**Best for:** Stable dependencies
+- ❌ `v2.6.0` - Minor version change
+- ❌ `v3.0.0` - Major version change
+
+**Best for:** Dependencies where you want only bug fixes
+
+### Comparison Operators
+
+#### Greater Than or Equal (>=)
+
+```toml
+[dependencies]
+utils = "github.com/user/utils@>=v1.2.0"
+```
+
+Matches `v1.2.0`, `v1.3.0`, `v2.0.0`, etc.
+
+#### Greater Than (>)
+
+```toml
+[dependencies]
+core = "github.com/user/core@>v1.0.0"
+```
+
+Matches `v1.0.1`, `v1.1.0`, `v2.0.0`, etc. (excludes `v1.0.0`)
+
+#### Less Than or Equal (`<=`)
+
+```toml
+[dependencies]
+legacy = "github.com/user/legacy@<=v2.0.0"
+```
+
+Matches `v2.0.0`, `v1.9.0`, `v1.0.0`, etc.
+
+#### Less Than (`<`)
+
+```toml
+[dependencies]
+old = "github.com/user/old@<v2.0.0"
+```
+
+Matches `v1.9.9`, `v1.0.0`, etc. (excludes `v2.0.0`)
+
+### Exact Version
+
+Specify an exact version without operators:
+
+```toml
+[dependencies]
+critical = "github.com/user/critical@v1.5.3"
+```
+
+**Matches:** Only `v1.5.3`
+
+**Best for:** Critical dependencies where you need exact control
+
+### Latest
+
+Use `latest` to always fetch the newest version:
+
+```toml
+[dependencies]
+experimental = "github.com/user/experimental@latest"
+```
+
+**Warning:** Not recommended for production - versions will change on every update
+
+## Version Resolution
+
+When multiple packages depend on the same library with different constraints, Ferret resolves to a version that satisfies all constraints.
+
+### Example: Compatible Constraints
+
+```toml
+# Your fer.ret
+[dependencies]
+web = "github.com/user/web@^v2.0.0"
+api = "github.com/user/api@^v2.0.0"
+```
+
+If `web` depends on `logger@^v1.0.0` and `api` depends on `logger@~v1.5.0`:
+
+```
+web → logger@^v1.0.0 (allows v1.0.0 - v1.9.9)
+api → logger@~v1.5.0 (allows v1.5.0 - v1.5.9)
+
+Resolution: logger@v1.5.9 ✅
+(Highest version satisfying both constraints)
+```
+
+### Example: Conflicting Constraints
+
+```toml
+[dependencies]
+package-a = "github.com/user/package-a@^v1.0.0"
+package-b = "github.com/user/package-b@^v2.0.0"
+```
+
+If both depend on `logger` but with incompatible constraints:
+
+```
+package-a → logger@^v1.0.0 (allows v1.x)
+package-b → logger@~v2.5.0 (allows v2.5.x)
+
+Resolution: ❌ Version conflict!
+Error: No version satisfies all constraints
+```
+
+**Solution:** Contact package maintainers or use different packages
+
+## Update Behavior
+
+### Update All
+
+```bash
+ferret update
+```
+
+Updates all packages to the latest version matching their constraints:
+
+- `logger@^v1.0.0` → Updates to latest v1.x (e.g., v1.9.0)
+- `http@~v2.5.0` → Updates to latest v2.5.x (e.g., v2.5.9)
+- `exact@v1.2.3` → No update (exact version)
+
+### Selective Update
+
+```bash
+ferret update github.com/user/logger
+```
+
+Updates only the specified package(s) to the latest compatible version.
+
+## Best Practices
+
+### 1. Use Appropriate Constraints
+
+```toml
+# ✅ Good: Allow compatible updates
+logger = "github.com/ferret/logger@^v1.0.0"
+
+# ⚠️ Cautious: Only bug fixes
+critical-lib = "github.com/vendor/lib@~v2.3.0"
+
+# ❌ Avoid: Too strict (miss bug fixes)
+utils = "github.com/ferret/utils@v1.0.0"
+
+# ❌ Avoid: Too loose (risk breaking changes)
+experimental = "github.com/ferret/experimental@latest"
+```
+
+### 2. Test After Updates
+
+```bash
+ferret update
+# Run your tests
+ferret test
+```
+
+### 3. Review Lock File Changes
+
+When updating, check `ferret.lock` changes:
+
+```bash
+git diff ferret.lock
+```
+
+### 4. Pin Critical Dependencies
+
+For production-critical dependencies, use exact versions:
+
+```toml
+[dependencies]
+payment-sdk = "github.com/vendor/payment@v3.2.1"
+```
+
+### 5. Update Regularly
+
+```bash
+# Check for updates monthly
+ferret update
+
+# Or per package as needed
+ferret update github.com/user/logger
+```
+
+## Common Scenarios
+
+### Scenario 1: Library Development
+
+Allow flexibility for users:
+
+```toml
+[dependencies]
+http = "github.com/ferret/http@^v2.0.0"
+json = "github.com/ferret/json@^v1.0.0"
+```
+
+### Scenario 2: Application Development
+
+Balance stability and updates:
+
+```toml
+[dependencies]
+# Framework: Allow compatible updates
+web-framework = "github.com/ferret/web@^v3.0.0"
+
+# Utilities: Allow minor updates
+logger = "github.com/ferret/logger@^v1.0.0"
+
+# Critical: Pin exact version
+payment-processor = "github.com/vendor/payment@v2.5.3"
+```
+
+### Scenario 3: Experimental Project
+
+Stay on the bleeding edge:
+
+```toml
+[dependencies]
+new-feature = "github.com/ferret/new@>=v0.1.0"
+```
+
+## Troubleshooting
+
+### Version Conflicts
+
+**Problem:** `Error: version conflict: no version satisfies all constraints`
+
+**Solution:**
+1. Check which packages have conflicting requirements:
+   ```bash
+   ferret list
+   ```
+2. Update packages to compatible versions
+3. Contact maintainers if dependencies are incompatible
+
+### No Versions Found
+
+**Problem:** `Error: no versions found for github.com/user/package`
+
+**Solution:**
+- Verify the repository exists and is public
+- Check the repository has Git tags
+- Ensure the repository name is correct
+
+### Update Not Working
+
+**Problem:** Package doesn't update to latest version
+
+**Solution:**
+- Check constraint allows the new version
+- Verify no conflicting constraints from other packages
+- Try: `ferret update github.com/user/package`
+
+## Reference
+
+| Constraint | Matches | Example |
+|------------|---------|---------|
+| `^v1.2.3` | v1.2.3 ≤ version < v2.0.0 | Compatible (same major) |
+| `~v1.2.3` | v1.2.3 ≤ version < v1.3.0 | Patch only |
+| `>=v1.2.3` | v1.2.3 ≤ version | Greater or equal |
+| `>v1.2.3` | v1.2.3 < version | Greater than |
+| `<=v1.2.3` | version ≤ v1.2.3 | Less or equal |
+| `<v1.2.3` | version < v1.2.3 | Less than |
+| `v1.2.3` | version = v1.2.3 | Exact |
+| `latest` | newest version | Latest |
+
+---
+
+## Package Cache Management
+
+### Understanding the Cache
+
+Packages are downloaded to `.ferret/modules/`:
+
+<FileTree>
+- .ferret/modules
+  - github.com/user
+    - logger@v1.0.0
+    - logger@v1.5.0
+    - logger@v1.9.0
+</FileTree>
+
+Multiple versions can coexist for different projects.
+
+### ferret cleanup
+
+Remove unused packages from cache:
+
+```bash
+ferret cleanup
+```
+
+**What it does:**
+- Scans `ferret.lock`
+- Identifies packages not referenced
+- Removes orphaned versions
+- Frees disk space
+
+**Example output:**
+```
+Found 3 unused dependencies
+  → Removing github.com/user/old-logger@v0.5.0
+  → Removing github.com/user/deprecated@v1.0.0
+  → Removing github.com/user/temp@v0.1.0
+✓ Cleaned up 3 packages (12.5 MB freed)
+```
+
+**When to use:**
+- After removing dependencies
+- After major version updates
+- Periodically to save disk space
+
+### Manual Cache Management
+
+**Check cache size:**
+```bash
+du -sh .ferret/modules/
+```
+
+**Clear entire cache:**
+```bash
+rm -rf .ferret/
+ferret get  # Reinstall
+```
+
+**Clear specific package:**
+```bash
+rm -rf .ferret/modules/github.com/user/package@v1.0.0
+```
+
+---
+
+## Development Workflows
+
+### Mock Mode for Testing
+
+Test package management without network access using local directories.
+
+**Setup:**
+
+1. Create mock packages directory:
+
+<FileTree>
+- mock-packages
+  - github.com/user
+    - logger-v1.0.0
+    - logger-v1.5.0
+    - logger-v1.9.0
+</FileTree>
+
+2. Configure in `fer.ret`:
+```toml
+[dev]
+mock_remote = true
+mock_path = "../mock-packages"
+```
+
+3. Install:
+```bash
+ferret get
+```
+
+The package manager uses local directories instead of Git downloads.
+
+**Use cases:**
+- CI/CD environments
+- Offline development
+- Testing package resolution
+- Local package development
+
+### Lock File Management
+
+#### Understanding ferret.lock
+
+Auto-generated JSON file recording exact versions:
+
+```json
+{
+  "version": "1.0",
+  "direct_deps": ["github.com/user/logger"],
+  "dependencies": {
+    "github.com/user/logger": {
+      "version": "v1.9.0",
+      "resolved_url": "github.com/user/logger",
+      "direct": true
+    }
+  }
+}
+```
+
+#### When to Update
+
+**Automatic updates:**
+- `ferret get` - Adds new dependencies
+- `ferret update` - Updates versions
+- `ferret remove` - Removes dependencies
+
+**Manual intervention:**
+- Resolve merge conflicts
+- Force specific versions
+- Debug resolution issues
+
+#### Lock File Conflicts
+
+If team members update dependencies separately:
+
+```bash
+# Pull latest changes
+git pull
+
+# Regenerate lock file
+rm ferret.lock
+ferret get
+
+# Commit resolved lock file
+git add ferret.lock
+git commit -m "Resolve lock file conflict"
+```
+
+### Compiler Version Constraints
+
+Ensure package compatibility with compiler versions:
+
+```toml
+[package]
+name = "myapp"
+compiler = "<=0.0.3"  # Works with v0.0.3 or older
+```
+
+**Constraints:**
+- `<=0.0.3` - Maximum compiler version
+- `>=0.0.2` - Minimum compiler version
+- `>=0.0.2,<=0.0.3` - Range (future support)
+
+**Why it matters:**
+- New packages may use features unavailable in old compilers
+- Prevents compilation errors
+- Ensures team compatibility
+
+---
+
+## Performance Optimization
+
+### Parallel Downloads
+
+The package manager downloads dependencies in parallel:
+
+```bash
+ferret get github.com/user/pkg1 github.com/user/pkg2 github.com/user/pkg3
+```
+
+All three download simultaneously.
+
+### Smart Caching
+
+**Cache reuse:**
+- Same package version across projects
+- No re-download if cached
+- Instant installation
+
+**Example:**
+```bash
+# Project 1
+cd ~/project1
+ferret get github.com/user/logger@v1.9.0  # Downloads
+
+# Project 2
+cd ~/project2
+ferret get github.com/user/logger@v1.9.0  # Instant (cached)
+```
+
+### Incremental Updates
+
+`ferret update` only downloads new versions:
+
+```bash
+ferret update  # Only updates changed packages
+```
+
+---
+
+## Security Considerations
+
+### Package Verification
+
+- Uses Git tags/releases (immutable)
+- Downloads from official Git providers
+- No central package registry (no supply chain attacks)
+
+### Best Practices
+
+- ✅ Pin critical dependencies to exact versions
+- ✅ Review dependency updates before applying
+- ✅ Use `ferret.lock` for reproducibility
+- ✅ Audit dependencies periodically
+- ✅ Prefer well-maintained packages
+- ❌ Avoid `latest` in production
+- ❌ Don't commit `.ferret/modules/`
+
+---
+
+## See Also
+
+- [Package Manager Overview](/package-manager/) - Introduction and concepts
+- [Usage Guide](/package-manager/usage) - Commands and workflows

@@ -1,39 +1,109 @@
 ---
-title: Modules
-description: Working with modules in Ferret
+title: Modules & Imports
+description: Working with modules and imports in Ferret
 sidebar:
   order: 4
 ---
 
 import { FileTree } from '@astrojs/starlight/components';
 
-Modules in ferret are nothing but files. Each file is a module, and the module name is derived from the file path from the root of the project.
+Modules in Ferret organize code into reusable units. Understanding how modules work is essential for building larger applications.
 
-For example, if you have a file structure like this:
+## What is a Module?
+
+Each `.fer` file is a module. The module is identified by its import path, which can be:
+
+1. **Standard library** - Built-in modules (`std/io`, `net/http`, `db/sql`)
+2. **Local project files** - Files in your project
+3. **External packages** - Dependencies from `fer.ret`
+4. **Neighbor packages** - Local packages in your workspace
+
+## Import Paths
+
+### Standard Library Imports
+
+```ferret
+import "std/io";
+import "net/http";
+import "db/sql";
+```
+
+No manifest required for stdlib imports.
+
+### Project-Local Imports
+
+For files within your project:
 
 <FileTree>
-- your_project
+- myproject
+  - fer.ret
   - main.fer
   - utils
     - math.fer
-    - ...
+    - string.fer
 </FileTree>
 
-The module name for `math.fer` would be `your_project/utils/math`.
+```toml
+# fer.ret
+[package]
+name = "myproject"
+```
 
-## Importing Modules
-To use a module in another file, you use the `import` statement followed by the module path.
 ```ferret
-import "your_project/utils/math";
+// In main.fer
+import "myproject/utils/math";
+import "myproject/utils/string";
+
+fn main() {
+    let result := math::Add(5, 3);
+}
 ```
-To use access functions or variables from the imported module, you use the module name as a prefix followed by `::` and then the function or variable name.
+
+### External Package Imports
+
+For dependencies declared in `fer.ret`:
+
+```toml
+# fer.ret
+[dependencies]
+logger = "github.com/user/logger@^v1.0.0"
+```
+
 ```ferret
-let result := math::Some_function();
+import "github.com/user/logger";
+
+fn main() {
+    logger::Info("Hello!");
+}
 ```
-You can also use `as` to create an alias for the module to shorten the name or avoid naming conflicts.
-```ferret 
-import "your_project/utils/math" as m;
-let result := m::Some_function();
+
+### Neighbor Package Imports
+
+For local workspace packages:
+
+<FileTree>
+- workspace
+  - shared
+    - fer.ret (name = "shared")
+    - utils.fer
+  - myapp
+    - fer.ret
+    - main.fer
+</FileTree>
+
+```toml
+# myapp/fer.ret
+[dependencies]
+shared = "../shared"
+```
+
+```ferret
+// In myapp/main.fer
+import "shared/utils";
+
+fn main() {
+    utils::Helper();
+}
 ```
 
 ### Import Alias Restrictions
@@ -71,8 +141,6 @@ Ferret uses **capitalization** to control symbol visibility, similar to Go:
 - **Lowercase** names are **private** - only accessible within the defining module
 
 ```ferret
-// In your_project/utils/math.fer
-
 // Exported (public) - starts with uppercase
 const PI := 3.14159;
 fn Add(a: i32, b: i32) -> i32 { return a + b; }
@@ -96,12 +164,9 @@ type Person struct {
 };
 ```
 
-**Private field access rules:**
+**Access rules:**
 - **Public fields** (uppercase) → accessible everywhere
-- **Private fields** (lowercase) → only accessible in:
-  1. **Methods of that type** (via receiver)
-  2. **Struct literals** (to provide initial values)
-- Direct field access `.field` on private fields is **not allowed** outside methods
+- **Private fields** (lowercase) → only in methods and struct literals
 
 ```ferret
 type Account struct {
@@ -110,43 +175,136 @@ type Account struct {
 };
 
 fn (a: Account) GetBalance() -> i32 {
-    return a.balance;  // ✅ OK - method can access private field
-}
-
-fn (a: &Account) Deposit(amount: i32) {
-    a.balance = a.balance + amount;  // ✅ OK - method can modify
+    return a.balance;  // ✅ OK - method can access
 }
 
 fn test() {
-    // ✅ OK - struct literal provides all fields
     let acc := { .Owner = "Alice", .balance = 1000 } as Account;
-    
-    let owner := acc.Owner;      // ✅ OK - public field
-    let bal := acc.balance;      // ❌ Error - private field
-    let bal2 := acc.GetBalance(); // ✅ OK - use method instead
+    let owner := acc.Owner;      // ✅ OK - public
+    let bal := acc.balance;      // ❌ Error - private
+    let bal2 := acc.GetBalance(); // ✅ OK - use method
 }
 ```
 
-**Cross-module field access:**
-```ferret
-// In another module
-import "your_project/types";
+## Using Imports
 
-let p := { .Name = "Alice", .Age = 30, .ssn = "123" } as types::Person;
+### Module Aliases
 
-let name := p.Name;  // ✅ OK - public field
-let age := p.Age;    // ✅ OK - public field  
-let ssn := p.ssn;    // ❌ Error - private field
-```
-
-### Enum Variants Inherit Visibility
-
-Enum variants automatically inherit the visibility of their parent enum:
+Import with an alias to shorten names:
 
 ```ferret
-type Status enum { Pending, Active, Closed };  // Exported enum
-// Status::Pending, Status::Active, Status::Closed are all exported
+import "std/math" as m;
+import "github.com/user/logger" as log;
 
-type internal enum { A, B, C };  // Private enum  
-// internal::A, internal::B, internal::C are all private
+fn main() {
+    let result := m::Sqrt(16.0);
+    log::Info("Result calculated");
+}
 ```
+
+Default aliases use the last path segment:
+- `import "std/math";` → `math`
+- `import "github.com/user/logger";` → `logger`
+
+### Accessing Module Members
+
+Use `::` to access exported members:
+
+```ferret
+import "std/io";
+import "myproject/utils/math";
+
+fn main() {
+    io::Println("Hello!");
+    let x := math::PI;
+    let p := math::Point{ .X: 5 };
+}
+```
+
+## Module Resolution
+
+Ferret resolves imports in this order:
+
+1. **Cached modules** - Already loaded
+2. **Standard library** - `std/`, `net/`, `db/`
+3. **Local project** - Files via package name
+4. **Dependencies** - From `fer.ret`
+5. **Error** - Not found
+
+:::caution[Manifest Required]
+A `fer.ret` manifest is **required** for non-stdlib imports.
+
+```
+error: manifest file (fer.ret) is required for non-stdlib imports.
+```
+
+Single files with only stdlib don't need a manifest.
+:::
+
+## Best Practices
+
+- ✅ Clear, descriptive module names
+- ✅ Single responsibility per module
+- ✅ Export only necessary symbols
+- ✅ Use aliases for long paths
+- ✅ Declare dependencies in `fer.ret`
+- ❌ Avoid circular dependencies
+- ❌ Don't reuse import alias names
+
+## Complete Example
+
+<FileTree>
+- myapp
+  - fer.ret
+  - main.fer
+  - models
+    - user.fer
+  - services
+    - auth.fer
+</FileTree>
+
+```toml
+# fer.ret
+[package]
+name = "myapp"
+
+[dependencies]
+logger = "github.com/user/logger@^v1.0.0"
+```
+
+```ferret
+// main.fer
+import "std/io";
+import "github.com/user/logger";
+import "myapp/models/user";
+import "myapp/services/auth";
+
+fn main() {
+    logger::Info("Starting...");
+    let u := user::New("Alice");
+    auth::Login(u);
+    io::Println("Welcome!");
+}
+```
+
+```ferret
+// models/user.fer
+type User struct {
+    .Name: string,
+    .Id: i32,
+}
+
+fn New(name: string) -> User {
+    return User{ .Name: name, .Id: 0 };
+}
+
+// Private helper
+fn validate(name: string) -> bool {
+    return name != "";
+}
+```
+
+## See Also
+
+- [Package Manager](/package-manager/) - Dependency management
+- [Usage Guide](/package-manager/usage) - Working with packages

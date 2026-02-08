@@ -1,0 +1,434 @@
+---
+title: Usage Guide
+description: How to use the Ferret package manager
+sidebar:
+  order: 2
+---
+
+import { FileTree } from '@astrojs/starlight/components';
+
+Learn how to create projects, manage dependencies, and work with the package manager.
+
+## Creating a Project
+
+### Initialize with ferret init
+
+```bash
+ferret init myapp
+```
+
+You'll be prompted for:
+1. **Project name** - Defaults to directory name if not provided
+2. **Description** - Optional, press Enter to skip
+3. **Author** - Optional, press Enter to skip
+
+This creates:
+- `fer.ret` - Package manifest
+- `main.fer` - Hello world starter
+
+**Examples:**
+```bash
+ferret init myapp    # With name
+ferret init          # Use directory name
+```
+
+## The Manifest File (fer.ret)
+
+### File Structure
+
+```toml
+[package]
+name = "myapp"
+version = "v1.0.0"
+description = "My Ferret application"
+author = "Your Name"
+compiler = "<=0.0.3"
+
+[dependencies]
+logger = "github.com/user/logger@^v1.0.0"
+http-client = "github.com/user/http-client@v1.2.0"
+mathlib = "../mathlib"
+
+[dev]
+mock_remote = true
+mock_path = "../mock-packages"
+```
+
+## Package Section
+
+Defines your project metadata:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | ✓ | Package name (lowercase, hyphens allowed) |
+| `version` | ✓ | Semantic version (e.g., `v1.0.0`) |
+| `description` | | Brief description of the package |
+| `author` | | Author name and/or email |
+| `compiler` | | Compiler version constraint |
+
+```toml
+[package]
+name = "awesome-lib"
+version = "v1.0.0"
+description = "An awesome Ferret library"
+author = "Jane Doe <jane@example.com>"
+compiler = "<=0.0.3"
+```
+
+### Compiler Version
+
+The `compiler` field ensures compatibility:
+- `<=0.0.3` - Works with compiler v0.0.3 or older
+- `>=0.0.2` - Requires compiler v0.0.2 or newer
+
+New packages can't run on older compilers, so use `<=current_version`.
+
+## Dependencies Section
+
+Lists all external packages your project needs.
+
+### Remote Packages
+
+From Git providers (GitHub, GitLab, Bitbucket):
+
+```toml
+[dependencies]
+logger = "github.com/user/logger@^v1.0.0"
+http = "gitlab.com/org/http@v2.1.0"
+utils = "bitbucket.org/team/utils@~v1.5.0"
+```
+
+Format: `name = "provider.com/owner/repo@version"`
+
+### Neighbor Packages
+
+Local packages in your workspace:
+
+```toml
+[dependencies]
+shared-lib = "../shared"
+common = "../common"
+```
+
+Use relative paths starting with `../`.
+
+### Version Constraints
+
+| Constraint | Matches | Example |
+|------------|---------|---------|
+| `^v1.2.3` | `v1.2.3` to `v1.x.x` | Same major version |
+| `~v1.2.3` | `v1.2.3` to `v1.2.x` | Patch updates only |
+| `>=v1.2.3` | `v1.2.3` and above | Greater or equal |
+| `>v1.2.3` | Above `v1.2.3` | Greater than |
+| `<=v1.2.3` | `v1.2.3` and below | Less or equal |
+| `<v1.2.3` | Below `v1.2.3` | Less than |
+| `v1.2.3` | Exactly `v1.2.3` | Exact match |
+| `latest` | Newest available | Always updates |
+
+## Dev Section
+
+Optional development configuration:
+
+```toml
+[dev]
+mock_remote = true
+mock_path = "../mock-packages"
+```
+
+**Mock Mode** - Test without network by using local package directories:
+- `mock_remote` - Enable mock mode
+- `mock_path` - Path to mock packages
+
+Example structure:
+<FileTree>
+- mock-packages
+  - github.com
+    - user
+      - logger-v1.0.0
+      - logger-v1.5.0
+      - logger-v1.9.0
+    - user2
+      - http-v2.0.0
+      - string-parser-v2.13.2
+</FileTree>
+
+## Complete Examples
+
+### Simple Application
+
+```toml
+[package]
+name = "myapp"
+version = "v1.0.0"
+compiler = "<=0.0.3"
+
+[dependencies]
+logger = "github.com/ferret/logger@^v1.0.0"
+```
+
+### Monorepo with Local Packages
+
+```toml
+[package]
+name = "main-app"
+version = "v1.0.0"
+compiler = "<=0.0.3"
+
+[dependencies]
+auth = "../auth"          # Local package
+database = "../database"  # Local package
+logger = "github.com/ferret/logger@^v1.0.0"  # Remote
+```
+
+### Development Setup
+
+```toml
+[package]
+name = "test-app"
+version = "v0.1.0"
+compiler = "<=0.0.3"
+
+[dependencies]
+logger = "github.com/user/logger@^v1.0.0"
+
+[dev]
+mock_remote = true
+mock_path = "../test-packages"
+```
+
+## Lock File (ferret.lock)
+
+Auto-generated file that records exact versions for reproducible builds:
+
+```json
+{
+  "version": "1.0",
+  "direct_deps": ["github.com/user/logger"],
+  "dependencies": {
+    "github.com/user/logger": {
+      "version": "v1.9.0",
+      "resolved_url": "github.com/user/logger",
+      "direct": true
+    }
+  }
+}
+```
+
+**Always commit `ferret.lock`** to version control.
+
+## Package Manager Commands
+
+### ferret get
+
+Install dependencies from `fer.ret` or add new packages.
+
+```bash
+ferret get                    # Install all from fer.ret
+ferret get <pkg>[@version]... # Add specific packages
+```
+
+**Examples:**
+```bash
+ferret get
+ferret get github.com/user/logger@^v1.0.0
+ferret get github.com/user/logger@^v1.0.0 github.com/user/http@v2.0.0
+```
+
+**What it does:**
+- Downloads to `.ferret/modules/`
+- Resolves transitive dependencies
+- Updates `ferret.lock`
+- Adds to `fer.ret` when installing specific packages
+
+### ferret update
+
+Update packages to latest compatible versions.
+
+```bash
+ferret update            # Update all
+ferret update <pkg>...   # Update specific
+```
+
+**Examples:**
+```bash
+ferret update
+ferret update github.com/user/logger
+ferret update github.com/user/logger github.com/user/http
+```
+
+### ferret remove
+
+Remove a dependency and clean up orphaned packages.
+
+```bash
+ferret remove <pkg>
+```
+
+**Examples:**
+```bash
+ferret remove logger
+ferret remove http-client
+```
+
+### ferret list
+
+Show all dependencies (direct and transitive).
+
+```bash
+ferret list
+```
+
+**Output:**
+```
+myapp v1.0.0
+
+Dependencies (2):
+  logger (remote)
+    URL: github.com/user/logger
+    Constraint: ^v1.0.0
+    Locked: v1.9.0
+
+Transitive dependencies (1):
+  github.com/user/utils @ v2.0.0
+    Used by: [github.com/user/http-client]
+```
+
+## Common Workflows
+
+### Starting a New Project
+
+```bash
+ferret init myapp
+cd myapp
+# Edit fer.ret to add dependencies
+ferret get
+ferret main.fer
+```
+
+### Adding Dependencies
+
+**Option 1: Command line**
+```bash
+ferret get github.com/user/logger@^v1.0.0
+```
+
+**Option 2: Edit fer.ret**
+```toml
+[dependencies]
+logger = "github.com/user/logger@^v1.0.0"
+```
+Then run:
+```bash
+ferret get
+```
+
+### Updating Dependencies
+
+```bash
+# Check current versions
+ferret list
+
+# Update all packages
+ferret update
+
+# Update specific packages
+ferret update github.com/user/logger
+```
+
+### Removing Dependencies
+
+```bash
+ferret remove logger
+```
+
+### Working in a Team
+
+**First time setup:**
+```bash
+git clone <repo>
+cd <project>
+ferret get    # Installs exact versions from ferret.lock
+```
+
+**After pulling changes:**
+```bash
+git pull
+ferret get    # Updates if fer.ret or ferret.lock changed
+```
+
+### Monorepo with Local Packages
+
+<FileTree>
+- workspace
+  - shared
+    - fer.ret
+  - auth
+    - fer.ret
+  - main-app
+    - fer.ret
+</FileTree>
+
+In `main-app/fer.ret`:
+```toml
+[dependencies]
+shared = "../shared"
+auth = "../auth"
+```
+
+## Files Generated
+
+| File | Description | Commit? |
+|------|-------------|---------|
+| `fer.ret` | Package manifest | ✓ Yes |
+| `ferret.lock` | Locked versions | ✓ Yes |
+| `.ferret/modules/` | Package cache | ✗ No |
+
+**Important:**
+- Commit `fer.ret` and `ferret.lock` to version control
+- Add `.ferret/` to `.gitignore`
+
+## Troubleshooting
+
+### Command not found
+
+```bash
+export PATH=$PATH:/path/to/ferret/bin
+```
+
+### Network errors
+
+- Check internet connection
+- Verify repository is public
+- Retry (may be temporary)
+
+### Version conflicts
+
+```bash
+ferret list  # Check constraints
+# Adjust versions in fer.ret
+ferret get
+```
+
+### Corrupted lock file
+
+```bash
+rm ferret.lock
+ferret get
+```
+
+### Missing dependencies
+
+If you see import errors:
+```bash
+ferret get    # Ensure all dependencies are installed
+```
+
+## Best Practices
+
+- ✅ Use semantic versioning (`vX.Y.Z`)
+- ✅ Commit `fer.ret` and `ferret.lock`
+- ✅ Use `^` for flexible compatibility
+- ✅ Keep dependencies minimal
+- ✅ Test after `ferret update`
+- ✅ Include `compiler` field
+- ✅ Add `.ferret/` to `.gitignore`

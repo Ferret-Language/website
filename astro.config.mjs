@@ -80,6 +80,10 @@ export default defineConfig({
                 autogenerate: { directory: 'advanced' },
             },
             {
+                label: 'Package Manager',
+                autogenerate: { directory: 'package-manager' },
+            },
+            {
                 label: 'Standard Library',
                 autogenerate: { directory: 'stdlib' },
             }
