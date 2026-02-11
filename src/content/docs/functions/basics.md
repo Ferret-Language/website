@@ -80,6 +80,7 @@ This allows for greater flexibility in how functions are used and composed. See 
 
 ## Next Steps
 
+- [Learn about Pipes](/functions/pipes)
 - [Learn about Parameters](/functions/parameters)
 - [Explore Anonymous Functions](/functions/anonymous)
 - [Learn about Error Handling](/advanced/errors)
