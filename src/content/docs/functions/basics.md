@@ -77,10 +77,3 @@ let result = square(5);  // 25
 ```
 
 This allows for greater flexibility in how functions are used and composed. See the [Anonymous Functions](/functions/anonymous) page for detailed examples.
-
-## Next Steps
-
-- [Learn about Pipes](/functions/pipes)
-- [Learn about Parameters](/functions/parameters)
-- [Explore Anonymous Functions](/functions/anonymous)
-- [Learn about Error Handling](/advanced/errors)

@@ -2,21 +2,21 @@
 title: Pipes
 description: Pipe values into function calls with |>
 sidebar:
-  order: 4
+  order: 5
 ---
 
 Ferret’s pipe operator (`|>`) passes the left-hand value into a function call on the right-hand side.
 
 ## Basic Usage
 
-By default, the value is appended as the last argument:
+By default, the value is appended as the first argument:
 
 ```ferret
 import "std/io";
 
 fn add(x: i32, y: i32) -> i32 { return x + y; }
 
-let result := 5 |> add(10); // add(10, 5)
+let result := 5 |> add(10); // add(5, 10)
 io::Println(result);
 ```
 
@@ -29,7 +29,7 @@ import "std/io";
 
 fn add(x: i32, y: i32) -> i32 { return x + y; }
 
-let result := 5 |> add(_, 10); // add(5, 10)
+let result := 5 |> add(10, _); // add(10, 5)
 io::Println(result);
 ```
 
@@ -73,9 +73,3 @@ let other := 5 |> add(_, 10);    // ok
 - The piped value must type-check against the target parameter (or placeholder position).
 - Only one placeholder (`_`) is allowed per pipe stage.
 - You cannot pipe a `void` value into the next stage.
-
-## Next Steps
-
-- [Function Basics](/functions/basics)
-- [Parameters](/functions/parameters)
-- [Anonymous Functions](/functions/anonymous)
