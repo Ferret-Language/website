@@ -12,7 +12,7 @@ elif [ -n "${TERMUX_PREFIX}" ] && [ "${TERMUX_PREFIX}" = "/data/data/com.termux/
 fi
 if [ "${IS_TERMUX}" -eq 1 ] && [ -z "${FERRET_ALLOW_TERMUX_RELEASE-}" ]; then
   echo "Termux detected. Prebuilt releases are not available."
-  echo "Use: curl -fsSL https://ferret.brainbird.org/install-termux.sh | sh"
+  echo "Use: curl -fsSL https://ferret-lang.vercel.app/install-termux.sh | sh"
   exit 1
 fi
 
