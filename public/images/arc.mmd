@@ -1,0 +1,182 @@
+---
+config:
+  layout: elk
+---
+flowchart TB
+ subgraph Inputs["Inputs"]
+    direction TB
+        I1[".fer Source Files"]
+        I2["In-memory Files (WASM / Playground)"]
+        I3["Stdlib Modules (libs/*.fer or embedded)"]
+        I4["Package Manifest (fer.toml)"]
+  end
+ subgraph Context["Compiler Context (context_v2.CompilerContext)"]
+    direction TB
+        C1[("Module Registry (import path -> Module)")]
+        C2["Dependency Graph (import path -> imports)"]
+        C3["Topological Order (sortedModules)"]
+        C4["Universe Scope (built-in symbols + globals)"]
+        C5["Config (backend, pointer size, paths)"]
+        C6[("Module Artifacts (HIR, Lowered HIR, MIR, Narrowing, Heap Returns)")]
+  end
+ subgraph Diagnostics["Diagnostics (diagnostics/)"]
+    direction TB
+        D1["DiagnosticBag (thread-safe)"]
+        D2[("SourceCache (file line cache)")]
+        D3["Emitter (ANSI/HTML rendering)"]
+        D4["Error Codes (L/P/T/M/S/W prefixes)"]
+  end
+ subgraph Pipeline["Pipeline Orchestrator (pipeline/)"]
+    direction TB
+        P1["Parallel Parse (sync.Map + WaitGroup)"]
+        P2["Compute Topological Order"]
+        P3["Entry Check (ensure main)"]
+        P4["Runtime Audit (builtin symbols vs runtime C)"]
+  end
+ subgraph Phase1["Phase 1: Lex + Parse (Parallel per Module)"]
+    direction TB
+        L1["Lexer (frontend/lexer) Regex-based"]
+        L2["Parser (frontend/parser) Recursive descent"]
+        L3[("AST (frontend/ast)")]
+        L4["Import Scan (top-level only)"]
+  end
+ subgraph Phase2["Phase 2: Symbol Collection (collector/)"]
+    direction TB
+        S1["Pass 1: Declarations (types, funcs, vars, consts)"]
+        S2["Pass 2: Function Bodies"]
+        S3["Pass 3: Method Bodies"]
+        S4[("Symbol Tables (module + nested scopes)")]
+        S5["Import Aliases (map alias -> import path)"]
+  end
+ subgraph Phase3["Phase 3: Resolution (resolver/)"]
+    direction TB
+        R1["Resolver (scope walking + name binding)"]
+        R2["Identifier Binding (scope lookup + imports)"]
+  end
+ subgraph Phase4["Phase 4: Type Checking (typechecker/)"]
+    direction TB
+        T1["Top-Level Signature Pass (types + method signatures)"]
+        T2["Type Inference (untyped literals, defaults)"]
+        T3["Type Compatibility (assignability + casts)"]
+        T4["Flow-Narrowing (optionals, unions, interface{})"]
+        T5["Optional/Result Checking (unwrap, propagate, catch)"]
+  end
+ subgraph Phase5["Phase 5: HIR Generation (hir/gen)"]
+    direction TB
+        H1["HIR Generator (typed AST -> HIR)"]
+        H2[("HIR Module (source-shaped, typed)")]
+  end
+ subgraph Phase6["Phase 6: HIR Analysis (hir/analysis)"]
+    direction TB
+        A1["CFG Builder (basic blocks)"]
+        A2["Return/Loop Analysis (missing return, unreachable)"]
+        A3["Const Propagation + Array Bounds"]
+        A4["Dead Code Detection (constant conditions)"]
+        A5["Borrow Checking (ref rules)"]
+        A6["Heap Return Marking (for ABI)"]
+  end
+ subgraph Phase7["Phase 7: HIR Lowering (hir/lower)"]
+    direction TB
+        Lw1["HIR Lowerer (canonical form)"]
+        Lw2["Make Optional/Result Ops Explicit"]
+        Lw3["Temp Splitting (complex expressions)"]
+        Lw4[("Lowered HIR (canonical)")]
+  end
+ subgraph Phase8["Phase 8: MIR Generation (mir/gen)"]
+    direction TB
+        M1["MIR Generator (SSA-like)"]
+        M2["Data Layout (pointer size, alignment)"]
+        M3["Closure Lowering (env capture + wraps)"]
+        M4[("VTables (interface dispatch)")]
+        M5[("Type Descriptors (runtime type IDs)")]
+        M6["Module Init Function (global init)"]
+        M7[("MIR Module (functions + blocks)")]
+  end
+ subgraph MIRLowering["MIR Lowering"]
+    direction TB
+        ML1["Lower Switch (to compare/jump chains)"]
+  end
+ subgraph Phase9["Phase 9: Code Generation"]
+    direction TB
+        Q1["QBE Backend (codegen/qbe_embeddings)"]
+        Q2["QBE IR (.ssa)"]
+        Q3["QBE Tool (external)"]
+        Q4["Assembly (.s)"]
+        W1["WASM Backend (codegen/wasm)"]
+        W2["WASM Module (.wasm bytes)"]
+  end
+ subgraph Build["Native Build & Link (codegen/build)"]
+    direction TB
+        B1["Assembler (as / $AS)"]
+        B2["Object Files (.o)"]
+        B3["Linker (ld / $LD)"]
+        B4[("Runtime Library (libferret_runtime.a)")]
+        B5[("CRT Objects (crt1/crti/crtn or crt2/crtbegin/crtend)")]
+        B6["Executable (native binary)"]
+  end
+    D1 -- Format --> D3
+    D1 -- Cache Source --> D2
+    D4 -- Code Lookup --> D3
+    L1 -- Token Stream --> L2
+    L2 -- Build Tree --> L3
+    L3 -- Extract Imports --> L4
+    S1 -- Declare Names --> S4
+    S2 -- Bind Locals --> S4
+    S3 -- Bind Methods --> S4
+    S1 -- Track Imports --> S5
+    R1 -- Bind Names --> R2
+    T1 -- Seed Types --> T2
+    T2 -- Check Assignments --> T3
+    T4 -- Validate Uses --> T5
+    H1 -- Lower AST --> H2
+    A1 -- Analyze Paths --> A2
+    A3 -- Warn --> A4
+    A5 -- Feed ABI Info --> A6
+    Lw1 -- Canonicalize --> Lw2
+    Lw1 -- Normalize --> Lw3
+    Lw2 -- Output --> Lw4
+    Lw3 -- Output --> Lw4
+    M2 -- Size/Align Info --> M1
+    M1 -- Lower --> M3
+    M1 -- Generate --> M4 & M5
+    M1 -- Build --> M6
+    M1 -- Output --> M7
+    Q1 -- Emit --> Q2
+    Q2 -- Compile --> Q3
+    Q3 -- Generate --> Q4
+    W1 -- Emit --> W2
+    B1 -- Assemble --> B2
+    B2 -- Link --> B3
+    B4 --> B3
+    B5 --> B3
+    B3 -- Output --> B6
+    I1 -- Read --> L1
+    I2 -- Read --> L1
+    I3 --> P1
+    I4 --> C5
+    P1 --> Phase1
+    L3 -- Store Module --> C1
+    L4 -- Add Edges --> C2
+    C2 -- Compute Order --> P2
+    P2 -- Save --> C3
+    C3 --> Phase2 & Phase3 & Phase4
+    S4 -- Update Module --> C1
+    Phase2 --> P4
+    R2 -- Update Symbols --> C1
+    T4 -- Store Narrowing --> C6
+    Phase4 -- Errors/Warnings --> D1
+    Phase4 -- Typed AST --> H1
+    H2 -- Store HIR --> C6
+    H2 --> Phase6
+    A6 -- Store Heap Returns --> C6
+    Phase6 --> Lw1
+    Lw4 -- Store Lowered HIR --> C6
+    Lw4 --> M1
+    M7 -- Store MIR --> C6
+    M7 --> ML1
+    MIRLowering --> Q1 & W1
+    Q4 --> B1
+    B6 -- Errors on failure --> D1
+    P3 --> Phase9
+    Phase1 -- Add Source Content --> D1
+    D3 --> D2
