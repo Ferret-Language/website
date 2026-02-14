@@ -54,7 +54,7 @@ Reads a line from stdin and returns it. Returns an error if input fails.
 import "std/io";
 
 io::Print("Enter your name: ");
-let name := io::Read() catch |err| {
+let name := io::Read() catch err {
     io::Println("Input error:", err);
     return;
 };
@@ -86,7 +86,7 @@ Reads a line from stdin and parses it as a 32-bit integer.
 import "std/io";
 
 io::Print("Enter a number: ");
-let number := io::ReadInt() catch |err| {
+let number := io::ReadInt() catch err {
     io::Println("Invalid number:", err);
     return;
 };
@@ -103,7 +103,7 @@ Reads a line from stdin and parses it as a 64-bit floating-point number.
 import "std/io";
 
 io::Print("Enter a decimal: ");
-let decimal := io::ReadFloat() catch |err| {
+let decimal := io::ReadFloat() catch err {
     io::Println("Invalid number:", err);
     return;
 };
@@ -123,6 +123,59 @@ let name := "Alice";
 let age := 25;
 io::Printf("Name: {}, Age: {}\n", name, age);
 // Output: Name: Alice, Age: 25
+```
+
+## Streaming Interfaces
+
+```ferret
+type Reader interface {
+    Read(maxBytes: i32) -> str ! []byte
+};
+
+type Writer interface {
+    Write(buf: []byte) -> str ! i32
+};
+
+type Closer interface {
+    Close()
+};
+
+type ReadWriter interface {
+    Read(maxBytes: i32) -> str ! []byte,
+    Write(buf: []byte) -> str ! i32
+};
+```
+
+### WriteString()
+```ferret
+fn WriteString(w: Writer, s: str) -> str ! i32
+```
+
+### Copy()
+```ferret
+fn Copy(dst: Writer, src: Reader, bufSize: i32) -> str ! i64
+```
+
+### ReadAll()
+```ferret
+fn ReadAll(src: Reader, bufSize: i32) -> str ! []byte
+```
+
+```ferret title="example"
+import "std/fs";
+import "std/io";
+
+let file := fs::Create("out.txt") catch err {
+    io::Println("Create error:", err);
+    return;
+};
+
+defer file.Close();
+
+let w: io::Writer = &mut file;
+io::WriteString(w, "hello\n") catch err {
+    io::Println("Write error:", err);
+};
 ```
 
 ## Printable Types
@@ -145,19 +198,19 @@ fn main() {
     io::Println("Simple Calculator");
     
     io::Print("Enter first number: ");
-    let a := io::ReadInt() catch |err| {
+    let a := io::ReadInt() catch err {
         io::Println("Error:", err);
         return;
     };
     
     io::Print("Enter operator (+, -, *, /): ");
-    let op := io::Read() catch |err| {
+    let op := io::Read() catch err {
         io::Println("Error:", err);
         return;
     };
     
     io::Print("Enter second number: ");
-    let b := io::ReadInt() catch |err| {
+    let b := io::ReadInt() catch err {
         io::Println("Error:", err);
         return;
     };
@@ -195,7 +248,7 @@ fn main() {
         attempts += 1;
         io::Printf("Attempt {}: ", attempts);
         
-        let guess := io::ReadInt() catch |err| {
+        let guess := io::ReadInt() catch err {
             io::Println("Please enter a valid number");
             continue;
         };
@@ -229,7 +282,7 @@ let input := match io::Read() {
 };
 
 // Method 2: Catch syntax
-let number := io::ReadInt() catch |err| {
+let number := io::ReadInt() catch err {
     io::Println("Not a number:", err);
     -1 // default value
 };
@@ -237,7 +290,7 @@ let number := io::ReadInt() catch |err| {
 // Method 3: Error propagation
 fn getUserInput() -> str ! i32 {
     io::Print("Enter number: ");
-    let num := io::ReadInt() catch |err| err; // propagate error
+    let num := io::ReadInt() catch err err; // propagate error
     return num;
 }
 ```

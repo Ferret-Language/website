@@ -96,7 +96,7 @@ Executes a shell command and returns the exit code.
 import "os";
 import "std/io";
 
-let exitCode := os::Exec("ls -la") catch |err| {
+let exitCode := os::Exec("ls -la") catch err {
     io::Printf("Command failed: {}\n", err);
     return;
 };
@@ -115,12 +115,12 @@ import "os";
 import "std/io";
 
 // Send SIGTERM to process
-os::Kill(12345, os::SIGTERM) catch |err| {
+os::Kill(12345, os::SIGTERM) catch err {
     io::Printf("Failed to kill process: {}\n", err);
 };
 
 // Check if process exists (signal 0)
-let exists := os::Kill(12345, 0) catch |err| {
+let exists := os::Kill(12345, 0) catch err {
     io::Println("Process does not exist");
     false
 };
@@ -141,7 +141,7 @@ import "os";
 import "std/io";
 
 // Self-terminate with SIGINT
-os::Signal(os::SIGINT) catch |err| {
+os::Signal(os::SIGINT) catch err {
     io::Printf("Failed to send signal: {}\n", err);
 };
 ```
@@ -158,7 +158,7 @@ Retrieves the value of an environment variable.
 import "os";
 import "std/io";
 
-let home := os::GetEnv("HOME") catch |err| {
+let home := os::GetEnv("HOME") catch err {
     io::Printf("HOME not set: {}\n", err);
     "/tmp"
 };
@@ -166,7 +166,7 @@ let home := os::GetEnv("HOME") catch |err| {
 io::Printf("Home directory: {}\n", home);
 
 // Check for custom environment variable
-let apiKey := os::GetEnv("API_KEY") catch |err| {
+let apiKey := os::GetEnv("API_KEY") catch err {
     io::Println("Warning: API_KEY not set");
     ""
 };
@@ -182,11 +182,11 @@ Sets an environment variable.
 import "os";
 import "std/io";
 
-os::SetEnv("DEBUG", "true") catch |err| {
+os::SetEnv("DEBUG", "true") catch err {
     io::Printf("Failed to set DEBUG: {}\n", err);
 };
 
-os::SetEnv("APP_VERSION", "1.2.3") catch |err| {
+os::SetEnv("APP_VERSION", "1.2.3") catch err {
     io::Printf("Failed to set APP_VERSION: {}\n", err);
 };
 ```
@@ -201,7 +201,7 @@ Removes an environment variable.
 import "os";
 import "std/io";
 
-os::UnsetEnv("TEMP_VAR") catch |err| {
+os::UnsetEnv("TEMP_VAR") catch err {
     io::Printf("Failed to unset TEMP_VAR: {}\n", err);
 };
 ```
@@ -218,7 +218,7 @@ Returns the hostname of the machine.
 import "os";
 import "std/io";
 
-let hostname := os::Hostname() catch |err| {
+let hostname := os::Hostname() catch err {
     io::Printf("Failed to get hostname: {}\n", err);
     "unknown"
 };
@@ -267,7 +267,7 @@ import "std/io";
 // Graceful shutdown
 fn shutdown(pid: i32) {
     io::Printf("Sending SIGTERM to {}\n", pid);
-    os::Kill(pid, os::SIGTERM) catch |err| {
+    os::Kill(pid, os::SIGTERM) catch err {
         io::Printf("Failed to send SIGTERM: {}\n", err);
         return;
     };
@@ -275,10 +275,10 @@ fn shutdown(pid: i32) {
     os::Sleep(5000); // Wait 5 seconds
     
     // Force kill if still running
-    let stillRunning := os::Kill(pid, 0) catch |err| false;
+    let stillRunning := os::Kill(pid, 0) catch err false;
     if stillRunning {
         io::Printf("Force killing {}\n", pid);
-        os::Kill(pid, os::SIGKILL) catch |err| {
+        os::Kill(pid, os::SIGKILL) catch err {
             io::Printf("Failed to force kill: {}\n", err);
         };
     }
@@ -313,7 +313,7 @@ fn loadConfigFromEnv() -> AppConfig {
         err(_) => 8080
     };
     
-    let dbUrl := os::GetEnv("DATABASE_URL") catch |err| {
+    let dbUrl := os::GetEnv("DATABASE_URL") catch err {
         io::Println("Warning: DATABASE_URL not set, using default");
         "sqlite:///app.db"
     };
@@ -335,7 +335,7 @@ fn monitorProcess(pid: i32, intervalMs: i32) {
     io::Printf("Monitoring process {}\n", pid);
     
     while true {
-        let isRunning := os::Kill(pid, 0) catch |err| false;
+        let isRunning := os::Kill(pid, 0) catch err false;
         
         if !isRunning {
             io::Printf("Process {} has terminated\n", pid);
@@ -369,7 +369,7 @@ fn printSystemInfo() {
     io::Println("=== System Information ===");
     
     // Hostname
-    let hostname := os::Hostname() catch |err| "unknown";
+    let hostname := os::Hostname() catch err "unknown";
     io::Printf("Hostname: {}\n", hostname);
     
     // CPU count
@@ -384,7 +384,7 @@ fn printSystemInfo() {
     io::Println("\n=== Environment ===");
     let vars := ["PATH", "HOME", "USER", "SHELL"];
     for envVar in vars {
-        let value := os::GetEnv(envVar) catch |err| "<not set>";
+        let value := os::GetEnv(envVar) catch err "<not set>";
         io::Printf("{}: {}\n", envVar, value);
     }
     
@@ -414,7 +414,7 @@ fn daemonize() {
     
     // Write PID file
     let pidStr := pid as str;
-    fs::WriteFile("/var/run/mydaemon.pid", pidStr) catch |err| {
+    fs::WriteFile("/var/run/mydaemon.pid", pidStr) catch err {
         io::Printf("Warning: Cannot write PID file: {}\n", err);
     };
     
@@ -427,7 +427,7 @@ fn daemonize() {
         let timestamp := time::Now();
         let logEntry := "[" + timestamp + "] Heartbeat " + (counter as str) + "\n";
         
-        fs::AppendFile("/var/log/mydaemon.log", logEntry) catch |err| {
+        fs::AppendFile("/var/log/mydaemon.log", logEntry) catch err {
             io::Printf("Log error: {}\n", err);
         };
         
@@ -437,7 +437,7 @@ fn daemonize() {
 }
 
 fn stopDaemon() {
-    let pidStr := fs::ReadFile("/var/run/mydaemon.pid") catch |err| {
+    let pidStr := fs::ReadFile("/var/run/mydaemon.pid") catch err {
         io::Printf("Cannot read PID file: {}\n", err);
         return;
     };
@@ -445,12 +445,12 @@ fn stopDaemon() {
     // Parse PID (simplified)
     let pid := 0; // Would parse from pidStr
     
-    os::Kill(pid, os::SIGTERM) catch |err| {
+    os::Kill(pid, os::SIGTERM) catch err {
         io::Printf("Failed to stop daemon: {}\n", err);
     };
     
     // Clean up PID file
-    fs::Remove("/var/run/mydaemon.pid") catch |err| {
+    fs::Remove("/var/run/mydaemon.pid") catch err {
         io::Printf("Cannot remove PID file: {}\n", err);
     };
 }

@@ -63,7 +63,7 @@ fn main() {
     });
     
     io::Println("Server starting on port 3000...");
-    app.Listen(3000) catch |err| {
+    app.Listen(3000) catch err {
         io::Printf("Failed to start server: {}\n", err);
     };
 }
@@ -90,7 +90,7 @@ app.Get("/health", fn(req: &Request, res: &mut Response) {
 
 // Start server
 io::Println("Starting server on port 8080...");
-app.Listen(8080) catch |err| {
+app.Listen(8080) catch err {
     io::Printf("Server error: {}\n", err);
 };
 ```
@@ -112,7 +112,7 @@ app.Get("/", fn(req: &Request, res: &mut Response) {
 });
 
 // Listen on specific interface
-app.ListenAddrNative("127.0.0.1:3000") catch |err| {
+app.ListenAddrNative("127.0.0.1:3000") catch err {
     io::Printf("Failed to listen: {}\n", err);
 };
 ```
@@ -187,7 +187,7 @@ app.Any("/health", fn(req: &Request, res: &mut Response) {
     res.Send("OK");
 });
 
-app.Listen(3000) catch |err| {
+app.Listen(3000) catch err {
     io::Printf("Server error: {}\n", err);
 };
 ```
@@ -257,7 +257,7 @@ app.Post("/login", fn(req: &Request, res: &mut Response) {
     res.Json("{\"token\": \"your-jwt-token-here\"}");
 });
 
-app.Listen(3000) catch |err| {
+app.Listen(3000) catch err {
     io::Printf("Server error: {}\n", err);
 };
 ```
@@ -287,7 +287,7 @@ app.Get("/api/status", fn(req: &Request, res: &mut Response) {
     res.Json("{\"status\": \"API is running\"}");
 });
 
-app.Listen(3000) catch |err| {
+app.Listen(3000) catch err {
     io::Printf("Server error: {}\n", err);
 };
 ```
@@ -347,7 +347,7 @@ app.Post("/upload", fn(req: &Request, res: &mut Response) {
     res.Json("{\"message\": \"Upload received\"}");
 });
 
-app.Listen(3000) catch |err| {
+app.Listen(3000) catch err {
     io::Printf("Server error: {}\n", err);
 };
 ```
@@ -431,7 +431,7 @@ app.Get("/new-page", fn(req: &Request, res: &mut Response) {
     res.Send("You've been redirected!");
 });
 
-app.Listen(3000) catch |err| {
+app.Listen(3000) catch err {
     io::Printf("Server error: {}\n", err);
 };
 ```
@@ -509,7 +509,7 @@ fn serializeUsers(users: []User) -> str {
 }
 
 fn main() {
-    let mut server := newApiServer();
+    let server := newApiServer();
     
     // Add some sample data
     addUser(&mut server, "Alice", "alice@example.com");
@@ -574,7 +574,7 @@ fn main() {
     io::Println("REST API Server starting on port 3000...");
     io::Println("Try: curl http://localhost:3000/api/users");
     
-    app.Listen(3000) catch |err| {
+    app.Listen(3000) catch err {
         io::Printf("Server error: {}\n", err);
     };
 }
@@ -613,7 +613,7 @@ fn handleFileUpload(req: &Request, res: &mut Response) {
     let filepath := "./uploads/" + filename;
     
     // Save file (simplified - would parse multipart in real implementation)
-    fs::WriteFile(filepath, req.Body) catch |err| {
+    fs::WriteFile(filepath, req.Body) catch err {
         io::Printf("Failed to save file: {}\n", err);
         res.Status(500).Json("{\"error\": \"Failed to save file\"}");
         return;
@@ -629,7 +629,7 @@ fn main() {
     let app := http::Server();
     
     // Create uploads directory
-    // fs::CreateDir("./uploads") catch |err| {}; // Would create directory
+    // fs::CreateDir("./uploads") catch err {}; // Would create directory
     
     app.Post("/upload", handleFileUpload);
     
@@ -644,7 +644,7 @@ fn main() {
         res.Header("Content-Type", "text/html").Send(html);
     });
     
-    app.Listen(3000) catch |err| {
+    app.Listen(3000) catch err {
         io::Printf("Server error: {}\n", err);
     };
 }
@@ -677,7 +677,7 @@ fn serializeChatMessage(msg: ChatMessage) -> str {
 }
 
 fn main() {
-    let mut messages := []ChatMessage{};
+    let messages := []ChatMessage{};
     
     let app := http::Server();
     
@@ -737,7 +737,7 @@ fn main() {
     });
     
     io::Println("Chat server starting on port 3000...");
-    app.Listen(3000) catch |err| {
+    app.Listen(3000) catch err {
         io::Printf("Server error: {}\n", err);
     };
 }

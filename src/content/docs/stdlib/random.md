@@ -195,7 +195,7 @@ fn RollDice(sides: i32) -> i32 {
 }
 
 fn RollMultipleDice(count: i32, sides: i32) -> []i32 {
-    let mut results := []i32{};
+    let results := []i32{};
     
     for i in 0..count {
         let roll := RollDice(sides);
@@ -386,8 +386,8 @@ type Point struct {
 };
 
 fn RandomWalk(steps: i32, stepSize: f64) -> []Point {
-    let mut path := []Point{};
-    let mut current := Point{.x: 0.0, .y: 0.0};
+    let path := []Point{};
+    let current := Point{.x: 0.0, .y: 0.0};
     
     append(&mut path, current);
     
@@ -488,7 +488,7 @@ fn Shuffle(arr: &mut []i32) {
 
 // Select k random elements from array
 fn RandomSample(arr: []str, k: i32) -> []str {
-    let mut result := []str{};
+    let result := []str{};
     let available := arr; // Copy for sampling
     
     let sampleSize := if k > len(&arr) { len(&arr) } else { k };

@@ -225,6 +225,44 @@ setup_database(&config);
 setup_cache(&config);
 ```
 
+## Heap Ownership Type (`#T`)
+
+Ferret uses `#T` to represent owned heap values.
+
+```ferret
+let a: #i32 = #10;
+let b: #i32 = @a;   // move heap ownership
+// let c := a;      // ❌ a was moved
+
+let value: i32 = b; // reading #T in value context yields T
+```
+
+Key rules:
+- Heap allocation is explicit with `#expr`.
+- A target typed as `#T` must receive heap ownership (`#expr` or `@owner`).
+- Nested heap wrappers like `##T` are not supported.
+
+## Resource Handles And References
+
+Compiler resource handles (such as file and TCP handles) are non-copyable.
+
+```ferret
+import "std/fs";
+
+let f := fs::CreateRW("log.txt") catch err {
+    return;
+};
+
+// let f2 := f; // ❌ resource values are non-copyable
+let f2 := @f;   // ✅ explicit move
+f2.Close();
+```
+
+Use references when you want temporary access without ownership transfer:
+- `&T` for read-only access
+- `&mut T` for mutable access
+- `@T` when a function/method must consume ownership
+
 ## References vs Values
 
 Understanding when to use each:

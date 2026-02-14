@@ -51,7 +51,7 @@ fn append(source: SequenceRef, value: Type) -> bool
 Appends a value to the end of an array. Returns `true` on success.
 
 ```ferret title="example"
-let mut numbers := [1, 2, 3];
+let numbers := [1, 2, 3];
 append(&mut numbers, 4);
 // numbers is now [1, 2, 3, 4]
 ```
@@ -98,7 +98,7 @@ fn set(source: MapRef, key: Type1, value: Type2) -> bool
 Sets a key-value pair in a map. Returns `true` on success.
 
 ```ferret title="example"
-let mut config := {"debug": true};
+let config := {"debug": true};
 set(&mut config, "port", 8080);
 // config is now {"debug": true, "port": 8080}
 ```
@@ -142,7 +142,7 @@ let content := match fs::ReadFile("config.txt") {
 
 // Or use catch for error propagation
 fn loadConfig() -> str ! map[str]str {
-    let raw := fs::ReadFile("app.config") catch |err| err;
+    let raw := fs::ReadFile("app.config") catch err err;
     // parse and return config...
 }
 ```
@@ -158,8 +158,8 @@ Standard library modules fully integrate with Ferret's type system:
 
 ```ferret title="example"
 // Generic append works with any type
-let mut names := ["Alice"];
-let mut numbers := [1, 2];
+let names := ["Alice"];
+let numbers := [1, 2];
 
 append(&mut names, "Bob");    // Works with strings
 append(&mut numbers, 3);      // Works with integers

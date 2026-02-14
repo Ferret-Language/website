@@ -37,6 +37,35 @@ fn (receiver: Type) method_name(parameters) -> ReturnType {
 
 The receiver is like the first parameter—it's the value the method operates on. Inside the method, you can access the receiver's fields and call other methods.
 
+Receiver forms:
+- `Type`: value receiver (copy by default)
+- `&Type`: immutable borrow receiver
+- `&mut Type`: mutable borrow receiver
+- `@Type`: move receiver (consumes the value)
+
+```ferret
+import "std/fs";
+
+type FileWrap struct {
+    .f: fs::File
+};
+
+fn (w: &mut FileWrap) SeekStart() -> str ! i64 {
+    return w.f.Seek(0, fs::SeekWhence::Start) catch err {
+        return err!;
+    };
+}
+
+fn (w: @FileWrap) Close() {
+    w.f.Close();
+}
+```
+
+Rules:
+- Move receivers require an owned value type (`@T`), not references.
+- Calling a move receiver consumes the receiver value at the call site.
+
+
 ## Methods on Structs
 
 The most common use case is defining methods on structs:

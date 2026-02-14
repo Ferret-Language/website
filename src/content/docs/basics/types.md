@@ -251,6 +251,23 @@ let has_permission := true;  // Inferred as bool
 
 You'll use booleans constantly when writing conditions, like "if the user is logged in" or "while the game is running."
 
+## Heap Ownership Type (`#T`)
+
+Ferret uses `#T` for owned heap values. Allocation is explicit with `#expr`.
+
+```ferret
+let a: #i32 = #10;
+let b: #i32 = @a;   // move heap ownership
+// let c := a;       // ❌ moved value
+
+let copy_as_value: i32 = b; // read payload in value context
+```
+
+Rules:
+- `#expr` creates heap ownership.
+- A `#T` variable must receive heap ownership (`#expr` or `@owner`).
+- Use `@` to transfer ownership between bindings.
+
 ## Compound Types
 
 Compound types are built by combining other types together. They let you group related data.

@@ -5,9 +5,11 @@ sidebar:
   order: 2
 ---
 
-You can use multiple types of parameters in Ferret functions.
+Ferret supports value, reference, move-qualified, default, and variadic parameters.
 
-## Basic Parameters
+## Value Parameters
+
+Value parameters copy by default.
 
 ```ferret
 fn add(a: i32, b: i32) -> i32 {
@@ -15,37 +17,84 @@ fn add(a: i32, b: i32) -> i32 {
 }
 ```
 
-## Optional Parameters
+## Reference Parameters
 
-Parameters can be optional:
+Use `&T` for read-only borrowing and `&mut T` for mutable borrowing.
 
 ```ferret
-fn greet(name: str, title: ?str) -> str {
-    if title != none {
-        return "Hello, " + title + " " + name;
+fn sum(values: &[]i32) -> i32 {
+    let total := 0;
+    for v in values {
+        total += v;
     }
-    return "Hello, " + name;
+    return total;
+}
+
+fn push_value(values: &mut []i32, v: i32) {
+    append(values, v);
 }
 ```
 
+## Move-Qualified Parameters (`@T`)
+
+Use `@T` when the callee must consume ownership.
+
+```ferret
+import "std/fs";
+
+fn close_file(f: @fs::File) {
+    f.Close();
+}
+
+fn main() {
+    let file := fs::Create("out.txt") catch err {
+        return;
+    };
+
+    close_file(@file);
+    // file is moved and no longer usable here
+}
+```
+
+Rules:
+- Callers must pass lvalues with explicit move syntax (`@value`).
+- Move-qualified parameters cannot be reference types.
+- Variadic parameters cannot be move-qualified.
+
+## Default Parameters
+
+Parameters can declare defaults with `=`.
+
+```ferret
+fn connect(host: str = "127.0.0.1", port: i32 = 6379) -> str {
+    return host + ":" + port;
+}
+```
+
+Rules:
+- Default parameters must be trailing.
+- A default expression cannot reference another parameter.
+
 ## Variadic Parameters
 
-Accept multiple arguments:
+Use `...T` for variable argument lists.
 
 ```ferret
 fn sum(numbers: ...i32) -> i32 {
     let total := 0;
     for n in numbers {
-        total = total + n;
+        total += n;
     }
     return total;
 }
-
-let result := sum(1, 2, 3, 4, 5);  // 15
 ```
+
+Rules:
+- Variadic parameter must be the last parameter.
+- Variadic parameters cannot have default values.
 
 ## Next Steps
 
-- [Learn about Anonymous Functions](/functions/anonymous)
-- [Learn about Structs](/type-system/structs)
-- [Explore Methods](/type-system/methods)
+- [Function Basics](/functions/basics)
+- [Reference Types](/type-system/references)
+- [Borrow Checker](/type-system/borrow-checker)

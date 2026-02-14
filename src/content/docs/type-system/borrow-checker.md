@@ -31,6 +31,24 @@ let b := @a;  // a moved
 // let c := a;  // ❌ Error: use of moved value
 ```
 
+### Non-Copyable Resource Values
+
+Most Ferret values copy by default, but resource handle types are intentionally non-copyable.
+
+```ferret
+import "std/fs";
+
+let f := fs::CreateRW("data.txt") catch err {
+    return;
+};
+
+// let copy := f; // ❌ implicit resource copy
+let moved := @f;  // ✅ explicit move
+moved.Close();
+```
+
+This prevents double-close and shared-handle lifetime bugs.
+
 ### Borrowing
 
 Instead of copying or moving, you can **borrow** a value by taking a reference to it:
@@ -155,7 +173,9 @@ process_data(&arr);  // ✅ Can borrow again - previous borrow released
 
 ### Method Receivers
 
-Methods automatically borrow `self` with the appropriate type:
+Methods can borrow or consume `self` depending on receiver type:
+- `&T` and `&mut T` borrow.
+- `@T` consumes (moves) the receiver.
 
 ```ferret
 type Counter struct {
@@ -175,6 +195,10 @@ let counter := { .Value = 0 } as Counter;
 counter.increment();  // Borrows as &mut
 counter.increment();  // ✅ Previous borrow released
 let val := counter.get();  // Borrows as &
+
+// Consuming receiver example:
+// fn (c: @Counter) close() { ... }
+// counter.close(); // counter moved and unusable after call
 ```
 
 ### Container Mutations
