@@ -76,12 +76,12 @@ export default defineConfig({
                 autogenerate: { directory: 'type-system' },
             },
             {
-                label: 'Advanced',
-                autogenerate: { directory: 'advanced' },
-            },
-            {
                 label: 'Package Manager',
                 autogenerate: { directory: 'package-manager' },
+            },
+            {
+                label: 'Advanced',
+                autogenerate: { directory: 'advanced' },
             },
             {
                 label: 'Standard Library',
