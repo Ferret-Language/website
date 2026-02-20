@@ -10,6 +10,7 @@ export async function registerFerretLanguage() {
       "union",
       "map", "if", "else", "for", "in", "while", "break", "continue",
       "match", "defer", "import", "catch", "as", "return", "fork", "mut",
+      "constraint",
     ],
 
     literals: ["true", "false", "none"],
@@ -19,6 +20,7 @@ export async function registerFerretLanguage() {
       "u8", "u16", "u32", "u64", "u128", "u256",
       "f32", "f64", "f128", "f256",
       "bool", "str", "byte", "char", "void",
+      "complex", "complex64", "complex128", "complex256", "complex512"
     ],
 
     operators: [

@@ -494,9 +494,9 @@
                     "match": "\\b(let|const)\\b"
                 },
                 {
-                    "comment": "type keyword",
-                    "name": "keyword.declaration.type.fer",
-                    "match": "\\b(type)\\b"
+                  "comment": "type keyword",
+                  "name": "keyword.declaration.type.fer",
+                  "match": "\\b(type|constraint)\\b"
                 },
                 {
                     "comment": "enum keyword",
@@ -813,6 +813,18 @@
                             "name": "entity.name.type.declaration.fer"
                         }
                     }
+                },
+                {
+                  "comment": "constraint declarations",
+                  "match": "\\b(constraint)\\s+(_?[A-Za-z][A-Za-z0-9_]*)\\b",
+                  "captures": {
+                    "1": {
+                      "name": "keyword.declaration.type.fer"
+                    },
+                    "2": {
+                      "name": "entity.name.type.declaration.fer"
+                    }
+                  }
                 },
                 {
                     "comment": "types",
