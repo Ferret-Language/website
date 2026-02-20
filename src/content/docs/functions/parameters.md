@@ -5,15 +5,33 @@ sidebar:
   order: 2
 ---
 
-Ferret supports value, reference, move-qualified, default, and variadic parameters.
+Ferret supports value, reference, default, and variadic parameters.
 
 ## Value Parameters
 
-Value parameters copy by default.
+Value parameters follow Ferret's ownership rules:
+- Copy for copyable types (for example `i32`, `bool`, and aggregates of copyable fields)
+- Move for non-copyable owned types (for example resource handles, `#T`, dynamic containers, and aggregates containing them)
 
 ```ferret
 fn add(a: i32, b: i32) -> i32 {
     return a + b;
+}
+```
+
+```ferret
+import "std/fs";
+
+fn close_file(f: fs::File) {
+    f.Close();
+}
+
+fn main() {
+    let file := fs::Create("out.txt") catch err {
+        return;
+    };
+
+    close_file(file); // file is moved because fs::File is non-copyable
 }
 ```
 
@@ -35,31 +53,9 @@ fn push_value(values: &mut []i32, v: i32) {
 }
 ```
 
-## Move-Qualified Parameters (`@T`)
-
-Use `@T` when the callee must consume ownership.
-
-```ferret
-import "std/fs";
-
-fn close_file(f: @fs::File) {
-    f.Close();
-}
-
-fn main() {
-    let file := fs::Create("out.txt") catch err {
-        return;
-    };
-
-    close_file(@file);
-    // file is moved and no longer usable here
-}
-```
-
-Rules:
-- Callers must pass lvalues with explicit move syntax (`@value`).
-- Move-qualified parameters cannot be reference types.
-- Variadic parameters cannot be move-qualified.
+Use references when the callee should not take ownership:
+- `&T` for shared read-only access
+- `&mut T` for mutable access
 
 ## Default Parameters
 
@@ -92,6 +88,7 @@ fn sum(numbers: ...i32) -> i32 {
 Rules:
 - Variadic parameter must be the last parameter.
 - Variadic parameters cannot have default values.
+- Variadic arguments use normal value semantics (copyable values copy, non-copyable values move).
 
 ## Next Steps
 

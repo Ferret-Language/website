@@ -20,15 +20,15 @@ type Client struct {
 ```
 
 `Client` owns a TCP connection resource.
-- Non-copyable by default
-- Movable with `@`
-- `Close()` consumes ownership (`@Client` receiver)
+- Non-copyable
+- Value passing/assignment moves ownership
+- `Close()` uses a value receiver and consumes the client
 
 ## API
 
 ```ferret
 fn Connect(addr: str) -> str ! Client
-fn (c: @Client) Close()
+fn (c: Client) Close()
 
 fn (c: &mut Client) CommandArgs(args: []str) -> str ! str
 fn (c: &mut Client) CommandStr(args: ...str) -> str ! str
@@ -80,7 +80,7 @@ fn main() {
 
 ```ferret
 let c1 := redis::Connect("127.0.0.1:6379") catch err { return; };
-// let c2 := c1; // ❌ implicit resource copy
-let c2 := @c1;   // ✅ explicit move
+let c2 := c1;  // ownership moved to c2
+// c1.Close(); // ❌ use of moved value
 c2.Close();
 ```

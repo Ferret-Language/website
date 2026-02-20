@@ -99,7 +99,7 @@ fn main() {
 
 ### Reference Iteration
 
-By default, iterating over an array **copies** each element. To modify the original array elements or avoid copying large structures, use **reference iteration**:
+By default, value iteration passes each element by value (copy for copyable types, move for non-copyable types). To modify the original array elements or avoid ownership transfer, use **reference iteration**:
 
 #### Immutable References (`&v`)
 
@@ -141,11 +141,11 @@ fn main() {
 ```
 
 **Key points about reference iteration:**
-- Use `&v` for read-only access (prevents copying, cannot modify)
+- Use `&v` for read-only access (no ownership transfer, cannot modify)
 - Use `&mut v` for read-write access (modifies original array)
 - Dereference with `*` to access the value: `*v`
 - Only the **second** iterator variable can be a reference
-- The index variable is always a value copy
+- The index variable is a value (copyable index type)
 
 ### Iterating Over Strings
 

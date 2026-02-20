@@ -9,12 +9,14 @@ Reference types in Ferret provide a way to pass data by reference rather than by
 
 ## What Are Reference Types?
 
-By default, Ferret copies values when assigning or passing them. Literals bind directly into the destination without an extra copy. If you want to transfer ownership from a binding, use `@` to move it. Reference types let you explicitly pass a reference instead, avoiding the copy.
+By default, Ferret passes values by value. For copyable types this copies; for non-copyable owned types this moves ownership. Reference types let you explicitly borrow instead.
 
 ```ferret
 let x := 1;
-let y := x;   // copy
-let z := @x;  // move; x is no longer usable
+let y := x;      // copy (primitive)
+
+let data := [1, 2, 3];
+let data2 := data; // move (dynamic array ownership transferred)
 ```
 
 ```ferret
@@ -23,12 +25,12 @@ type LargeData struct {
     .Metadata: str,
 };
 
-// Without reference - copies the entire struct (4KB + string)
-fn process_copy(data: LargeData) {
-    // Works with a copy of data
+// Without reference - value semantics (copy if copyable, move if non-copyable)
+fn process_value(data: LargeData) {
+    // Works with an owned value
 }
 
-// With reference - only passes a pointer (8 bytes)
+// With reference - borrow only (no ownership transfer)
 fn process_ref(data: &LargeData) {
     // Works with the original data via reference
 }
@@ -99,7 +101,7 @@ io::Println(y);  // Prints: 20
 
 ## Reference Iteration in Loops
 
-References are commonly used in for-loops to avoid copying array elements or to modify them in place:
+References are commonly used in for-loops to avoid ownership transfer of array elements or to modify them in place:
 
 ### Immutable Reference Iteration
 
@@ -116,7 +118,7 @@ for i, &v in numbers {
 }
 ```
 
-This avoids copying each element, which is useful for large structures:
+This avoids taking ownership of each element, which is useful for large structures:
 
 ```ferret
 type LargeStruct struct {
@@ -127,7 +129,7 @@ type LargeStruct struct {
 let items: []LargeStruct = [...];
 
 for i, &item in items {
-    // item is &LargeStruct (no copy!)
+    // item is &LargeStruct (no ownership transfer)
     io::Println(item.Name);  // Auto-dereference for fields
 }
 ```
@@ -152,7 +154,7 @@ io::Println("After:", numbers[0], numbers[1], numbers[2]);
 // Prints: After: 11 12 13
 ```
 
-This is essential for modifying large structures without copying:
+This is essential for modifying large structures without ownership transfer:
 
 ```ferret
 type Player struct {
@@ -171,8 +173,8 @@ for i, &mut player in players {
 
 **Important notes about reference iteration:**
 - Only the **second** iterator variable (value) can be a reference
-- The index variable is always a value copy
-- Use `&v` for read-only access (prevents copying)
+- The index variable is always a value (copyable index type)
+- Use `&v` for read-only access (no ownership transfer)
 - Use `&mut v` for read-write access (modifies original array)
 - Dereference with `*` is needed for arithmetic but not for field access
 
@@ -180,7 +182,7 @@ for i, &mut player in players {
 
 ### Performance Optimization
 
-References avoid copying large data structures:
+References avoid ownership transfer of large data structures:
 
 ```ferret
 type GameState struct {
@@ -231,15 +233,16 @@ Ferret uses `#T` to represent owned heap values.
 
 ```ferret
 let a: #i32 = #10;
-let b: #i32 = @a;   // move heap ownership
-// let c := a;      // ❌ a was moved
+let b: #i32 = a;  // move heap ownership
+// let c := a;    // ❌ a was moved
 
 let value: i32 = b; // reading #T in value context yields T
 ```
 
 Key rules:
 - Heap allocation is explicit with `#expr`.
-- A target typed as `#T` must receive heap ownership (`#expr` or `@owner`).
+- A target typed as `#T` must receive heap ownership (`#expr` or another `#T` owner).
+- Assigning/passing `#T` moves ownership.
 - Nested heap wrappers like `##T` are not supported.
 
 ## Resource Handles And References
@@ -253,23 +256,22 @@ let f := fs::CreateRW("log.txt") catch err {
     return;
 };
 
-// let f2 := f; // ❌ resource values are non-copyable
-let f2 := @f;   // ✅ explicit move
+let f2 := f;  // ownership moved to f2
+// f.Close(); // ❌ use of moved value
 f2.Close();
 ```
 
 Use references when you want temporary access without ownership transfer:
 - `&T` for read-only access
 - `&mut T` for mutable access
-- `@T` when a function/method must consume ownership
-
+- `T` value parameters/receivers when consuming ownership is intended
 ## References vs Values
 
 Understanding when to use each:
 
 | Aspect | Value (`T`) | Immutable Ref (`&T`) | Mutable Ref (`&mut T`) |
 |--------|-------------|---------------------|---------------------|
-| **Copying** | Creates a copy | Passes a pointer | Passes a pointer |
+| **Copy/Move** | Copy for copyable types, move for non-copyable types | Passes a pointer | Passes a pointer |
 | **Size overhead** | Full size of T | Always 8 bytes | Always 8 bytes |
 | **Mutation** | Can't affect original | Can't modify | Can modify |
 | **Safety** | Always safe | Always safe | Must ensure validity |

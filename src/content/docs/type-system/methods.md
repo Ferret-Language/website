@@ -38,10 +38,13 @@ fn (receiver: Type) method_name(parameters) -> ReturnType {
 The receiver is like the first parameter—it's the value the method operates on. Inside the method, you can access the receiver's fields and call other methods.
 
 Receiver forms:
-- `Type`: value receiver (copy by default)
+- `Type`: value receiver
 - `&Type`: immutable borrow receiver
 - `&mut Type`: mutable borrow receiver
-- `@Type`: move receiver (consumes the value)
+
+`Type` receivers follow normal value semantics:
+- Copy for copyable receiver types
+- Move for non-copyable receiver types
 
 ```ferret
 import "std/fs";
@@ -56,15 +59,15 @@ fn (w: &mut FileWrap) SeekStart() -> str ! i64 {
     };
 }
 
-fn (w: @FileWrap) Close() {
+fn (w: FileWrap) Close() {
     w.f.Close();
 }
 ```
 
 Rules:
-- Move receivers require an owned value type (`@T`), not references.
-- Calling a move receiver consumes the receiver value at the call site.
-
+- Receiver types are `T`, `&T`, or `&mut T`.
+- A value receiver (`T`) consumes non-copyable values at the call site.
+- Use `&T` / `&mut T` when the method should borrow instead of taking ownership.
 
 ## Methods on Structs
 

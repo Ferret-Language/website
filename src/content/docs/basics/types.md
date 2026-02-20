@@ -257,17 +257,16 @@ Ferret uses `#T` for owned heap values. Allocation is explicit with `#expr`.
 
 ```ferret
 let a: #i32 = #10;
-let b: #i32 = @a;   // move heap ownership
-// let c := a;       // ❌ moved value
+let b: #i32 = a;  // ownership moved to b
+// let c := a;    // ❌ moved value
 
-let copy_as_value: i32 = b; // read payload in value context
+let payload: i32 = b; // read payload in value context
 ```
 
 Rules:
 - `#expr` creates heap ownership.
-- A `#T` variable must receive heap ownership (`#expr` or `@owner`).
-- Use `@` to transfer ownership between bindings.
-
+- A `#T` variable must receive heap ownership (`#expr` or another `#T` owner).
+- Assigning/passing `#T` transfers ownership (move), not deep-copy.
 ## Compound Types
 
 Compound types are built by combining other types together. They let you group related data.
@@ -449,7 +448,7 @@ This pattern is so common you'll use it all the time when working with maps!
 
 ## Reference Types
 
-Reference types let you pass data by reference rather than by copy. Add `&` before a type to make it a reference:
+Reference types let you pass data by reference instead of transferring a value by value. Add `&` before a type to make it a reference:
 
 ```ferret
 type LargeData struct {
@@ -457,15 +456,15 @@ type LargeData struct {
     .Metadata: str,
 };
 
-// Passes by copy (copies entire struct)
-fn process_copy(data: LargeData) { }
+// Value parameter: copy if copyable, move if non-copyable
+fn process_value(data: LargeData) { }
 
-// Passes by reference (only copies pointer)
+// Reference parameter: borrow only (no ownership transfer)
 fn process_ref(data: &LargeData) { }
 ```
 
 References are useful for:
-- Avoiding expensive copies of large data
+- Avoiding ownership transfer when the callee only needs access
 - Sharing data between functions
 
 **Learn more:** References are covered in detail in the [Type System section](/type-system/references).

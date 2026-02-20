@@ -36,9 +36,9 @@ type File struct {
 ```
 
 `File` is a resource handle type:
-- Non-copyable by default (implicit copy is a compile error)
-- Movable with `@file`
-- `Close()` consumes ownership via move receiver
+- Non-copyable
+- Value passing/assignment moves ownership
+- `Close()` uses a value receiver and consumes the handle
 
 ### FileMode
 
@@ -79,7 +79,7 @@ fn Create(path: str) -> str ! File
 fn CreateRW(path: str) -> str ! File
 fn OpenAppend(path: str) -> str ! File
 
-fn (f: @File) Close()
+fn (f: File) Close()
 fn (f: &mut File) ReadLine() -> str ! str
 fn (f: &mut File) ReadBytes(maxBytes: i32) -> str ! []byte
 fn (f: &mut File) Read(maxBytes: i32) -> str ! []byte
@@ -137,7 +137,9 @@ fn main() {
 
 ```ferret
 let f1 := fs::Create("a.txt") catch err { return; };
-// let f2 := f1; // ❌ resource values are non-copyable
-let f2 := @f1;   // ✅ explicit move
+let f2 := f1;  // ownership moved to f2
+// f1.Close(); // ❌ use of moved value
 f2.Close();
 ```
+
+Use `&File` / `&mut File` in helper APIs when the caller should retain ownership.

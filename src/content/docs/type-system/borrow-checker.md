@@ -9,31 +9,27 @@ Ferret's borrow checker is a compile-time analysis system that ensures memory sa
 
 ## Core Concepts
 
-### Ownership and Copies
+### Ownership, Copies, and Moves
 
-Every binding owns its value. Ferret copies by default, so assigning or returning a value creates a copy unless you explicitly move it. Literals bind directly into the destination without an extra copy.
+Every binding owns its value. Ferret uses mixed value semantics:
+- Copy for copyable values (primitives and structurally copyable aggregates)
+- Move for non-copyable owned values (resource handles, `#T`, dynamic containers, and aggregates containing them)
+
+Literals bind directly into the destination without an extra copy.
 
 ```ferret title="run"
 fn main() {
     let x := 42;
-    let y := x;   // copy
-    let z := @x;  // move; x is no longer usable
+    let y := x;  // copy (primitive)
+
+    let data := [1, 2, 3];
+    let data2 := data; // move (dynamic array)
 }
-```
-
-### Moves (@)
-
-Use `@` to move a value out of a binding. Moves are only allowed on identifiers (phase 1), cannot move references, and cannot happen while the value is borrowed.
-
-```ferret
-let a := 10;
-let b := @a;  // a moved
-// let c := a;  // ❌ Error: use of moved value
 ```
 
 ### Non-Copyable Resource Values
 
-Most Ferret values copy by default, but resource handle types are intentionally non-copyable.
+Resource handle types are intentionally non-copyable.
 
 ```ferret
 import "std/fs";
@@ -42,11 +38,9 @@ let f := fs::CreateRW("data.txt") catch err {
     return;
 };
 
-// let copy := f; // ❌ implicit resource copy
-let moved := @f;  // ✅ explicit move
+let moved := f;  // ownership moved
 moved.Close();
 ```
-
 This prevents double-close and shared-handle lifetime bugs.
 
 ### Borrowing
@@ -175,7 +169,7 @@ process_data(&arr);  // ✅ Can borrow again - previous borrow released
 
 Methods can borrow or consume `self` depending on receiver type:
 - `&T` and `&mut T` borrow.
-- `@T` consumes (moves) the receiver.
+- `T` value receivers use normal value semantics (copy if copyable, move if non-copyable).
 
 ```ferret
 type Counter struct {
@@ -196,11 +190,10 @@ counter.increment();  // Borrows as &mut
 counter.increment();  // ✅ Previous borrow released
 let val := counter.get();  // Borrows as &
 
-// Consuming receiver example:
-// fn (c: @Counter) close() { ... }
-// counter.close(); // counter moved and unusable after call
+// Consuming receiver example for non-copyable type:
+// fn (f: fs::File) close_now() { f.Close(); }
+// close_now(file); // file moved and unusable after call
 ```
-
 ### Container Mutations
 
 Built-in functions follow borrow rules:
@@ -406,12 +399,12 @@ fn create_ref() -> &i32 {
 
 **Solution:** Return the value, not a reference:
 
-Use `return @x;` when you want to move a value instead of copying it.
+Use `return x;` and Ferret will copy or move based on the return type and source value category.
 
 ```ferret
 fn create_value() -> i32 {
     let x := 42;
-    return x;  // ✅ OK - returns a copy
+    return x;  // ✅ OK - returns by value (copy for copyable, move for non-copyable)
 }
 ```
 

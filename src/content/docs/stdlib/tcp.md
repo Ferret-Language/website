@@ -36,9 +36,9 @@ type TcpConn struct {
 ```
 
 `TcpListener` and `TcpConn` are resource handles:
-- Non-copyable by default
-- Explicitly movable with `@`
-- `Close()` consumes ownership (`@TcpListener`, `@TcpConn` receivers)
+- Non-copyable
+- Value passing/assignment moves ownership
+- `Close()` uses value receivers and consumes the handle
 
 ## API
 
@@ -47,13 +47,13 @@ fn ListenTcp(addr: str) -> str ! TcpListener
 fn DialTcp(addr: str) -> str ! TcpConn
 
 fn (l: &mut TcpListener) Accept() -> str ! TcpConn
-fn (l: @TcpListener) Close()
+fn (l: TcpListener) Close()
 
 fn (c: &mut TcpConn) Read(maxBytes: i32) -> str ! []byte
 fn (c: &mut TcpConn) ReadStr(maxBytes: i32) -> str ! str
 fn (c: &mut TcpConn) Write(buf: []byte) -> str ! i32
 fn (c: &mut TcpConn) WriteStr(data: str) -> str ! i32
-fn (c: @TcpConn) Close()
+fn (c: TcpConn) Close()
 
 fn (c: &mut TcpConn) SetReadTimeoutMs(ms: i32) -> str ! bool
 fn (c: &mut TcpConn) SetWriteTimeoutMs(ms: i32) -> str ! bool
@@ -99,7 +99,7 @@ fn main() {
 
 ```ferret
 let c1 := tcp::DialTcp("127.0.0.1:8080") catch err { return; };
-// let c2 := c1; // ❌ implicit resource copy
-let c2 := @c1;   // ✅ explicit move
+let c2 := c1;  // ownership moved to c2
+// c1.Close(); // ❌ use of moved value
 c2.Close();
 ```
