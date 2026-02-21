@@ -9,13 +9,17 @@ if [ ! -f /etc/arch-release ]; then
 fi
 
 DEST_DIR="${FERRET_INSTALL_DIR:-${HOME}/.local}"
+FERRET_DIR="${DEST_DIR}/ferret"
+BIN_DIR="${FERRET_DIR}/bin"
 
 # Check if user wants system-wide install
 if [ "${FERRET_INSTALL_DIR:-}" = "" ] && [ "$(id -u)" -eq 0 ]; then
   DEST_DIR="/usr/local"
+  FERRET_DIR="${DEST_DIR}/ferret"
+  BIN_DIR="${FERRET_DIR}/bin"
 fi
 
-echo "Installing Ferret to ${DEST_DIR}"
+echo "Installing Ferret to ${FERRET_DIR}"
 
 # Detect architecture
 ARCH=$(uname -m)
@@ -52,8 +56,9 @@ TEMP_DIR=$(mktemp -d)
 trap "rm -rf ${TEMP_DIR}" EXIT
 
 # Remove previous Ferret install (keep other tools in DEST_DIR/bin)
+rm -rf "${FERRET_DIR}"
 rm -f "${DEST_DIR}/bin/ferret"
-rm -rf "${DEST_DIR}/libs"
+rm -rf "${DEST_DIR}/libs" "${DEST_DIR}/toolchain"
 
 # Download and extract
 cd "${TEMP_DIR}"
@@ -61,38 +66,47 @@ curl -L -o ferret.tar.gz "${DOWNLOAD_URL}"
 tar -xzf ferret.tar.gz
 
 # Install to destination
-mkdir -p "${DEST_DIR}/bin"
-mkdir -p "${DEST_DIR}/libs"
+mkdir -p "${FERRET_DIR}/bin"
+mkdir -p "${FERRET_DIR}/libs"
 
 # Copy binary
-if [ -f "bin/ferret" ]; then
-  cp -f bin/ferret "${DEST_DIR}/bin/"
+if [ -f "ferret/bin/ferret" ]; then
+  cp -f ferret/bin/ferret "${FERRET_DIR}/bin/"
+elif [ -f "bin/ferret" ]; then
+  cp -f bin/ferret "${FERRET_DIR}/bin/"
 elif [ -f "ferret" ]; then
-  cp -f ferret "${DEST_DIR}/bin/"
+  cp -f ferret "${FERRET_DIR}/bin/"
 else
   echo "Error: ferret binary not found in extracted archive" >&2
   exit 1
 fi
 
-chmod +x "${DEST_DIR}/bin/ferret"
+chmod +x "${FERRET_DIR}/bin/ferret"
 
-# Copy runtime libraries (must live at ../libs relative to bin)
-if [ -d "libs" ]; then
-  cp -r libs/* "${DEST_DIR}/libs/"
+# Copy runtime libraries and toolchain (must live at ../libs and ../toolchain relative to bin)
+if [ -d "ferret/libs" ]; then
+  cp -r ferret/libs/* "${FERRET_DIR}/libs/"
+elif [ -d "libs" ]; then
+  cp -r libs/* "${FERRET_DIR}/libs/"
+fi
+if [ -d "ferret/toolchain" ]; then
+  cp -r ferret/toolchain "${FERRET_DIR}/"
+elif [ -d "toolchain" ]; then
+  cp -r toolchain "${FERRET_DIR}/"
 fi
 
 echo ""
-echo "✓ Ferret installed successfully to ${DEST_DIR}"
+echo "✓ Ferret installed successfully to ${FERRET_DIR}"
 echo ""
 
 # Check if in PATH
-if echo "${PATH}" | grep -q "${DEST_DIR}/bin"; then
-  echo "✓ ${DEST_DIR}/bin is already in your PATH"
+if echo "${PATH}" | grep -q "${BIN_DIR}"; then
+  echo "✓ ${BIN_DIR} is already in your PATH"
   echo "  Run: ferret --version"
 else
   echo "Add to your PATH:"
-  echo "  export PATH=\"${DEST_DIR}/bin:\$PATH\""
+  echo "  export PATH=\"${BIN_DIR}:\$PATH\""
   echo ""
   echo "Or add to ~/.bashrc:"
-  echo "  echo 'export PATH=\"${DEST_DIR}/bin:\$PATH\"' >> ~/.bashrc"
+  echo "  echo 'export PATH=\"${BIN_DIR}:\$PATH\"' >> ~/.bashrc"
 fi

@@ -24,7 +24,8 @@ else
   INSTALL_DIR="${HOME}/.ferret"
 fi
 
-BIN_DIR="${INSTALL_DIR}/bin"
+FERRET_DIR="${INSTALL_DIR}/ferret"
+BIN_DIR="${FERRET_DIR}/bin"
 
 os="$(uname -s)"
 case "$os" in
@@ -66,7 +67,9 @@ else
 fi
 
 mkdir -p "$INSTALL_DIR"
-rm -rf "$INSTALL_DIR/bin" "$INSTALL_DIR/libs"
+rm -rf "$FERRET_DIR"
+rm -f "$INSTALL_DIR/bin/ferret"
+rm -rf "$INSTALL_DIR/libs" "$INSTALL_DIR/toolchain"
 tar -xzf "$tmp/$archive" -C "$INSTALL_DIR"
 
 if [ ! -d "$BIN_DIR" ]; then
@@ -74,7 +77,7 @@ if [ ! -d "$BIN_DIR" ]; then
   exit 1
 fi
 
-echo "Installed to $INSTALL_DIR"
+echo "Installed to $FERRET_DIR"
 if [ "${IS_TERMUX}" -eq 1 ]; then
   echo "Termux detected. If this build does not run, you may need a Termux-specific release."
 fi

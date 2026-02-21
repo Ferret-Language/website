@@ -4,6 +4,7 @@ $ErrorActionPreference = "Stop"
 $repo = if ($env:FERRET_REPO) { $env:FERRET_REPO } else { "Ferret-Language/Ferret" }
 $baseUrl = if ($env:FERRET_RELEASE_BASE) { $env:FERRET_RELEASE_BASE } else { "https://github.com/$repo/releases/latest/download" }
 $installDir = if ($env:FERRET_INSTALL_DIR) { $env:FERRET_INSTALL_DIR } else { Join-Path $env:USERPROFILE ".ferret" }
+$ferretDir = Join-Path $installDir "ferret"
 
 $arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
 switch ($arch) {
@@ -21,12 +22,14 @@ $zipPath = Join-Path $tempDir $archive
 
 Invoke-WebRequest -Uri $url -OutFile $zipPath
 
-Remove-Item -Recurse -Force (Join-Path $installDir "bin") -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force $ferretDir -ErrorAction SilentlyContinue
+Remove-Item -Force (Join-Path $installDir "bin\ferret.exe") -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force (Join-Path $installDir "libs") -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force (Join-Path $installDir "toolchain") -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $installDir | Out-Null
 
 Expand-Archive -Path $zipPath -DestinationPath $installDir -Force
-$binDir = Join-Path $installDir "bin"
+$binDir = Join-Path $ferretDir "bin"
 
 function Add-ToPath {
     param([string]$dir)
@@ -48,6 +51,6 @@ Add-ToPath $binDir
 # Cleanup temp directory
 Remove-Item -Recurse -Force $tempDir -ErrorAction SilentlyContinue
 
-Write-Host "Installed to $installDir"
+Write-Host "Installed to $ferretDir"
 Write-Host "Added to PATH: $binDir"
 Write-Host "Restart your terminal to use 'ferret'."
