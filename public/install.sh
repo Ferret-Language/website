@@ -93,21 +93,18 @@ add_path_line() {
   printf '\n%s\n' "$line" >> "$file"
 }
 
+shell_name="$(basename "${SHELL:-}")"
+if [ "$shell_name" = "zsh" ]; then
+  add_path_line "${HOME}/.zshrc"
+elif [ "$shell_name" = "bash" ]; then
+  add_path_line "${HOME}/.bashrc"
+fi
+add_path_line "${HOME}/.profile"
+
 if case ":$PATH:" in *":${BIN_DIR}:"*) true ;; *) false ;; esac; then
-  :
+  echo "✓ ${BIN_DIR} is already in your PATH"
+  echo "  Run: ferret --version"
 else
-  if [ -n "${FERRET_ADD_TO_PATH-}" ] && [ "${FERRET_ADD_TO_PATH}" = "0" ]; then
-    echo "Add to PATH:"
-    echo "  export PATH=\"${BIN_DIR}:\$PATH\""
-  else
-    shell_name="$(basename "${SHELL:-}")"
-    if [ "$shell_name" = "zsh" ]; then
-      add_path_line "${HOME}/.zshrc"
-    elif [ "$shell_name" = "bash" ]; then
-      add_path_line "${HOME}/.bashrc"
-    fi
-    add_path_line "${HOME}/.profile"
-    echo "Added ${BIN_DIR} to PATH in your shell profile."
-    echo "Restart your terminal to use 'ferret'."
-  fi
+  echo "Added ${BIN_DIR} to PATH in your shell profile."
+  echo "Restart your terminal to use 'ferret'."
 fi

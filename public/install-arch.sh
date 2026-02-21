@@ -128,13 +128,29 @@ echo "✓ Ferret installed successfully to ${FERRET_DIR}"
 echo ""
 
 # Check if in PATH
+add_path_line() {
+  file="$1"
+  line="export PATH=\"${BIN_DIR}:\$PATH\""
+  if [ -f "$file" ]; then
+    if grep -qs "$line" "$file"; then
+      return 0
+    fi
+  fi
+  printf '\n%s\n' "$line" >> "$file"
+}
+
+shell_name="$(basename "${SHELL:-}")"
+if [ "$shell_name" = "zsh" ]; then
+  add_path_line "${HOME}/.zshrc"
+elif [ "$shell_name" = "bash" ]; then
+  add_path_line "${HOME}/.bashrc"
+fi
+add_path_line "${HOME}/.profile"
+
 if echo "${PATH}" | grep -q "${BIN_DIR}"; then
   echo "✓ ${BIN_DIR} is already in your PATH"
   echo "  Run: ferret --version"
 else
-  echo "Add to your PATH:"
-  echo "  export PATH=\"${BIN_DIR}:\$PATH\""
-  echo ""
-  echo "Or add to ~/.bashrc:"
-  echo "  echo 'export PATH=\"${BIN_DIR}:\$PATH\"' >> ~/.bashrc"
+  echo "Added ${BIN_DIR} to PATH in your shell profile."
+  echo "Restart your terminal to use 'ferret'."
 fi
