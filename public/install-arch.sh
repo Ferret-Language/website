@@ -19,6 +19,32 @@ if [ "${FERRET_INSTALL_DIR:-}" = "" ] && [ "$(id -u)" -eq 0 ]; then
   BIN_DIR="${FERRET_DIR}/bin"
 fi
 
+cleanup_path() {
+  path="$1"
+  if [ -e "$path" ] || [ -L "$path" ]; then
+    rm -rf "$path" 2>/dev/null || true
+  fi
+}
+
+cleanup_stale_system_bin() {
+  if [ -e "/usr/local/bin/ferret" ] || [ -L "/usr/local/bin/ferret" ]; then
+    if [ -L "/usr/local/bin/ferret" ] && [ ! -e "/usr/local/bin/ferret" ]; then
+      cleanup_path "/usr/local/bin/ferret"
+    elif [ -e "${BIN_DIR}/ferret" ] && [ ! "/usr/local/bin/ferret" -ef "${BIN_DIR}/ferret" ]; then
+      cleanup_path "/usr/local/bin/ferret"
+    fi
+
+    if [ -e "/usr/local/bin/ferret" ] || [ -L "/usr/local/bin/ferret" ]; then
+      if [ ! -w "/usr/local/bin/ferret" ]; then
+        echo "Warning: /usr/local/bin/ferret exists and could not be removed (permission denied)."
+        echo "  Remove with: sudo rm -f /usr/local/bin/ferret"
+      else
+        echo "Warning: /usr/local/bin/ferret exists and may shadow this install."
+      fi
+    fi
+  fi
+}
+
 echo "Installing Ferret to ${FERRET_DIR}"
 
 # Detect architecture
@@ -94,6 +120,8 @@ if [ -d "ferret/toolchain" ]; then
 elif [ -d "toolchain" ]; then
   cp -r toolchain "${FERRET_DIR}/"
 fi
+
+cleanup_stale_system_bin
 
 echo ""
 echo "✓ Ferret installed successfully to ${FERRET_DIR}"
