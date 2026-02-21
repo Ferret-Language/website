@@ -49,7 +49,7 @@ trap "rm -rf ${TEMP_DIR}" EXIT
 
 # Remove previous Ferret install (keep other tools in DEST_DIR/bin)
 rm -f "${DEST_DIR}/bin/ferret"
-rm -rf "${DEST_DIR}/lib/ferret"
+rm -rf "${DEST_DIR}/libs"
 
 # Download and extract
 cd "${TEMP_DIR}"
@@ -58,7 +58,7 @@ tar -xzf ferret.tar.gz
 
 # Install to destination
 mkdir -p "${DEST_DIR}/bin"
-mkdir -p "${DEST_DIR}/lib/ferret"
+mkdir -p "${DEST_DIR}/libs"
 
 # Copy binary
 if [ -f "bin/ferret" ]; then
@@ -74,7 +74,7 @@ chmod +x "${DEST_DIR}/bin/ferret"
 
 # Copy runtime libraries
 if [ -d "libs" ]; then
-  cp -r libs/* "${DEST_DIR}/lib/ferret/"
+  cp -r libs/* "${DEST_DIR}/libs"
 fi
 
 echo ""
