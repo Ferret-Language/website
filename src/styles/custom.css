@@ -12,11 +12,12 @@
     --ferret-purple: 262, 83%, 58%;
     --ferret-blue: 217, 91%, 60%;
     --ferret-pink: 334, 89%, 62%;
+    --ferret-pink-cherry: -21, 113%, 70%;
     --ferret-yellow: 57, 94%, 43%;
     --ferret-cyan: 178, 94%, 43%;
 
     /* Pick accent ONCE */
-    --accent-hsl: var(--ferret-blue);
+    --accent-hsl: var(--ferret-pink-cherry);
 
     /* Dynamic outputs */
     --accent-color: hsl(var(--accent-hsl));

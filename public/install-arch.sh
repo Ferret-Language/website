@@ -53,11 +53,9 @@ case "${ARCH}" in
   x86_64)
     FERRET_ARCH="linux-amd64"
     ;;
-  aarch64|arm64)
-    FERRET_ARCH="linux-arm64"
-    ;;
   *)
-    echo "Unsupported architecture: ${ARCH}" >&2
+    echo "No prebuilt release for architecture: ${ARCH}" >&2
+    echo "Available on Arch installer: linux-amd64" >&2
     exit 1
     ;;
 esac

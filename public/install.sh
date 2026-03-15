@@ -30,7 +30,7 @@ BIN_DIR="${FERRET_DIR}/bin"
 os="$(uname -s)"
 case "$os" in
   Linux) os="linux" ;;
-  Darwin) os="darwin" ;;
+  Darwin) os="macos" ;;
   *) echo "Unsupported OS: $os" >&2; exit 1 ;;
 esac
 
@@ -40,6 +40,11 @@ case "$arch" in
   aarch64|arm64) arch="arm64" ;;
   *) echo "Unsupported arch: $arch" >&2; exit 1 ;;
 esac
+
+if [ "$os" = "linux" ] && [ "$arch" != "amd64" ]; then
+  echo "No prebuilt release for ${os}-${arch} yet (available: linux-amd64)." >&2
+  exit 1
+fi
 
 # macOS requires Xcode Command Line Tools for assembler/linker
 if [ "$os" = "darwin" ]; then

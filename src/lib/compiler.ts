@@ -11,6 +11,13 @@ export interface CompileResult {
     wasm?: string;
 }
 
+export interface RunWasmResult {
+    success: boolean;
+    exitCode?: number;
+    error?: string;
+    missingImports?: string[];
+}
+
 export interface FerretCompiler {
     compile: (files: Record<string, string> | string, debug: boolean) => CompileResult;
     version?: string;
@@ -28,6 +35,11 @@ declare global {
 }
 
 let wasmReady = false;
+
+function isLegacyCompilerVersion(version: string): boolean {
+    const v = version.trim().toLowerCase();
+    return v === "0.0.8" || v.startsWith("0.0.8-");
+}
 
 export function isWasmReady(): boolean {
     return wasmReady;
@@ -47,9 +59,9 @@ export async function initWasm(): Promise<{ success: boolean; error?: string; ve
             }
         }
 
-        console.log("📥 Fetching ferret.wasm...");
-        const wasmVersion = "wasm-backend-0.1"; // Browser WASM backend
-        const response = await fetch("/ferret2.wasm?v=" + wasmVersion, {
+        console.log("📥 Fetching ferret2.wasm...");
+        const cacheBuster = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const response = await fetch("/ferret2.wasm?v=" + encodeURIComponent(cacheBuster), {
             cache: "no-store", // Force no cache
         });
         
@@ -72,8 +84,17 @@ export async function initWasm(): Promise<{ success: boolean; error?: string; ve
 
         // Check if ferretCompile function is available
         if (typeof window.ferretCompile === "function") {
-            wasmReady = true;
             const version = window.ferretWasmVersion || "unknown";
+            if (isLegacyCompilerVersion(version)) {
+                wasmReady = false;
+                return {
+                    success: false,
+                    error: `Loaded legacy playground compiler version ${version}. Please replace website/public/ferret2.wasm with the new compiler wasm build.`,
+                    version,
+                };
+            }
+
+            wasmReady = true;
             console.log("✅ Ferret WASM compiler loaded successfully!");
             console.log("📌 WASM Version:", version);
             return { success: true, version };
@@ -101,5 +122,62 @@ export function compile(files: Record<string, string>, debug: boolean = false): 
         };
     }
 
-    return window.ferretCompile(files, debug);
+    const normalizedFiles: Record<string, string> = { ...files };
+    if (normalizedFiles["main.ferr"] && !normalizedFiles["main.fer"]) {
+        normalizedFiles["main.fer"] = normalizedFiles["main.ferr"];
+    }
+    if (normalizedFiles["main.fer"] && !normalizedFiles["main.ferr"]) {
+        normalizedFiles["main.ferr"] = normalizedFiles["main.fer"];
+    }
+
+    return window.ferretCompile(normalizedFiles, debug);
+}
+
+export async function runCompiledWasmSelfContained(base64Wasm: string): Promise<RunWasmResult> {
+    try {
+        const bytes = Uint8Array.from(atob(base64Wasm), (c) => c.charCodeAt(0));
+        const module = await WebAssembly.compile(bytes);
+        const imports = WebAssembly.Module.imports(module);
+
+        if (imports.length > 0) {
+            const missingImports = imports.map((entry) => `${entry.module}.${entry.name}`);
+            return {
+                success: false,
+                error: "Program is not self-contained yet (requires host/runtime imports).",
+                missingImports,
+            };
+        }
+
+        const instance = await WebAssembly.instantiate(module, {});
+        const exports = instance.exports as Record<string, unknown>;
+        const main = exports.main;
+
+        if (typeof main !== "function") {
+            return {
+                success: false,
+                error: "Compiled module has no exported main function.",
+            };
+        }
+
+        const result = (main as () => unknown)();
+        const exitCode = typeof result === "number" ? (result | 0) : 0;
+
+        if (exitCode !== 0) {
+            return {
+                success: false,
+                exitCode,
+                error: `Program exited with status ${exitCode}.`,
+            };
+        }
+
+        return {
+            success: true,
+            exitCode: 0,
+        };
+    } catch (error) {
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+        };
+    }
 }

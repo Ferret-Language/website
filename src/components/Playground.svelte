@@ -4,8 +4,7 @@
 
   import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
   import { registerFerretLanguage, defineThemes, getCurrentTheme } from "../lib/monaco-config";
-  import { initWasm, isWasmReady, compile } from "../lib/compiler";
-  import { createFerretRuntime } from "../lib/runtime";
+  import { initWasm, isWasmReady, compile, runCompiledWasmSelfContained } from "../lib/compiler";
   import { base64EncodeUnicode, base64DecodeUnicode } from "../lib/base64";
 
   import Modal, { showAlert, showConfirm, showPrompt } from "./Modal.svelte";
@@ -41,7 +40,7 @@
   let editorContainer: HTMLDivElement | null = null;
 
   let files = $state<Record<string, monaco.editor.ITextModel>>({});
-  let activeFile = $state("main.fer");
+  let activeFile = $state("main.ferr");
   let suppressSave = false;
 
   let cursorLine = $state(1);
@@ -81,7 +80,7 @@
   let startEditorWidth = 0;
   let copySuccess = $state(false);
 
-  const DEFAULT_CODE_FALLBACK = `// Welcome to Ferret\n\nfn main() {\n  print(\"Hello, Ferret!\");\n}`;
+  const DEFAULT_CODE_FALLBACK = `fn main() {\n  return;\n}`;
   const defaultCodeRoute = "/examples/default.fer";
 
 
@@ -92,10 +91,6 @@
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
-  }
-
-  function decodeBase64(base64: string): Uint8Array {
-    return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
   }
 
   // Simple djb2 hash for caching
@@ -168,7 +163,7 @@
     }
 
     files = next;
-    activeFile = data["main.fer"] ? "main.fer" : (Object.keys(data)[0] ?? "main.fer");
+    activeFile = data["main.ferr"] ? "main.ferr" : (Object.keys(data)[0] ?? "main.ferr");
 
     // Immediately reflect active file in the editor (avoid relying on reactive effects)
     if (editor && files[activeFile]) {
@@ -185,7 +180,7 @@
 
   function addFile(name: string, content = "// New file\n") {
     if (!monacoApi) return;
-    if (!name.endsWith(".fer")) return;
+    if (!name.endsWith(".ferr")) return;
     if (files[name]) return;
 
     const model = createModel(name, content);
@@ -204,7 +199,7 @@
   }
 
   function removeFile(name: string) {
-    if (name === "main.fer") return;
+    if (name === "main.ferr") return;
     const model = files[name];
     if (!model) return;
 
@@ -213,7 +208,7 @@
     files = rest;
 
     if (activeFile === name) {
-      activeFile = files["main.fer"] ? "main.fer" : (Object.keys(files)[0] ?? "main.fer");
+      activeFile = files["main.ferr"] ? "main.ferr" : (Object.keys(files)[0] ?? "main.ferr");
     }
 
     // Switch Monaco immediately to the new active model
@@ -257,10 +252,6 @@
     return [{ type: "system", text: log, html: `<pre class="compiler-log">${log}</pre>` }];
   }
 
-  function isInputNeeded(error: unknown): boolean {
-    return error instanceof Error && (error as any).code === "FERRET_INPUT";
-  }
-
   function abortRun(message: string) {
     runToken += 1;
     activeRunToken = 0;
@@ -280,56 +271,47 @@
     if (!cachedRun || token === 0 || token !== runToken) return;
 
     const baseEvents = buildCompilerEvents(cachedRun.compilerLog);
-    const events: TerminalEvent[] = [];
-
-    const runtime = createFerretRuntime({
-      onPrint: () => {},
-      onEvent: (event: TerminalEvent) => events.push(event),
-      input: inputLines.join("\n"),
-      throwOnInputNeeded: true,
-    });
 
     try {
-      const programBytes = decodeBase64(cachedRun.wasm) as BufferSource;
-      const program = await WebAssembly.instantiate(programBytes, runtime.imports);
+      const runResult = await runCompiledWasmSelfContained(cachedRun.wasm);
       if (token !== runToken) return;
 
-      runtime.bind(program.instance);
-      const main = (program.instance.exports as any).main;
-      if (typeof main === "function") main();
-      if (token !== runToken) return;
-
-      terminalEvents = baseEvents.concat(events);
-
-      if (!terminalEvents.some((e) => e.type === "output")) {
-        terminalEvents.push({ type: "system", text: "✓ Program ran with no output" });
+      if (runResult.success) {
+        terminalEvents = baseEvents.concat([
+          { type: "system", text: "✓ Program ran in self-contained mode." },
+          {
+            type: "system",
+            text: "Program executed successfully with exit status 0.",
+            html: `<p style="color: #10b981;">Program executed successfully with exit status 0.</p>`,
+          },
+        ]);
+        status = "success";
+        statusText = "Success";
+      } else {
+        const missing = runResult.missingImports && runResult.missingImports.length > 0
+          ? `\nMissing imports:\n- ${runResult.missingImports.join("\n- ")}`
+          : "";
+        terminalEvents = baseEvents.concat([
+          {
+            type: "system",
+            text: `${runResult.error || "Runtime error"}${missing}`,
+            html: `<pre class="compiler-log">${escapeHtml((runResult.error || "Runtime error") + missing)}</pre>`,
+          },
+          { type: "system", text: "Program executed unsuccessfully with exit status 1.", html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>` },
+        ]);
+        status = "error";
+        statusText = "Error";
       }
 
-      terminalEvents.push({
-        type: "system",
-        text: "Program executed successfully with exit status 0.",
-        html: `<p style="color: #10b981;">Program executed successfully with exit status 0.</p>`,
-      });
-
-      status = "success";
-      statusText = "Success";
       runState = "idle";
       activeRunToken = 0;
     } catch (err) {
       if (token !== runToken) return;
 
-      if (isInputNeeded(err)) {
-        terminalEvents = baseEvents.concat(events);
-        status = "input";
-        statusText = "Input";
-        runState = "waiting";
-        return;
-      }
-
       status = "error";
       statusText = "Error";
       const msg = err instanceof Error ? err.message : String(err);
-      terminalEvents = baseEvents.concat(events).concat([
+      terminalEvents = baseEvents.concat([
         { type: "system", text: `Runtime error: ${msg}`, html: `<p style="color: #ef4444;">Runtime error: ${escapeHtml(msg)}</p>` },
         { type: "system", text: "Program executed unsuccessfully with exit status 1.", html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>` },
       ]);
@@ -338,7 +320,6 @@
       activeRunToken = 0;
     } finally {
       if (token !== runToken) return;
-      runtime.reset();
       if (runState === "idle") {
         setTimeout(() => {
           if (runState === "idle") {
@@ -455,11 +436,11 @@
   // UI actions
   // -----------------------------
   async function handleAddFile() {
-    const name = await showPrompt("Enter file name (must end with .fer):", "e.g., utils.fer");
+    const name = await showPrompt("Enter file name (must end with .ferr):", "e.g., utils.ferr");
     if (!name) return;
 
-    if (!name.endsWith(".fer")) {
-      await showAlert("File name must end with .fer");
+    if (!name.endsWith(".ferr")) {
+      await showAlert("File name must end with .ferr");
       return;
     }
 
@@ -473,8 +454,8 @@
   }
 
   async function handleCloseFile(name: string) {
-    if (name === "main.fer") {
-      await showAlert("Cannot remove main.fer");
+    if (name === "main.ferr") {
+      await showAlert("Cannot remove main.ferr");
       return;
     }
     const ok = await showConfirm(`Close ${name}?`);
@@ -551,7 +532,7 @@
     const ok = await showConfirm("Are you sure you want to clear all files?");
     if (!ok) return;
 
-    loadFiles({ "main.fer": "" }, { persist: true });
+    loadFiles({ "main.ferr": "" }, { persist: true });
 
     terminalEvents = [{ type: "system", text: "All files cleared" }];
     inputLines = [];
@@ -675,7 +656,7 @@
       }
 
       if (!loaded) {
-        loadFiles({ "main.fer": defaultCode }, { persist: true });
+        loadFiles({ "main.ferr": defaultCode }, { persist: true });
       }
 
       // Attach per-model save handlers
@@ -799,7 +780,7 @@
             }}
           >
             <span class="tab-name">{fileName}</span>
-            {#if fileName !== "main.fer"}
+            {#if fileName !== "main.ferr"}
               <button
                 type="button"
                 class="tab-close"

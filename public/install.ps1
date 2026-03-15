@@ -9,8 +9,7 @@ $ferretDir = Join-Path $installDir "ferret"
 $arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
 switch ($arch) {
     "X64" { $arch = "amd64" }
-    "Arm64" { $arch = "arm64" }
-    default { throw "Unsupported architecture: $arch" }
+    default { throw "No prebuilt release for architecture: $arch (available: windows-amd64)" }
 }
 
 $archive = "ferret-windows-$arch.zip"
