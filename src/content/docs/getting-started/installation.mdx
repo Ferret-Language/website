@@ -47,18 +47,27 @@ If you want to build Ferret yourself, you need Go and a C compiler available on 
 
 ```bash
 git clone https://github.com/Ferret-Language/Ferret.git
-cd Ferret
+cd Ferret/compiler
 ./build.sh
 ```
 
 Windows:
 
 ```bat
-scripts\build.bat
+cd compiler
+build.bat
 ```
+
+This produces a self-contained compiler bundle at `output/ferret`.
 
 ## Running Ferret programs
 
 ```bash
-ferret yourfile.fer
+./output/ferret/bin/ferret run main.ferr
+```
+
+Or if `ferret` is already on your `PATH`:
+
+```bash
+ferret run main.ferr
 ```

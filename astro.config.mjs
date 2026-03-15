@@ -14,7 +14,7 @@ export default defineConfig({
     trailingSlash: 'ignore',
     integrations: [starlight({
         title: 'Ferret',
-        description: 'A modern, type-safe programming language',
+        description: 'A modern systems language with explicit ownership and LLVM/QBE backends',
         favicon: '/favicon.png',  // Change to '/favicon.png' or '/favicon.ico' if using different format
         disable404Route: true, // Use custom 404 page instead of Starlight's
         lastUpdated: true,

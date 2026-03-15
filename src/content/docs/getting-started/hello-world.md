@@ -9,15 +9,16 @@ Let's write your first Ferret program!
 
 ## Create a File
 
-Create a file named `main.fer` in your project directory (folder).:
+Create a file named `main.ferr` in your project directory.
 
 ```ferret title="run"
 // Your first Ferret program
-import "std/io";
+import "std/io"
 
-fn main() {
-    let greeting: str = "Hello, World!";
-    io::Println(greeting);
+fn main() i32 {
+    let greeting = "Hello, World!"
+    io::Println(greeting)
+    return 0
 }
 ```
 
@@ -26,20 +27,7 @@ fn main() {
 Compile and run your program:
 
 ```bash
-ferret main.fer
-```
-
-The compiler will produce a little program of the same name as your current project folder. So if your project folder is named `hello`, you'll get an executable named `hello` (or `hello.exe` on Windows). Run it like this:
-
-```bash
-./hello # On Windows, use: ./hello.exe
-```
-
-Or compile with a custom output name:
-
-```bash
-ferret -o myapp hello.fer
-./myapp
+ferret run main.ferr
 ```
 
 ## Understanding the Code
@@ -47,24 +35,26 @@ ferret -o myapp hello.fer
 Let's break down what's happening:
 
 - `fn main()` - Every Ferret program starts with a `main` function
-- `let greeting: str = "Hello, World!";` - Declares a variable with type annotation
-- `io::Println(greeting);` - Outputs the greeting to the console
+- `let greeting = "Hello, World!"` - Declares an immutable local value
+- `io::Println(greeting)` - Outputs the greeting to the console
+- `return 0` - Returns process exit status
 
 ## Try It Yourself
 
 Try modifying the program:
 
 ```ferret title="run"
-import "std/io";
+import "std/io"
 
-fn greet(name: str) -> str {
-    return "Hello, " + name + "!";
+fn greet(name str) str {
+    return "Hello, " + name + "!"
 }
 
-fn main() {
-    let name: str = "Ferret";
-    let message: str = greet(name);
-    io::Println(message);
+fn main() i32 {
+    let name = "Ferret"
+    let message = greet(name)
+    io::Println(message)
+    return 0
 }
 ```
 

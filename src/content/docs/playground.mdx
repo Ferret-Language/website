@@ -1,20 +1,24 @@
 ---
 title: Playground
-description: Try Ferret in your browser with syntax highlighting
+description: Compile and run Ferret in your browser using the WebAssembly compiler
 template: doc
 ---
-Try writing Ferret code directly in your browser! The playground features:
+Try Ferret directly in your browser. The playground is powered by a WebAssembly build of the compiler and runtime.
+
+Current playground capabilities:
 
 - **Full syntax highlighting** for Ferret keywords, types, and operators
 - **Monaco Editor** - the same editor that powers VS Code
+- **In-browser compilation** from Ferret source to WebAssembly
+- **Run output panel** for program execution and diagnostics
 - **Theme support** - automatically matches your dark/light preference
 
 :::tip
 Use `Ctrl/Cmd + Space` for autocomplete and `Ctrl/Cmd + /` to toggle comments!
 :::
 
-Go to the [Playground](/play/) to try it out!
+Go to the [Playground](/play/) to try it out.
 
 :::note
-Code execution is coming soon! For now, enjoy syntax highlighting and code editing. We're working on integrating the Ferret compiler for real-time execution.
+The long-term direction is to compile the full Ferret compiler toolchain directly to WebAssembly for tighter parity with local LLVM/clang workflows.
 :::

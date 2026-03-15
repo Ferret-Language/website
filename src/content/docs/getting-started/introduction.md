@@ -1,51 +1,52 @@
 ---
 title: Introduction to Ferret
-description: Learn about Ferret, a modern type-safe programming language
+description: Learn the current Ferret compiler model and core syntax
 sidebar:
   order: 1
 ---
 
+Ferret is a modern systems language focused on explicit semantics: ownership, clear control flow, and predictable code generation.
 
-Ferret is a modern, type-safe programming language designed for clarity, safety, and developer productivity.
+This documentation now targets the **new compiler line** and its current syntax.
 
-### Type Safety
-Ferret's powerful type system catches errors at compile-time, not runtime. With optional types, error types, and flow-sensitive type narrowing, you can write code with confidence.
+### Explicit Ownership
+Ferret makes ownership part of type syntax (`*T`, `*mut T`, `*own T`, `*raw T`) so resource behavior is visible in source.
 
-### Modern Syntax
-Clean, expressive syntax that's easy to learn and pleasant to write. Inspired by the best features of modern languages.
+### Practical Type System
+Ferret includes structs, enums, interfaces, unions, optionals (`?T`), and error unions (`E!T`) as first-class language features.
 
-### Error Handling
-First-class error handling with result types (`E ! T`) that make dealing with failures explicit and safe.
+### Multi-backend Compilation
+The compiler supports LLVM and QBE backends and is being used in browser playground flows through WebAssembly.
 
-### Optional Types
-No more null pointer exceptions! Optional types (`?T`) and the coalescing operator (`??`) make handling missing values a breeze.
+### Modules and Imports
+Imports are package-root relative and use `::` for imported names, enum variants, and static members.
 
-## Quick Example
+## Quick Example (Current Syntax)
 
 ```ferret title="run"
 import "std/io";
-// Variables with type inference
-// Functions
-fn greet(name: str) -> str {
-    return "Hello, " + name + "!";
+
+type BuildMode enum {
+    debug,
+    release,
 }
 
-fn main() {
-    let name: str = "Ferret";
-    let version: i32 = 1;
-
-    // Optional types
-    let maybeValue: ?i32 = 42;
-
-    if maybeValue != none {
-        // Type narrowing - maybeValue is i32 here
-        let doubled: i32 = maybeValue * 2;
+fn Name(mode BuildMode) str {
+    if mode == BuildMode::release {
+        return "release"
     }
+    return "debug"
+}
 
-    // Coalescing operator for default values
-    let value: i32 = maybeValue ?? 0;
-
-    io::Println(greet(name));
+fn main() i32 {
+    let mode = BuildMode::debug
+    io::Println("mode:")
+    io::Println(Name(mode))
+    return 0
 }
 
 ```
+
+:::note
+If you are coming from older Ferret docs, prefer pages under Getting Started first. Some deeper reference pages are still being migrated to the new syntax.
+:::

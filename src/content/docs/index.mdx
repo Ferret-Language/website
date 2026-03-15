@@ -3,7 +3,7 @@ title: Ferret Programming Language
 description: A modern, type-safe programming language with optional types and powerful error handling.
 template: splash
 hero:
-  tagline: A modern, type-safe programming language designed for clarity, safety, and developer productivity.
+  tagline: A modern, type-safe systems language with explicit ownership, predictable control flow, and practical tooling.
   image:
     file: ../../assets/ferret.svg
   actions:
@@ -17,7 +17,7 @@ hero:
       variant: secondary
 banner:
   content: |
-    Ferret v0.0.6 is released. Try it now!
+    Docs are updated for the new compiler syntax (.ferr, explicit ownership, and run/check workflows).
 ---
 
 import CustomFooter from '../../components/CustomFooter.astro';
@@ -33,40 +33,40 @@ import HomepageAnimations from '../../components/HomepageAnimations.astro';
   <div class="feature-item scroll-slide-up" data-delay="0">
     <div class="feature-header">
       <span class="feature-marker">01</span>
-      <h2>Type Safety</h2>
+      <h2>Ownership & Safety</h2>
     </div>
     <p class="feature-description">
-      Powerful type system with flow-sensitive type narrowing catches errors at compile-time, not runtime.
+      Ferret uses explicit pointer ownership and compile-time analysis to make memory behavior visible and predictable.
     </p>
   </div>
 
   <div class="feature-item scroll-slide-up" data-delay="100">
     <div class="feature-header">
       <span class="feature-marker">02</span>
-      <h2>Optional Types</h2>
+      <h2>Practical Type System</h2>
     </div>
     <p class="feature-description">
-      No more null pointer exceptions! Optional types <code>?T</code> make handling missing values safe and elegant.
+      Built-in optionals <code>?T</code>, error unions <code>E!T</code>, enums, structs, and interfaces keep APIs explicit.
     </p>
   </div>
 
   <div class="feature-item scroll-slide-up" data-delay="200">
     <div class="feature-header">
       <span class="feature-marker">03</span>
-      <h2>Error Handling</h2>
+      <h2>Dual Backend Toolchain</h2>
     </div>
     <p class="feature-description">
-      First-class error handling with error types <code>E ! T</code> that make dealing with failures explicit.
+      Target both LLVM and QBE backends with one compiler, then bundle local toolchains for predictable builds.
     </p>
   </div>
 
   <div class="feature-item scroll-slide-up" data-delay="300">
     <div class="feature-header">
       <span class="feature-marker">04</span>
-      <h2>Modern Syntax</h2>
+      <h2>Browser Playground</h2>
     </div>
     <p class="feature-description">
-      Clean, expressive syntax that's easy to learn and pleasant to write.
+      The playground runs the Ferret compiler in WebAssembly, enabling in-browser compile and execute loops.
     </p>
   </div>
 </section>
@@ -76,20 +76,26 @@ import HomepageAnimations from '../../components/HomepageAnimations.astro';
   <div class="scroll-fade-in" data-delay="200">
   
 ```ferret
-// Variables with type inference
-let name: str = "Ferret";
-let version := 1;
+import "std/io"
 
-// Optional types with type narrowing
-let maybeValue: ?i32 = 42;
-
-if maybeValue != none {
-    let doubled: i32 = maybeValue * 2;
+type Mode enum {
+  debug,
+  run,
 }
 
-// Functions
-fn greet(name: str) -> str {
-    return "Hello, " + name + "!";
+fn SelectMode(v i32) Mode {
+  if v > 0 {
+    return Mode::run
+  }
+  return Mode::debug
+}
+
+fn main() i32 {
+  let mode = SelectMode(1)
+  if mode == Mode::run {
+    io::Println("Ferret is running")
+  }
+  return 0
 }
 ```
   </div>

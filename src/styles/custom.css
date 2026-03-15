@@ -16,11 +16,13 @@
     --ferret-cyan: 178, 94%, 43%;
 
     /* Pick accent ONCE */
-    --accent-hsl: var(--ferret-pink);
+    --accent-hsl: var(--ferret-blue);
 
     /* Dynamic outputs */
     --accent-color: hsl(var(--accent-hsl));
-    --trans-accent: hsla(var(--accent-hsl), 0.08);
+    --trans-accent: hsla(var(--accent-hsl), 0.12);
+    --surface-glass: hsla(var(--accent-hsl), 0.08);
+    --surface-glass-strong: hsla(var(--accent-hsl), 0.16);
 
     --editor-bg: #282c34;
     --editor-fg: #abb2bf;
@@ -86,6 +88,8 @@
 
     --neutral: rgba(126, 126, 126, 0.164);
     --neutral-hover: rgba(148, 148, 148, 0.344);
+    --surface-glass: hsla(var(--accent-hsl), 0.12);
+    --surface-glass-strong: hsla(var(--accent-hsl), 0.2);
 
     /* Dark theme patterns */
     --pattern-dots: url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='2' cy='2' r='1' fill='%23ffffff' opacity='0.08'/%3E%3C/svg%3E");
@@ -211,14 +215,19 @@ mobile-starlight-toc {
     background:
         var(--pattern-grid),
         radial-gradient(
-            circle at 20% 50%,
-            rgba(59, 130, 246, 0.1) 0%,
+            circle at 12% 35%,
+            hsla(var(--ferret-cyan), 0.24) 0%,
             transparent 50%
         ),
         radial-gradient(
-            circle at 80% 50%,
-            hsla(var(--accent-hsl), 0.5) 0%,
+            circle at 82% 40%,
+            hsla(var(--accent-hsl), 0.35) 0%,
             transparent 50%
+        ),
+        linear-gradient(
+            160deg,
+            color-mix(in oklab, var(--background) 90%, var(--accent-color) 10%),
+            var(--background)
         );
     background-size:
         40px 40px,
@@ -534,9 +543,9 @@ figcaption .title {
 
 /* Modern Layout - Vertical Flow */
 .modern-layout {
-    max-width: 800px;
+    max-width: 920px;
     margin: 0 auto;
-    padding: 0 1rem;
+    padding: 0 1.25rem 1.5rem;
     position: relative;
     isolation: isolate;
 }
@@ -550,7 +559,7 @@ figcaption .title {
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    border-bottom: 1px solid var(--foreground);
+    border-bottom: 1px solid color-mix(in oklab, var(--foreground) 35%, transparent);
     color: var(--foreground);
     position: relative;
     overflow: hidden;
@@ -622,6 +631,13 @@ figcaption .title {
 /* Example Section */
 .example-modern {
     margin: 4rem 0;
+}
+
+.example-modern .expressive-code,
+.example-modern .astro-code {
+    border: 1px solid color-mix(in oklab, var(--border) 75%, var(--accent-color) 25%);
+    border-radius: 16px;
+    box-shadow: 0 18px 38px -26px var(--surface-glass-strong);
 }
 
 /* Learning Paths - List Style */
