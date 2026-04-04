@@ -8,14 +8,30 @@ export interface CompileResult {
     success: boolean;
     output?: string;
     error?: string;
-    wasm?: string;
+    artifact?: string;
+    artifactKind?: string;
+    artifactExt?: string;
+    diagnosticsHtml?: string;
+    diagnostics?: CompileDiagnostic[];
+}
+
+export interface CompileDiagnostic {
+    severity: string;
+    code?: string;
+    message: string;
+    file?: string;
+    line?: number;
+    column?: number;
+    endLine?: number;
+    endColumn?: number;
 }
 
 export interface RunWasmResult {
     success: boolean;
     exitCode?: number;
     error?: string;
-    missingImports?: string[];
+    stdout?: string;
+    stderr?: string;
 }
 
 export interface FerretCompiler {
@@ -26,6 +42,8 @@ export interface FerretCompiler {
 declare global {
     interface Window {
         ferretCompile?: (code: string | Record<string, string>, debug: boolean) => CompileResult;
+        ferretRunWasm?: (artifact: Uint8Array | string) => RunWasmResult;
+        ferretAnsiToHtml?: (text: string) => string;
         ferretWasmVersion?: string;
     }
     class Go {
@@ -82,8 +100,11 @@ export async function initWasm(): Promise<{ success: boolean; error?: string; ve
         // Wait a bit for Go to initialize
         await new Promise((resolve) => setTimeout(resolve, 100));
 
-        // Check if ferretCompile function is available
-        if (typeof window.ferretCompile === "function") {
+        if (
+            typeof window.ferretCompile === "function" &&
+            typeof window.ferretRunWasm === "function" &&
+            typeof window.ferretAnsiToHtml === "function"
+        ) {
             const version = window.ferretWasmVersion || "unknown";
             if (isLegacyCompilerVersion(version)) {
                 wasmReady = false;
@@ -100,7 +121,7 @@ export async function initWasm(): Promise<{ success: boolean; error?: string; ve
             return { success: true, version };
         } else {
             throw new Error(
-                "ferretCompile function not found after WASM initialization"
+                "browser compiler entrypoint is incomplete after WASM initialization"
             );
         }
     } catch (error) {
@@ -122,62 +143,61 @@ export function compile(files: Record<string, string>, debug: boolean = false): 
         };
     }
 
-    const normalizedFiles: Record<string, string> = { ...files };
-    if (normalizedFiles["main.ferr"] && !normalizedFiles["main.fer"]) {
-        normalizedFiles["main.fer"] = normalizedFiles["main.ferr"];
-    }
-    if (normalizedFiles["main.fer"] && !normalizedFiles["main.ferr"]) {
-        normalizedFiles["main.ferr"] = normalizedFiles["main.fer"];
-    }
-
-    return window.ferretCompile(normalizedFiles, debug);
+    return window.ferretCompile({ ...files }, debug);
 }
 
-export async function runCompiledWasmSelfContained(base64Wasm: string): Promise<RunWasmResult> {
-    try {
-        const bytes = Uint8Array.from(atob(base64Wasm), (c) => c.charCodeAt(0));
-        const module = await WebAssembly.compile(bytes);
-        const imports = WebAssembly.Module.imports(module);
+export function isRunnableArtifact(result: Pick<CompileResult, "artifact" | "artifactKind">): boolean {
+    return typeof result.artifact === "string" && result.artifact.length > 0 && isWasmArtifactKind(result.artifactKind);
+}
 
-        if (imports.length > 0) {
-            const missingImports = imports.map((entry) => `${entry.module}.${entry.name}`);
-            return {
-                success: false,
-                error: "Program is not self-contained yet (requires host/runtime imports).",
-                missingImports,
-            };
-        }
-
-        const instance = await WebAssembly.instantiate(module, {});
-        const exports = instance.exports as Record<string, unknown>;
-        const main = exports.main;
-
-        if (typeof main !== "function") {
-            return {
-                success: false,
-                error: "Compiled module has no exported main function.",
-            };
-        }
-
-        const result = (main as () => unknown)();
-        const exitCode = typeof result === "number" ? (result | 0) : 0;
-
-        if (exitCode !== 0) {
-            return {
-                success: false,
-                exitCode,
-                error: `Program exited with status ${exitCode}.`,
-            };
-        }
-
+export async function runCompiledArtifact(
+    artifact: string,
+    artifactKind?: string
+): Promise<RunWasmResult> {
+    if (!wasmReady || typeof window.ferretRunWasm !== "function") {
         return {
-            success: true,
-            exitCode: 0,
+            success: false,
+            error: "WASM runner not ready",
         };
+    }
+
+    if (!isWasmArtifactKind(artifactKind)) {
+        return {
+            success: false,
+            error: `Browser compiler produced ${describeArtifact(artifactKind)}. Final wasm linking is not available in the playground yet.`,
+        };
+    }
+
+    try {
+        return window.ferretRunWasm(artifact);
     } catch (error) {
         return {
             success: false,
             error: error instanceof Error ? error.message : String(error),
         };
     }
+}
+
+export function renderCompilerHtml(text: string): string {
+    if (!wasmReady || typeof window.ferretAnsiToHtml !== "function") {
+        return escapeHtml(text);
+    }
+    return window.ferretAnsiToHtml(text);
+}
+
+function isWasmArtifactKind(kind?: string): boolean {
+    const normalized = (kind || "").trim().toLowerCase();
+    return normalized === "wasm" || normalized === "application/wasm" || normalized === "wasm-base64";
+}
+
+function describeArtifact(kind?: string): string {
+    const normalized = (kind || "").trim();
+    return normalized !== "" ? `${normalized} artifact` : "a non-runnable compiler artifact";
+}
+
+function escapeHtml(text: string): string {
+    return text
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
 }

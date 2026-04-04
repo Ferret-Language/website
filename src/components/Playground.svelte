@@ -4,7 +4,14 @@
 
   import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
   import { registerFerretLanguage, defineThemes, getCurrentTheme } from "../lib/monaco-config";
-  import { initWasm, isWasmReady, compile, runCompiledWasmSelfContained } from "../lib/compiler";
+  import {
+    initWasm,
+    isWasmReady,
+    compile,
+    isRunnableArtifact,
+    renderCompilerHtml,
+    runCompiledArtifact,
+  } from "../lib/compiler";
   import { base64EncodeUnicode, base64DecodeUnicode } from "../lib/base64";
 
   import Modal, { showAlert, showConfirm, showPrompt } from "./Modal.svelte";
@@ -40,7 +47,7 @@
   let editorContainer: HTMLDivElement | null = null;
 
   let files = $state<Record<string, monaco.editor.ITextModel>>({});
-  let activeFile = $state("main.ferr");
+  let activeFile = $state("main.fer");
   let suppressSave = false;
 
   let cursorLine = $state(1);
@@ -57,8 +64,8 @@
 
   let runToken = $state(0); // Incremented each time a new run starts, used to cancel previous runs
   let activeRunToken = $state(0); // Tracks the token of the currently active run
-  let cachedRun = $state<{ code: string; wasm: string; compilerLog: string } | null>(null);
-  let compilationCache = $state<Map<string, { wasm: string; compilerLog: string }>>(new Map()); // Cache compilation results by code hash
+  let cachedRun = $state<{ code: string; artifact: string; artifactKind?: string; compilerLog: string } | null>(null);
+  let compilationCache = $state<Map<string, { artifact: string; artifactKind?: string; compilerLog: string }>>(new Map()); // Cache compilation results by code hash
 
   let activeModel = $derived(files[activeFile] ?? null);
   let isWaitingInput = $derived(runState === "waiting");
@@ -116,6 +123,17 @@
     return out;
   }
 
+  function normalizeProjectFiles(data: Record<string, string>): Record<string, string> {
+    const normalized: Record<string, string> = {};
+    for (const [name, content] of Object.entries(data)) {
+      const normalizedName = name.endsWith(".ferr") ? `${name.slice(0, -5)}.fer` : name;
+      if (!(normalizedName in normalized)) {
+        normalized[normalizedName] = content;
+      }
+    }
+    return normalized;
+  }
+
   function saveToLocalStorage() {
     if (suppressSave) return;
     localStorage.setItem("ferret-playground-files", JSON.stringify(serializeFiles()));
@@ -128,10 +146,13 @@
     if (!savedFiles) return false;
 
     try {
-      const data = JSON.parse(savedFiles) as Record<string, string>;
+      const data = normalizeProjectFiles(JSON.parse(savedFiles) as Record<string, string>);
       loadFiles(data, { persist: false });
-      if (savedActive && files[savedActive]) {
-        activeFile = savedActive;
+      const normalizedActive = savedActive?.endsWith(".ferr")
+        ? `${savedActive.slice(0, -5)}.fer`
+        : savedActive;
+      if (normalizedActive && files[normalizedActive]) {
+        activeFile = normalizedActive;
       }
       saveToLocalStorage();
       return true;
@@ -143,6 +164,8 @@
 
   function loadFiles(data: Record<string, string>, opts: { persist?: boolean } = {}) {
     if (!monacoApi) return;
+
+    const normalizedData = normalizeProjectFiles(data);
 
     suppressSave = true;
 
@@ -156,14 +179,14 @@
     }
 
     const next: Record<string, monaco.editor.ITextModel> = {};
-    for (const [name, content] of Object.entries(data)) {
+    for (const [name, content] of Object.entries(normalizedData)) {
       const model = createModel(name, content);
       next[name] = model;
       attachModelSave(model);
     }
 
     files = next;
-    activeFile = data["main.ferr"] ? "main.ferr" : (Object.keys(data)[0] ?? "main.ferr");
+    activeFile = normalizedData["main.fer"] ? "main.fer" : (Object.keys(normalizedData)[0] ?? "main.fer");
 
     // Immediately reflect active file in the editor (avoid relying on reactive effects)
     if (editor && files[activeFile]) {
@@ -180,7 +203,7 @@
 
   function addFile(name: string, content = "// New file\n") {
     if (!monacoApi) return;
-    if (!name.endsWith(".ferr")) return;
+    if (!name.endsWith(".fer")) return;
     if (files[name]) return;
 
     const model = createModel(name, content);
@@ -199,7 +222,7 @@
   }
 
   function removeFile(name: string) {
-    if (name === "main.ferr") return;
+    if (name === "main.fer") return;
     const model = files[name];
     if (!model) return;
 
@@ -208,7 +231,7 @@
     files = rest;
 
     if (activeFile === name) {
-      activeFile = files["main.ferr"] ? "main.ferr" : (Object.keys(files)[0] ?? "main.ferr");
+      activeFile = files["main.fer"] ? "main.fer" : (Object.keys(files)[0] ?? "main.fer");
     }
 
     // Switch Monaco immediately to the new active model
@@ -241,15 +264,25 @@
       return `<div class="terminal-line terminal-input-line"><span class="terminal-prompt">></span><span class="terminal-text">${escapeHtml(ev.text || "")}</span></div>`;
     }
     if (ev.type === "system") {
-      return `<div class="terminal-line terminal-system">${escapeHtml(ev.text || "")}</div>`;
+      return renderTerminalBlock(ev.text || "", "terminal-system");
     }
-    // For output, preserve formatting without extra wrapping
-    return escapeHtml(ev.text || "");
+    return renderTerminalBlock(ev.text || "", "terminal-output-line");
   }
 
   function buildCompilerEvents(log: string): TerminalEvent[] {
     if (!log) return [];
-    return [{ type: "system", text: log, html: `<pre class="compiler-log">${log}</pre>` }];
+    return [{ type: "system", text: log, html: renderTerminalBlock(log, "compiler-log terminal-system") }];
+  }
+
+  function renderTerminalBlock(text: string, lineClass: string): string {
+    const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    const lines = normalized.split("\n");
+    return lines
+      .map((line) => {
+        const html = renderCompilerHtml(line);
+        return `<div class="terminal-line ${lineClass}"><span class="terminal-text">${html || "&nbsp;"}</span></div>`;
+      })
+      .join("");
   }
 
   function abortRun(message: string) {
@@ -273,12 +306,22 @@
     const baseEvents = buildCompilerEvents(cachedRun.compilerLog);
 
     try {
-      const runResult = await runCompiledWasmSelfContained(cachedRun.wasm);
+      const runResult = await runCompiledArtifact(cachedRun.artifact, cachedRun.artifactKind);
       if (token !== runToken) return;
 
       if (runResult.success) {
-        terminalEvents = baseEvents.concat([
-          { type: "system", text: "✓ Program ran in self-contained mode." },
+        const outputEvents: TerminalEvent[] = [];
+        if (runResult.stdout) {
+          outputEvents.push({ type: "output", text: runResult.stdout });
+        }
+        if (runResult.stderr) {
+          outputEvents.push({
+            type: "system",
+            text: runResult.stderr,
+            html: `<pre class="compiler-log">${escapeHtml(runResult.stderr)}</pre>`,
+          });
+        }
+        terminalEvents = baseEvents.concat(outputEvents, [
           {
             type: "system",
             text: "Program executed successfully with exit status 0.",
@@ -288,14 +331,22 @@
         status = "success";
         statusText = "Success";
       } else {
-        const missing = runResult.missingImports && runResult.missingImports.length > 0
-          ? `\nMissing imports:\n- ${runResult.missingImports.join("\n- ")}`
-          : "";
-        terminalEvents = baseEvents.concat([
+        const outputEvents: TerminalEvent[] = [];
+        if (runResult.stdout) {
+          outputEvents.push({ type: "output", text: runResult.stdout });
+        }
+        if (runResult.stderr) {
+          outputEvents.push({
+            type: "system",
+            text: runResult.stderr,
+            html: `<pre class="compiler-log">${escapeHtml(runResult.stderr)}</pre>`,
+          });
+        }
+        terminalEvents = baseEvents.concat(outputEvents, [
           {
             type: "system",
-            text: `${runResult.error || "Runtime error"}${missing}`,
-            html: `<pre class="compiler-log">${escapeHtml((runResult.error || "Runtime error") + missing)}</pre>`,
+            text: runResult.error || "Runtime error",
+            html: `<pre class="compiler-log">${escapeHtml(runResult.error || "Runtime error")}</pre>`,
           },
           { type: "system", text: "Program executed unsuccessfully with exit status 1.", html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>` },
         ]);
@@ -372,20 +423,27 @@
       let compileResult = compilationCache.get(codeHash);
       if (!compileResult) {
         const result = compile(allFiles, false);
-        if (result.success && result.wasm) {
+        if (result.success && result.artifact) {
+          const compilerLog = (result.output || "").trim();
           compileResult = {
-            wasm: result.wasm,
-            compilerLog: (result.output || "").trim(),
+            artifact: result.artifact,
+            artifactKind: result.artifactKind,
+            compilerLog,
           };
           compilationCache.set(codeHash, compileResult);
         } else {
           status = "error";
           statusText = "Error";
-          const errorText = result.error || result.output || "Compilation failed";
-          terminalEvents = [
-            { type: "system", text: errorText, html: `<pre class="compiler-log">${errorText}</pre>` },
-            { type: "system", text: "Program executed unsuccessfully with exit status 1.", html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>` },
-          ];
+          const fallbackText = result.error || result.output || "Compilation failed";
+          terminalEvents = result.diagnosticsHtml
+            ? [
+                { type: "system", text: fallbackText, html: `<div class="compiler-log">${result.diagnosticsHtml}</div>` },
+                { type: "system", text: "Program executed unsuccessfully with exit status 1.", html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>` },
+              ]
+            : [
+                { type: "system", text: fallbackText, html: `<pre class="compiler-log">${escapeHtml(fallbackText)}</pre>` },
+                { type: "system", text: "Program executed unsuccessfully with exit status 1.", html: `<p style="color: #ef4444;">Program executed unsuccessfully with exit status 1.</p>` },
+              ];
           runState = "idle";
           activeRunToken = 0;
           return;
@@ -394,9 +452,26 @@
 
       cachedRun = {
         code: codeStr,
-        wasm: compileResult.wasm,
+        artifact: compileResult.artifact,
+        artifactKind: compileResult.artifactKind,
         compilerLog: compileResult.compilerLog,
       };
+
+      if (!isRunnableArtifact(cachedRun)) {
+        terminalEvents = buildCompilerEvents(cachedRun.compilerLog).concat([
+          {
+            type: "system",
+            text: `Compiled successfully, but the browser compiler returned ${cachedRun.artifactKind || "a non-runnable artifact"}. Final wasm linking is not available in the playground yet.`,
+            html: `<pre class="compiler-log">${escapeHtml(`Compiled successfully, but the browser compiler returned ${cachedRun.artifactKind || "a non-runnable artifact"}. Final wasm linking is not available in the playground yet.`)}</pre>`,
+          },
+        ]);
+        status = "error";
+        statusText = "Error";
+        runState = "idle";
+        activeRunToken = 0;
+        return;
+      }
+
       await runWithInputs(activeRunToken);
     } catch (e) {
       status = "error";
@@ -436,11 +511,11 @@
   // UI actions
   // -----------------------------
   async function handleAddFile() {
-    const name = await showPrompt("Enter file name (must end with .ferr):", "e.g., utils.ferr");
+    const name = await showPrompt("Enter file name (must end with .fer):", "e.g., utils.fer");
     if (!name) return;
 
-    if (!name.endsWith(".ferr")) {
-      await showAlert("File name must end with .ferr");
+    if (!name.endsWith(".fer")) {
+      await showAlert("File name must end with .fer");
       return;
     }
 
@@ -454,8 +529,8 @@
   }
 
   async function handleCloseFile(name: string) {
-    if (name === "main.ferr") {
-      await showAlert("Cannot remove main.ferr");
+    if (name === "main.fer") {
+      await showAlert("Cannot remove main.fer");
       return;
     }
     const ok = await showConfirm(`Close ${name}?`);
@@ -532,7 +607,7 @@
     const ok = await showConfirm("Are you sure you want to clear all files?");
     if (!ok) return;
 
-    loadFiles({ "main.ferr": "" }, { persist: true });
+    loadFiles({ "main.fer": "" }, { persist: true });
 
     terminalEvents = [{ type: "system", text: "All files cleared" }];
     inputLines = [];
@@ -643,7 +718,7 @@
       let loaded = false;
       if (filesParam) {
         try {
-          const decoded = JSON.parse(base64DecodeUnicode(filesParam));
+          const decoded = normalizeProjectFiles(JSON.parse(base64DecodeUnicode(filesParam)));
           loadFiles(decoded, { persist: true });
           loaded = true;
         } catch (e) {
@@ -656,7 +731,7 @@
       }
 
       if (!loaded) {
-        loadFiles({ "main.ferr": defaultCode }, { persist: true });
+        loadFiles({ "main.fer": defaultCode }, { persist: true });
       }
 
       // Attach per-model save handlers
@@ -780,7 +855,7 @@
             }}
           >
             <span class="tab-name">{fileName}</span>
-            {#if fileName !== "main.ferr"}
+            {#if fileName !== "main.fer"}
               <button
                 type="button"
                 class="tab-close"
@@ -914,8 +989,7 @@
               <span class="keyboard-tip">💡 Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to run</span>
             </p>
           {:else}
-            <pre class="terminal-output">{#each terminalEvents as ev (ev)}{@html renderEvent(ev)}{/each}
-            </pre>
+            <div class="terminal-output">{#each terminalEvents as ev (ev)}{@html renderEvent(ev)}{/each}</div>
           {/if}
 
           <div class="terminal-input" class:terminal-input-hidden={!isWaitingInput}>
@@ -1512,7 +1586,10 @@
   }
 
   :global(.terminal-output) {
-    white-space: pre;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    white-space: normal;
     overflow-x: auto;
     padding: 0 !important;
     margin: 0 !important;
@@ -1520,24 +1597,38 @@
   }
 
   :global(.terminal-line) {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
+    display: block;
     white-space: pre-wrap;
-    font-style: italic;
+    line-height: 1.45;
   }
 
   :global(.terminal-text) {
     white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  :global(.terminal-input-line) {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  :global(.terminal-output-line) {
+    color: inherit;
   }
 
   :global(.terminal-system) {
     color: #9ca3af;
     font-size: 0.75rem;
+    font-style: italic;
   }
 
   :global([data-theme="dark"] .terminal-system) {
     color: #6b7280;
+  }
+
+  :global(.compiler-log) {
+    margin-bottom: 0.5rem;
   }
 
   .terminal-input {
