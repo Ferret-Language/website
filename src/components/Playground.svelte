@@ -64,8 +64,8 @@
 
   let runToken = $state(0); // Incremented each time a new run starts, used to cancel previous runs
   let activeRunToken = $state(0); // Tracks the token of the currently active run
-  let cachedRun = $state<{ code: string; artifact: string; artifactKind?: string; compilerLog: string } | null>(null);
-  let compilationCache = $state<Map<string, { artifact: string; artifactKind?: string; compilerLog: string }>>(new Map()); // Cache compilation results by code hash
+  let cachedRun = $state<{ code: string; artifact: string; artifactKind?: string; compilerLog: string; compilerLogHtml?: string } | null>(null);
+  let compilationCache = $state<Map<string, { artifact: string; artifactKind?: string; compilerLog: string; compilerLogHtml?: string }>>(new Map()); // Cache compilation results by code hash
 
   let activeModel = $derived(files[activeFile] ?? null);
   let isWaitingInput = $derived(runState === "waiting");
@@ -269,8 +269,11 @@
     return renderTerminalBlock(ev.text || "", "terminal-output-line");
   }
 
-  function buildCompilerEvents(log: string): TerminalEvent[] {
-    if (!log) return [];
+  function buildCompilerEvents(log: string, logHtml?: string): TerminalEvent[] {
+    if (!log && !logHtml) return [];
+    if (logHtml) {
+      return [{ type: "system", text: log || "Compiler output", html: `<div class="compiler-log">${logHtml}</div>` }];
+    }
     return [{ type: "system", text: log, html: renderTerminalBlock(log, "compiler-log terminal-system") }];
   }
 
@@ -303,7 +306,7 @@
   async function runWithInputs(token: number) {
     if (!cachedRun || token === 0 || token !== runToken) return;
 
-    const baseEvents = buildCompilerEvents(cachedRun.compilerLog);
+    const baseEvents = buildCompilerEvents(cachedRun.compilerLog, cachedRun.compilerLogHtml);
 
     try {
       const runResult = await runCompiledArtifact(cachedRun.artifact, cachedRun.artifactKind);
@@ -422,13 +425,15 @@
 
       let compileResult = compilationCache.get(codeHash);
       if (!compileResult) {
-        const result = compile(allFiles, false);
+        const result = compile(allFiles, false, { outputMode: "html" });
         if (result.success && result.artifact) {
           const compilerLog = (result.output || "").trim();
+          const compilerLogHtml = result.diagnosticsHtml?.trim();
           compileResult = {
             artifact: result.artifact,
             artifactKind: result.artifactKind,
             compilerLog,
+            compilerLogHtml,
           };
           compilationCache.set(codeHash, compileResult);
         } else {
@@ -455,10 +460,11 @@
         artifact: compileResult.artifact,
         artifactKind: compileResult.artifactKind,
         compilerLog: compileResult.compilerLog,
+        compilerLogHtml: compileResult.compilerLogHtml,
       };
 
       if (!isRunnableArtifact(cachedRun)) {
-        terminalEvents = buildCompilerEvents(cachedRun.compilerLog).concat([
+        terminalEvents = buildCompilerEvents(cachedRun.compilerLog, cachedRun.compilerLogHtml).concat([
           {
             type: "system",
             text: `Compiled successfully, but the browser compiler returned ${cachedRun.artifactKind || "a non-runnable artifact"}. Final wasm linking is not available in the playground yet.`,

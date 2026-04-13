@@ -10,7 +10,13 @@ Ferret is a modern systems language focused on explicit semantics: ownership, cl
 This documentation now targets the **new compiler line** and its current syntax.
 
 ### Explicit Ownership
-Ferret makes ownership part of type syntax (`*T`, `*mut T`, `*own T`, `*raw T`) so resource behavior is visible in source.
+Ferret makes ownership part of type syntax so resource behavior is visible in source.
+- `T` = ordinary value type
+- `*T` = owning heap pointer
+- `&T` = immutable borrowed reference
+- `&mut T` = mutable borrowed reference
+- `^T` = raw mutable pointer
+- `^const T` = raw const pointer
 
 ### Practical Type System
 Ferret includes structs, enums, interfaces, unions, optionals (`?T`), and error unions (`E!T`) as first-class language features.
@@ -46,7 +52,3 @@ fn main() i32 {
 }
 
 ```
-
-:::note
-If you are coming from older Ferret docs, prefer pages under Getting Started first. Some deeper reference pages are still being migrated to the new syntax.
-:::

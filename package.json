@@ -10,7 +10,7 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/starlight": "^0.36.2",
+    "@astrojs/starlight": "^0.38.3",
     "@tailwindcss/vite": "^4.1.17",
     "astro-d2": "^0.8.1",
     "gray-matter": "^4.0.3",
@@ -23,7 +23,7 @@
     "unist-util-visit": "^5.0.0"
   },
   "devDependencies": {
-    "@astrojs/svelte": "^7.2.4",
-    "astro": "^5.16.0"
+    "@astrojs/svelte": "^8.0.5",
+    "astro": "^6.1.6"
   }
 }

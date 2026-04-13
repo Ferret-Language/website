@@ -15,6 +15,18 @@ export interface CompileResult {
     diagnostics?: CompileDiagnostic[];
 }
 
+export type CompileLogFormat = "ansi" | "html";
+
+export interface CompileOptions {
+    outputMode?: CompileLogFormat;
+}
+
+interface WasmCompileOptions extends CompileOptions {
+    logformat?: CompileLogFormat;
+    logFormat?: CompileLogFormat;
+    logform?: CompileLogFormat;
+}
+
 export interface CompileDiagnostic {
     severity: string;
     code?: string;
@@ -35,15 +47,22 @@ export interface RunWasmResult {
 }
 
 export interface FerretCompiler {
-    compile: (files: Record<string, string> | string, debug: boolean) => CompileResult;
+    compile: (
+        files: Record<string, string> | string,
+        debug: boolean,
+        options?: CompileOptions
+    ) => CompileResult;
     version?: string;
 }
 
 declare global {
     interface Window {
-        ferretCompile?: (code: string | Record<string, string>, debug: boolean) => CompileResult;
+        ferretCompile?: (
+            code: string | Record<string, string>,
+            debug: boolean,
+            options?: WasmCompileOptions
+        ) => CompileResult;
         ferretRunWasm?: (artifact: Uint8Array | string) => RunWasmResult;
-        ferretAnsiToHtml?: (text: string) => string;
         ferretWasmVersion?: string;
     }
     class Go {
@@ -53,11 +72,6 @@ declare global {
 }
 
 let wasmReady = false;
-
-function isLegacyCompilerVersion(version: string): boolean {
-    const v = version.trim().toLowerCase();
-    return v === "0.0.8" || v.startsWith("0.0.8-");
-}
 
 export function isWasmReady(): boolean {
     return wasmReady;
@@ -100,28 +114,19 @@ export async function initWasm(): Promise<{ success: boolean; error?: string; ve
         // Wait a bit for Go to initialize
         await new Promise((resolve) => setTimeout(resolve, 100));
 
-        if (
-            typeof window.ferretCompile === "function" &&
-            typeof window.ferretRunWasm === "function" &&
-            typeof window.ferretAnsiToHtml === "function"
-        ) {
+        if (typeof window.ferretCompile === "function") {
             const version = window.ferretWasmVersion || "unknown";
-            if (isLegacyCompilerVersion(version)) {
-                wasmReady = false;
-                return {
-                    success: false,
-                    error: `Loaded legacy playground compiler version ${version}. Please replace website/public/ferret2.wasm with the new compiler wasm build.`,
-                    version,
-                };
-            }
 
             wasmReady = true;
             console.log("✅ Ferret WASM compiler loaded successfully!");
             console.log("📌 WASM Version:", version);
+            if (typeof window.ferretRunWasm !== "function") {
+                console.warn("⚠️ ferretRunWasm() is unavailable; compile-only mode is active.");
+            }
             return { success: true, version };
         } else {
             throw new Error(
-                "browser compiler entrypoint is incomplete after WASM initialization"
+                "browser compiler entrypoint is missing ferretCompile after WASM initialization"
             );
         }
     } catch (error) {
@@ -135,7 +140,11 @@ export async function initWasm(): Promise<{ success: boolean; error?: string; ve
     }
 }
 
-export function compile(files: Record<string, string>, debug: boolean = false): CompileResult {
+export function compile(
+    files: Record<string, string>,
+    debug: boolean = false,
+    options: CompileOptions = { outputMode: "html" }
+): CompileResult {
     if (!wasmReady || typeof window.ferretCompile !== "function") {
         return {
             success: false,
@@ -143,7 +152,9 @@ export function compile(files: Record<string, string>, debug: boolean = false): 
         };
     }
 
-    return window.ferretCompile({ ...files }, debug);
+    const outputMode = options.outputMode === "ansi" ? "ansi" : "html";
+    const result = invokeCompile({ ...files }, debug, outputMode);
+    return result;
 }
 
 export function isRunnableArtifact(result: Pick<CompileResult, "artifact" | "artifactKind">): boolean {
@@ -179,10 +190,7 @@ export async function runCompiledArtifact(
 }
 
 export function renderCompilerHtml(text: string): string {
-    if (!wasmReady || typeof window.ferretAnsiToHtml !== "function") {
-        return escapeHtml(text);
-    }
-    return window.ferretAnsiToHtml(text);
+    return escapeHtml(text);
 }
 
 function isWasmArtifactKind(kind?: string): boolean {
@@ -193,6 +201,35 @@ function isWasmArtifactKind(kind?: string): boolean {
 function describeArtifact(kind?: string): string {
     const normalized = (kind || "").trim();
     return normalized !== "" ? `${normalized} artifact` : "a non-runnable compiler artifact";
+}
+
+function invokeCompile(
+    files: Record<string, string>,
+    debug: boolean,
+    outputMode: CompileLogFormat
+): CompileResult {
+    const compilerFn = window.ferretCompile;
+    if (typeof compilerFn !== "function") {
+        return { success: false, error: "WASM compiler not ready" };
+    }
+
+    try {
+        const result = compilerFn(files, debug, {
+            outputMode,
+            logformat: outputMode,
+            logFormat: outputMode,
+            logform: outputMode,
+        });
+        if (result && typeof result === "object") {
+            return result;
+        }
+        return { success: false, error: "Compiler invocation returned invalid result" };
+    } catch (error) {
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Compiler invocation failed",
+        };
+    }
 }
 
 function escapeHtml(text: string): string {
