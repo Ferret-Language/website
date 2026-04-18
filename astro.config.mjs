@@ -15,7 +15,7 @@ export default defineConfig({
     integrations: [starlight({
         title: 'Ferret',
         description: 'A modern systems language with explicit ownership and LLVM/QBE backends',
-        favicon: '/favicon.png',  // Change to '/favicon.png' or '/favicon.ico' if using different format
+        favicon: '/ferret.png',  // Change to '/favicon.png' or '/favicon.ico' if using different format
         disable404Route: true, // Use custom 404 page instead of Starlight's
         lastUpdated: true,
         editLink: {
