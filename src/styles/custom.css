@@ -18,7 +18,7 @@
     --ferret-brown: 15, 23%, 32%;
 
     /* Pick accent ONCE */
-    --accent-hsl: var(--ferret-blue);
+    --accent-hsl: var(--ferret-brown);
 
     /* Dynamic outputs */
     --accent-color: hsl(var(--accent-hsl));
@@ -132,6 +132,10 @@ main:has(.hero),
 main:has(.hero) .content-panel {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
+}
+
+.sl-banner {
+    color: white;
 }
 
 .ferret-logo {
