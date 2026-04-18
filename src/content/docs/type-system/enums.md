@@ -1,35 +1,22 @@
 ---
 title: Enums
-description: Enumeration types in Ferret
+description: Closed sets of named values
 sidebar:
-  order: 8
+  order: 2
 ---
 
-Enums (enumerations) define a type with a fixed set of possible values.
-
-## Basic Enum
-
 ```ferret
-type Status enum {
-    Pending,
-    Active,
-    Completed,
-    Cancelled,
-};
-```
+type Mode enum {
+    debug,
+    release,
+}
 
-## Using Enums
-
-```ferret
-import "std/io";
-
-let status := Status::Active;
-
-match status {
-    Status::Pending => io::Println("Waiting"),
-    Status::Active => io::Println("Running"),
-    Status::Completed => io::Println("Done"),
-    Status::Cancelled => io::Println("Aborted"),
+fn label(m: Mode) -> str {
+    if m == Mode::debug {
+        return "debug"
+    }
+    return "release"
 }
 ```
 
+Use `Type::Variant` to reference enum variants.

@@ -15,9 +15,10 @@
     --ferret-pink-cherry: -21, 113%, 70%;
     --ferret-yellow: 57, 94%, 43%;
     --ferret-cyan: 178, 94%, 43%;
+    --ferret-brown: 15, 23%, 32%;
 
     /* Pick accent ONCE */
-    --accent-hsl: var(--ferret-pink-cherry);
+    --accent-hsl: var(--ferret-blue);
 
     /* Dynamic outputs */
     --accent-color: hsl(var(--accent-hsl));

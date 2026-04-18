@@ -1,24 +1,16 @@
 ---
 title: Playground
-description: Compile and run Ferret in your browser using the WebAssembly compiler
+description: Remote browser playground status and usage
 template: doc
 ---
-Try Ferret directly in your browser. The playground is powered by a WebAssembly build of the compiler and runtime.
 
-Current playground capabilities:
+The playground is currently remote-first.
 
-- **Full syntax highlighting** for Ferret keywords, types, and operators
-- **Monaco Editor** - the same editor that powers VS Code
-- **In-browser compilation** from Ferret source to WebAssembly
-- **Run output panel** for program execution and diagnostics
-- **Theme support** - automatically matches your dark/light preference
-
-:::tip
-Use `Ctrl/Cmd + Space` for autocomplete and `Ctrl/Cmd + /` to toggle comments!
-:::
-
-Go to the [Playground](/play/) to try it out.
+- open it at [`/play/`](/play/)
+- write `.fer` code in the editor
+- compile and run in the browser environment
 
 :::note
-The long-term direction is to compile the full Ferret compiler toolchain directly to WebAssembly for tighter parity with local LLVM/clang workflows.
+Playground runtime/toolchain parity with local CLI is still in progress.
+Use local `ferret run` for final verification.
 :::

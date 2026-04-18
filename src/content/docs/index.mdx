@@ -1,11 +1,11 @@
 ---
 title: Ferret Programming Language
-description: A modern, type-safe programming language with optional types and powerful error handling.
+description: Systems language with explicit ownership and practical tooling
 template: splash
 hero:
-  tagline: A modern, type-safe systems language with explicit ownership, predictable control flow, and practical tooling.
+  tagline: Explicit ownership, practical semantics, and a compiler-first workflow.
   image:
-    file: ../../assets/ferret.svg
+    file: ../../assets/ferret.png
   actions:
     - text: Get Started
       link: /getting-started/introduction/
@@ -17,7 +17,7 @@ hero:
       variant: secondary
 banner:
   content: |
-    Docs are updated for the new compiler syntax (.fer, explicit ownership, and run/check workflows).
+    Documentation tracks current compiler behavior in Ferret-compiler-v2.
 ---
 
 import CustomFooter from '../../components/CustomFooter.astro';
@@ -76,26 +76,23 @@ import HomepageAnimations from '../../components/HomepageAnimations.astro';
   <div class="scroll-fade-in" data-delay="200">
   
 ```ferret
-import "std/io"
-
 type Mode enum {
   debug,
   run,
 }
 
-fn SelectMode(v i32) Mode {
+fn SelectMode(v: i32) -> Mode {
   if v > 0 {
     return Mode::run
   }
   return Mode::debug
 }
 
-fn main() i32 {
+fn main() {
   let mode = SelectMode(1)
   if mode == Mode::run {
-    io::Println("Ferret is running")
+    println("Ferret is running")
   }
-  return 0
 }
 ```
   </div>
@@ -122,7 +119,7 @@ fn main() i32 {
     <span class="path-icon">→</span>
   </a>
 
-  <a href="/basics/variables/" class="path-link scroll-slide-up" data-delay="200">
+  <a href="/basics/bindings/" class="path-link scroll-slide-up" data-delay="200">
     <div class="path-content">
       <span class="path-step">Step 3</span>
       <h3>Language Guide</h3>

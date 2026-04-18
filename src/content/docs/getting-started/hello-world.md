@@ -1,40 +1,31 @@
 ---
 title: Hello World
-description: Your first Ferret program
+description: Build and run your first Ferret program
 sidebar:
   order: 3
 ---
 
-Let's write your first Ferret program!
+Create `main.fer`:
 
-## Create a File
-
-Create a file named `main.fer` in your project directory.
-
-```ferret title="run"
-// Your first Ferret program
+```ferret
 fn main() {
-    println("Hello, World!")
+    println("Hello world")
 }
 ```
 
-## Run the Program
-
-Compile and run your program:
+Run it:
 
 ```bash
 ferret run main.fer
 ```
 
-## Understanding the Code
+What this shows:
 
-Let's break down what's happening:
-
-- `fn main()` - Every Ferret program starts with a `main` function
-- `println(greeting)` - Outputs the greeting to the console
+- `fn main()` is the program entrypoint.
+- `println(...)` is the simplest output path for quick examples.
 
 ## Next Steps
 
-- [Learn about Variables & Constants](/basics/variables)
-- [Explore the Type System](/type-system/structs)
-- [Understand Functions](/functions/basics)
+- [Basics: Bindings](/basics/bindings)
+- [Control Flow](/control-flow/if-statements)
+- [Type System](/type-system/structs)

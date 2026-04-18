@@ -5,96 +5,48 @@ sidebar:
   order: 1
 ---
 
-Variables and constants let you store information in your program. If you're coming from languages like C, C++, or Java, you can think of them in a familiar way:
+Ferret has three common binding forms:
 
-* A **variable** is something that can change.
-* A **constant** is something that cannot change.
+- `let` immutable local binding
+- `let mut` mutable local binding
+- `const` compile-time constant
 
-Ferret follows the same idea, but with one important difference:
-
-> Variables are **immutable by default**.
-
-This means you must explicitly allow changes when you need them.
-
-Ferret provides three ways to declare values: `let`, `let mut`, and `const`. We call them bindings.
-
-## Bindings
-
-### Immutable bindings
-
-Use `let` to create a binding. By default, bindings are **immutable**, meaning their value cannot be changed after assignment.
-
-### Basic Examples
+## `let` and `let mut`
 
 ```ferret
-let name = "Ferret";
-let age = 1;
-let score = 10;
+let language = "Ferret"
+let mut retries = 0
+retries = retries + 1
 ```
 
-### Attempting to Reassign
+Type annotations use `:` when needed:
 
 ```ferret
-let points = 0;
-points = 15;  // ERROR: Cannot assign to immutable binding
+let code: i32 = 200
+let mut total: i64 = 0
 ```
 
-### Mutable bindings
+## `const`
 
-If you want a binding whose value can change or mutate, use `let mut`.
+`const` is for values that are fixed at compile time.
 
 ```ferret
-let mut points = 0;
-points = 15;
-points = 30;
+const MAX_CONNECTIONS = 128
+const APP_NAME = "ferret-docs"
 ```
 
-You should only use `mut` when necessary. This keeps code safer and easier to understand.
-
-## Constants
-
-Constants use `const`. Once a constant gets a value, it cannot change.
+## Mutability On Parameters
 
 ```ferret
-const PI = 3.14159;
-const MAX_RETRIES = 3;
-const APP_NAME = "Ferret Compiler";
+fn bump(mut x: i32) -> i32 {
+    x = x + 1
+    return x
+}
 ```
 
-### Why 'const' if 'let' is already immutable?
+`mut` on a parameter controls the local parameter binding in that function.
 
-This is a common question.
+## Next
 
-Even though `let` bindings are immutable, they are still **runtime values**.
-
-`const` is different:
-
-* It represents a **fixed, compile-time value**
-* It is meant for values that are truly constant across the program
-* It is often used for configuration, limits, and global definitions
-
-### Attempting to Reassign
-
-```ferret
-const VERSION = 1;
-VERSION = 2;  // ERROR: Cannot assign to constant
-```
-
-## Naming Conventions
-
-To keep code readable:
-
-* Use `snake_case` for bindings: `user_name`, `total_count`
-* Use `SCREAMING_SNAKE_CASE` for constants: `MAX_VALUE`, `DEFAULT_PORT`
-
-```ferret
-let user_name = "Alice";
-let mut total_count = 42;
-
-const DEFAULT_PORT = 8080;
-```
-
-## Next Steps
-
-* [Learn about Data Types](/basics/types)
-* [Explore Operators](/basics/operators)
+- [Data Types](/basics/types)
+- [Operators](/basics/operators)

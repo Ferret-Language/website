@@ -2,7 +2,7 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import ferretGrammarJson from './syntax/fer.tmLanguage.json';
-import d2 from 'astro-d2';
+//import d2 from 'astro-d2';
 import svelte from '@astrojs/svelte';
 
 // Cast to any to avoid type errors with the complex grammar structure
@@ -56,6 +56,14 @@ export default defineConfig({
 
         sidebar: [
             {
+                label: 'Overview',
+                link: '/',
+            },
+            {
+                label: 'Playground',
+                link: '/playground/',
+            },
+            {
                 label: 'Getting Started',
                 autogenerate: { directory: 'getting-started' },
             },
@@ -88,12 +96,9 @@ export default defineConfig({
                 autogenerate: { directory: 'stdlib' },
             }
         ],
-    }), d2({
-      sketch: true,
-      layout: 'elk',
-      // Disable generating diagrams when deploying on Vercel.
-      skipGeneration: !!process.env['VERCEL'],
-    }), svelte()],
+    }),
+    
+    svelte()],
 
     vite: {
         plugins: [],

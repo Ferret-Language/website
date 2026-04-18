@@ -1,73 +1,34 @@
 ---
 title: Error Handling
-description: Working with errors and result types in Ferret
+description: Error unions and catch handlers
 sidebar:
   order: 2
 ---
 
-Ferret uses explicit error handling with Error Types to manage failures safely.
-
-## Result Types
-
-Functions or methods that can fail return `E ! T` (Result type), where `E` is the error type and `T` is the success type.
-
-The syntax is consistent with the error return operator: just as you write `return "error"!` to return an error, you write `E ! T` for the type.
+Ferret uses explicit error unions (`E!T`) instead of implicit exceptions.
 
 ```ferret
-fn divide(a: i32, b: i32) -> str ! i32 {
-    if b == 0 {
-        return "Division by zero"!; // The `!` operator constructs an error value
+type Io error {
+    denied
+}
+
+fn load(ok: bool) -> Io!i32 {
+    if ok {
+        return 1
     }
-    return a / b;
+    return Io::denied
+}
+
+fn read_with_fallback(ok: bool) -> i32 {
+    return load(ok) catch -1
 }
 ```
 
-**Both types are required** - you must specify both the error type and success type.
-
-## Handling Errors
-
-When calling a function that returns an error type, you cannot ignore the possibility of failure. For example, this won't compile:
+Handler form:
 
 ```ferret
-let result := divide(10, 2); // You cannot call the function without handling the error
-```
-So you must handle it using `catch` clause:
-
-```ferret
-import "std/io";
-
-let result := divide(10, 0) catch e { // e holds the error value
-    // Handle error case
-    io::Println("Error occurred: " + e);
-    return; // Early return
-};
-
-// These line won't reach if there was an error
-io::Println("Result: " + result); // won't run because the program will return early on error
-```
-But what if you want to move forward even with an error? You can provide a default value after the `catch` block. This can be either declared in the block or after it as literal value:
-```ferret
-import "std/io";
-
-let result := divide(10, 0) catch e {
-    // handle error case and provide default
-    io::Println("Error occurred: " + e);
-    let default_value := -1;
-} default_value; // result will be -1
-```
-Or more concisely:
-```ferret
-import "std/io";
-
-let result := divide(10, 0) catch e {
-    // handle error case and provide default
-    io::Println("Error occurred: " + e);
-} -1 ; // default value if error occurs, result will be -1
-```
-
-## Shorthand
-You can just provide the default value directly:
-
-```ferret
-let result := divide(10, 0) catch -1; // result will be -1 on error
+let value = load(false) catch |err| {
+    println(err)
+    0
+}
 ```
